@@ -6,9 +6,9 @@
 
 | Step | Name | Status |
 |------|------|--------|
-| 0.1 | Quality protocol, agent rules, reference cleanup, `docs/devlogs/` | in progress |
-| 0.2 | Automated Phase 0 regression tests (API + web build) | pending |
-| 0.3 | Phase 0 docs truth + human UI/UX checklist; FULL STOP | pending |
+| 0.1 | Quality protocol, agent rules, reference cleanup, `docs/devlogs/` | done |
+| 0.2 | Automated Phase 0 regression tests (API + web build) | done |
+| 0.3 | Phase 0 docs truth + human UI/UX checklist; FULL STOP | in progress |
 
 Each step: test → phase/step audit → retest to **100%** → commit + push `main` → Jeremy-voice devlog. See `docs/PHASE_STEP_PROTOCOL.md`.
 
