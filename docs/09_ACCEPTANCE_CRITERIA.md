@@ -10,15 +10,15 @@
 - [x] AGENTS + core/phase-current rules state macOS-only + MyKAIA; Phase 0 NOT complete
 - [x] No living false-clearance claims in `PHASE_0.md`, `HANDOFF.md`, this file
 
-### Later Phase 0 steps (filled as they land)
+### Later Phase 0 steps
 
-- [ ] 0.2 New stack scaffold; old Vite product tree removed after rebuild-boundary commit
-- [ ] 0.3 Vault `.md` truth + SQLite cache; old storage replaced; continuous backup
-- [ ] 0.4 Durable tldraw/TipTap writing path
-- [ ] 0.5 One local STT path proven; header toggle reflects real state
-- [ ] 0.6 Onboarding + AI master kill switch
-- [ ] 0.7 Muse Tab/dismiss optional path
-- [ ] 0.8 Human UI/UX checklist published; status awaiting clear (not COMPLETE)
+- [x] 0.2 New stack scaffold; old Vite product tree removed after rebuild-boundary commit
+- [x] 0.3 Vault `.md` truth + SQLite cache; old storage replaced; continuous backup
+- [x] 0.4 Durable tldraw/TipTap writing path
+- [x] 0.5 One local STT path proven; header toggle reflects real state
+- [x] 0.6 Onboarding + AI master kill switch
+- [x] 0.7 Muse Tab/dismiss optional path
+- [x] 0.8 Human UI/UX checklist published; status awaiting clear (not COMPLETE)
 
 ### Human gate (required to leave Phase 0)
 

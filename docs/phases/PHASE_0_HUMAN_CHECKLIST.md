@@ -1,75 +1,78 @@
-# Phase 0 — Human UI/UX checklist
+# Phase 0 — Human UI/UX checklist (v2 rebuild)
 
-**FULL STOP.** Do not start Phase 1 until every item below is cleared.
+**FULL STOP.** Do not start Phase 1 until every item below is cleared **and** `./scripts/check-phase-clear.sh docs/phases/PHASE_0_HUMAN_CHECKLIST.md` exits 0.
+
+Chat phrases alone are not clearance.
 
 ## How to run
 
 ```bash
-# Terminal 1
+# Terminal 1 — API
 cd ~/Developer/storyworks
 source .venv/bin/activate
 uvicorn apps.api.app.main:app --reload --port 8787
 
-# Terminal 2
+# Terminal 2 — Web
 cd ~/Developer/storyworks/apps/web
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173**
+Open **http://127.0.0.1:3000**
 
-Optional: confirm Ollama is running (`ollama list`) so Muse can suggest.
+Optional: `ollama list` so Muse can suggest when AI is on.
 
 ---
 
 ## Checklist
 
-### Top bar / connectors
+### First launch / onboarding
 
-- [ ] Page loads in light mode (no dark theme)
+- [ ] Onboarding appears (or can be forced by clearing `storyworks.onboarded` in localStorage)
+- [ ] Can enter a vault folder path and continue
+- [ ] “Hate AI?” choice turns master AI off (header shows AI off; Muse/STT stay off)
+- [ ] Alternate path keeps AI available but helpers start off until toggled
+- [ ] Light mode only — no dark mode toggle anywhere
+
+### Header
+
 - [ ] Brand shows **Storyworks**
-- [ ] Ollama status pill shows ok when Ollama is up (or down if Ollama stopped — either is honest)
-- [ ] OpenClaw pill shows ok/n/a without crashing the app
-- [ ] Nav links: **Projects** and **Design** work
+- [ ] **AI** master toggle is visible and works both ways
+- [ ] **Muse** toggle is visible; disabled / ineffective when AI master is off
+- [ ] **STT** toggle shows real state: working on/off, or **STT not installed** (never silent failure / hang)
 
-### Projects (`/`)
+### Vault + projects
 
-- [ ] Create a project with a unique name → it appears under Available
-- [ ] Open the project → editor loads
-- [ ] Archive the project → it moves to Archived, disappears from Available
-- [ ] Restore → back under Available
-- [ ] Archive again → **Delete project** opens modal
-- [ ] Typing the wrong name leaves Delete disabled / rejected
-- [ ] Typing the **full exact name** deletes; project gone from lists
-- [ ] Confirm a backup folder appeared under `projects/backup/<slug>-…` (optional Finder check)
+- [ ] Open vault creates/uses folder with `.storyworks/` on disk
+- [ ] Create a project — it appears in the project selector
+- [ ] Archive / restore / typed-name delete still enforced by API (spot-check via UI or API is OK for Phase 0)
 
-### Editor (`/project/:id`)
+### Canvas writing (durable)
 
-- [ ] Large writing area is usable; type several sentences
-- [ ] Word count updates
-- [ ] Save status moves to saved after a short pause (autosave)
-- [ ] Refresh the page → text is still there
-- [ ] Muse toggle on: stop typing ~2.5s → ghost suggestion appears (needs Ollama)
-- [ ] **Tab** accepts suggestion into the manuscript
-- [ ] With a suggestion showing, press any other key → suggestion dismisses and typing continues
-- [ ] Muse toggle off → no new suggestions while idle
+- [ ] Select/create project → tldraw canvas loads
+- [ ] Type in a Note card; after a short pause, a `.md` file exists under `projects/<slug>/content/`
+- [ ] Refresh the page → board/notes still load from vault
+- [ ] Writing works with AI master **off** (no AI required)
 
-### Design stub (`/design`)
+### Muse (when AI on)
 
-- [ ] Route loads (placeholder sandbox is OK for Phase 0)
-- [ ] Writing path still reachable via Projects nav
+- [ ] Muse on + idle ~2.5s → ghost suggestion appears (needs Ollama + `huihui_ai/qwen3-abliterated:14b`)
+- [ ] **Tab** accepts suggestion
+- [ ] Any other key dismisses suggestion
+- [ ] With Ollama stopped or model missing, Muse fails gracefully (message / no hang)
 
-### Dual VCS sanity (optional but recommended)
+### Backup
 
-- [ ] After writing, `projects/<slug>/` has its own `.git` (not the app repo)
-- [ ] App repo `git status` does **not** show manuscript files as untracked product changes
+- [ ] Opening vault or calling backup creates a folder under `{vault}/.storyworks/backup/`
+
+### Clearance gate
+
+- [ ] Ran `./scripts/check-phase-clear.sh docs/phases/PHASE_0_HUMAN_CHECKLIST.md` yourself after filling this list
 
 ---
 
 ## Sign-off
 
-When all boxes are clear, reply in chat with something explicit like:
-
-> Phase 0 human checklist cleared — proceed to Phase 1
+When all boxes are clear, fill the table below, then run the gate script until it prints OK.
 
 | Field | Value |
 |-------|--------|
@@ -77,4 +80,4 @@ When all boxes are clear, reply in chat with something explicit like:
 | Date | |
 | Notes / fails | |
 
-**Agents: do not begin Phase 1 until that clear is received.**
+**Agents: do not begin Phase 1 and do not mark Phase 0 COMPLETE until the gate script exits 0.**
