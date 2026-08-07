@@ -1,0 +1,14 @@
+---
+description: Storyworks API and engine conventions
+globs: apps/api/**,engine/**
+alwaysApply: false
+---
+
+# API / engine
+
+- FastAPI + SQLite WAL under `data/` (gitignored).
+- Connectors: `engine/connectors/ollama.py`, `openclaw.py`.
+- Muse: `engine/muse.py` — Ollama-first.
+- Project Committer cwd is always `projects/<slug>`.
+- Delete only when archived + typed name match.
+- Never write story content into the app git index.

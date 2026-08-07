@@ -1,0 +1,13 @@
+---
+description: Storyworks web UI constraints
+globs: apps/web/**
+alwaysApply: false
+---
+
+# Web UI
+
+- Light mode only. Gold wire aesthetic direction (Phase 0 = wireframes).
+- Primary Phase 1 workbench: `/design` sandbox. Expand experiments there.
+- Preserve writing path (`/`, editor, Muse) while redesigning chrome.
+- No dark mode themes or toggles.
+- Muse UX: ghost suggestion, Tab accept, other key dismiss.

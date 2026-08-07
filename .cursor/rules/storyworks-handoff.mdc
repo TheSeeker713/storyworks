@@ -1,0 +1,14 @@
+---
+description: How to write HANDOFF.md between phases
+alwaysApply: false
+---
+
+# Handoff
+
+When finishing a phase:
+
+1. Update `docs/HANDOFF.md` — short checklist, read order, “you are Phase N only”.
+2. Keep or refresh `docs/CURSOR_HANDOFF_PROMPT.md` as the self-contained next-agent brief.
+3. Point to phase docs under `docs/phases/`.
+4. State what not to do (no re-scaffold, no skipping human gates).
+5. Confirm dual VCS and project safety rules still apply.

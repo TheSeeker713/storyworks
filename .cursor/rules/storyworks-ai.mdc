@@ -1,0 +1,13 @@
+---
+description: AI / Muse / model governor notes
+globs: engine/**
+alwaysApply: false
+---
+
+# AI
+
+- Ollama-first for Muse and local generate.
+- OpenClaw optional (probe only in Phase 0).
+- Prefer a single heavy local model; use fallback if missing.
+- Creative Constitution / style lint / Writers Room = Phase 2+ (do not invent half-baked governors in Phase 1).
+- See `@docs/04_AI_GOVERNOR.md` and `@docs/04b_WRITERS_ROOM.md`.
