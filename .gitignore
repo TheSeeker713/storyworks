@@ -22,3 +22,7 @@ apps/web/.vite/
 *.sqlite
 *.sqlite-*
 .openclaw-token
+
+# Bulky unconverted background dumps (converted webp + manifest are tracked)
+assets/backgrounds/raw/**
+!assets/backgrounds/raw/.gitkeep
