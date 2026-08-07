@@ -73,4 +73,8 @@ export const api = {
       body: JSON.stringify({ document }),
     }),
   ollama: () => req<{ ok: boolean; models?: string[]; error?: string }>("/api/connectors/ollama"),
+  stt: () =>
+    req<{ ok: boolean; installed?: boolean; state?: string; error?: string; model?: string }>(
+      "/api/connectors/stt",
+    ),
 };

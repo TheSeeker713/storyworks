@@ -8,6 +8,7 @@ const CanvasBoard = dynamic(() => import("@/components/CanvasBoard"), { ssr: fal
 
 const VAULT_KEY = "storyworks.vaultPath";
 const PROJECT_KEY = "storyworks.projectSlug";
+const STT_KEY = "storyworks.sttEnabled";
 
 export default function StudioApp() {
   const [vaultPath, setVaultPath] = useState("");
@@ -17,10 +18,21 @@ export default function StudioApp() {
   const [newName, setNewName] = useState("My Project");
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [sttState, setSttState] = useState<"working" | "not_installed" | "unknown">("unknown");
+  const [sttEnabled, setSttEnabled] = useState(false);
 
   const refreshProjects = useCallback(async () => {
     const data = await api.listProjects();
     setProjects(data.projects);
+  }, []);
+
+  const refreshStt = useCallback(async () => {
+    try {
+      const s = await api.stt();
+      setSttState(s.ok && s.installed ? "working" : "not_installed");
+    } catch {
+      setSttState("not_installed");
+    }
   }, []);
 
   const openVault = useCallback(
@@ -49,7 +61,9 @@ export default function StudioApp() {
       setInputPath(saved);
       void openVault(saved).catch((e: Error) => setError(e.message));
     }
-  }, [openVault]);
+    setSttEnabled(localStorage.getItem(STT_KEY) === "1");
+    void refreshStt();
+  }, [openVault, refreshStt]);
 
   async function createProject() {
     setError(null);
@@ -59,10 +73,45 @@ export default function StudioApp() {
     await refreshProjects();
   }
 
+  function toggleStt() {
+    if (sttState !== "working") return;
+    const next = !sttEnabled;
+    setSttEnabled(next);
+    localStorage.setItem(STT_KEY, next ? "1" : "0");
+  }
+
+  const sttLabel =
+    sttState === "working"
+      ? sttEnabled
+        ? "STT on"
+        : "STT off"
+      : sttState === "not_installed"
+        ? "STT not installed"
+        : "STT…";
+
   return (
     <div className="flex h-screen flex-col bg-stone-50 text-stone-900">
       <header className="flex flex-wrap items-center gap-3 border-b border-teal-900/15 bg-gradient-to-r from-teal-50 to-emerald-50 px-4 py-3">
         <h1 className="text-xl font-semibold tracking-tight text-teal-950">Storyworks</h1>
+        <button
+          type="button"
+          title={
+            sttState === "working"
+              ? "Toggle local speech-to-text"
+              : "Local STT is not available on this machine"
+          }
+          disabled={sttState !== "working"}
+          onClick={toggleStt}
+          className={`rounded-sm border px-3 py-1 text-sm ${
+            sttState !== "working"
+              ? "cursor-not-allowed border-stone-300 bg-stone-100 text-stone-400"
+              : sttEnabled
+                ? "border-teal-800 bg-teal-900 text-white"
+                : "border-stone-400 bg-white text-stone-800"
+          }`}
+        >
+          {sttLabel}
+        </button>
         <div className="flex flex-1 flex-wrap items-center gap-2 text-sm">
           <input
             className="min-w-[16rem] flex-1 rounded-sm border border-stone-300 bg-white px-2 py-1"

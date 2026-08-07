@@ -58,6 +58,27 @@ def connector_openclaw():
     return openclaw_health()
 
 
+@app.get("/api/connectors/stt")
+def connector_stt():
+    from engine.connectors.stt import stt_status
+
+    return stt_status()
+
+
+class TranscribeIn(BaseModel):
+    path: str = Field(min_length=1)
+
+
+@app.post("/api/stt/transcribe")
+def stt_transcribe(body: TranscribeIn):
+    from engine.connectors.stt import transcribe_file
+
+    result = transcribe_file(body.path)
+    if not result.get("ok"):
+        raise HTTPException(400, result.get("error") or "stt failed")
+    return result
+
+
 class OpenVaultIn(BaseModel):
     path: str = Field(min_length=1)
 

@@ -12,7 +12,7 @@ Prior Vite thin-slice / Phase 1B work is superseded. This phase builds the rebui
 | 0.2 | Scaffold new stack; remove old `apps/web` Vite tree and superseded product code | done (100%) |
 | 0.3 | Vault `.md` truth + SQLite cache; replace old storage; continuous backup | done (100%) |
 | 0.4 | tldraw Home + TipTap Note cards (durable writing) | done (100%) |
-| 0.5 | Repair local STT; prove one transcription path; basic header toggle | pending |
+| 0.5 | Repair local STT; prove one transcription path; basic header toggle | done (100%) |
 | 0.6 | Onboarding + AI master kill switch | pending |
 | 0.7 | Muse (Ollama) optional path | pending |
 | 0.8 | Phase 0 human checklist + FULL STOP | pending |
