@@ -1,29 +1,25 @@
 # Phase 0 — Scaffold, wire, early use
 
-**Status: CLOSING** — functional slice shipped; quality-gate closure steps in progress. Phase ends only after human UI/UX checklist clear (FULL STOP). Do **not** start Phase 1 until then.
+**Status: AWAITING HUMAN UI/UX CLEAR** — all closure steps done at 100%. **FULL STOP.** Do not start Phase 1 until Jeremy clears [`PHASE_0_HUMAN_CHECKLIST.md`](PHASE_0_HUMAN_CHECKLIST.md).
 
 ## Steps
 
 | Step | Name | Status |
 |------|------|--------|
-| 0.1 | Quality protocol, agent rules, reference cleanup, `docs/devlogs/` | done |
-| 0.2 | Automated Phase 0 regression tests (API + web build) | done |
-| 0.3 | Phase 0 docs truth + human UI/UX checklist; FULL STOP | in progress |
+| 0.1 | Quality protocol, agent rules, reference cleanup, `docs/devlogs/` | done (100%) |
+| 0.2 | Automated Phase 0 regression tests (API + web build) | done (100%) |
+| 0.3 | Phase 0 docs truth + human UI/UX checklist; FULL STOP | done (100%) — waiting on human |
 
-Each step: test → phase/step audit → retest to **100%** → commit + push `main` → Jeremy-voice devlog. See `docs/PHASE_STEP_PROTOCOL.md`.
-
-## Original thin-slice deliverables (runtime verified 2026-08-06)
+## Delivered
 
 - Monorepo + public GitHub `TheSeeker713/storyworks`
 - FastAPI + SQLite + Vite React wire UI
 - Muse via Ollama; OpenClaw health probe
 - Project lifecycle + local project git + committer
-- Docs, rules, handoff prompt
+- `docs/PHASE_STEP_PROTOCOL.md` + quality-gate rules
+- `pytest` suite (`tests/test_phase0_api.py`) — 6 passed
+- Human checklist: [`PHASE_0_HUMAN_CHECKLIST.md`](PHASE_0_HUMAN_CHECKLIST.md)
 
-## Gaps found in audit (why Phase 0 reopened for closure)
+## After human clear
 
-- No automated tests
-- No `PHASE_STEP_PROTOCOL` / quality-gate rule / step-end commit-push-devlog law in repo
-- Mycelia-only files under `docs/reference/` (must remove)
-- No `docs/devlogs/`
-- No Phase 0 human UI/UX checklist / FULL STOP gate recorded
+Mark this file **COMPLETE**, update `docs/HANDOFF.md` for Phase 1, then begin Phase 1 steps only.

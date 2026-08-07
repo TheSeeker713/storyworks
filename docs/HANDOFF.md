@@ -1,10 +1,10 @@
 # Handoff — current phase
 
-1. **Phase 0 is CLOSING**, not abandoned. Functional thin slice works; quality-gate closure steps must finish, then **human UI/UX checklist**.
-2. Read **`docs/PHASE_STEP_PROTOCOL.md`** and **`docs/phases/PHASE_0.md`**.
-3. **Do not start Phase 1** (`/design` expansion) until Jeremy clears **`docs/phases/PHASE_0_HUMAN_CHECKLIST.md`**.
-4. Also read: `AGENTS.md` → `INSTRUCTIONS.md` → `docs/10_FEATURE_MATRIX.md`.
-5. Never disrupt `projects/` without backup + temp archive protocol.
-6. Preserve Muse and the early writing path while closing Phase 0 docs/tests.
+1. **Phase 0 steps are complete at 100%.** Status: **FULL STOP — human UI/UX gate.**
+2. Open **`docs/phases/PHASE_0_HUMAN_CHECKLIST.md`** and clear every item.
+3. **Do not start Phase 1** until Jeremy explicitly clears that checklist.
+4. Protocol: `docs/PHASE_STEP_PROTOCOL.md`. Voice: `docs/reference/authentic-voice-notes.md`.
+5. Also read: `AGENTS.md` → `INSTRUCTIONS.md` → `docs/10_FEATURE_MATRIX.md`.
+6. Never disrupt `projects/` without backup + temp archive protocol.
 
-When Phase 0 human clear is done: update this file for Phase 1 only.
+When Phase 0 is cleared: update this file for Phase 1 (`/design` only).
