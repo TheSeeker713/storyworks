@@ -6,13 +6,27 @@ Local-first pre-production writing studio. **Read this first**, then follow the 
 
 | Phase | Owner | Scope |
 |-------|--------|--------|
-| **0** | Done (scaffold) | Thin usable slice: projects, editor, Muse, archive, connectors, docs |
-| **1** | Next agent | Human-gated visual/UX in `apps/web` **`/design` sandbox only** |
-| **2+** | Later | Production feature matrix (Writers Room, modules, git sync, procedural…) |
+| **0** | Closing | Thin usable slice + quality-gate closure; **FULL STOP** for human UI/UX checklist before Phase 1 |
+| **1** | After Phase 0 clear | Human-gated visual/UX in `apps/web` **`/design` sandbox only** |
+| **2+** | After Phase 1 clear | Production feature matrix (Writers Room, modules, git sync, procedural…) |
 
-**Do not** re-scaffold Phase 0. **Do not** implement Phase 2 production until the human signs off Phase 1 design.
+**Do not** re-scaffold Phase 0. **Do not** start Phase 1 until Jeremy clears `docs/phases/PHASE_0_HUMAN_CHECKLIST.md`. **Do not** implement Phase 2 until Phase 1 design sign-off.
 
-Cold start for Phase 1: open **`docs/CURSOR_HANDOFF_PROMPT.md`** first, then `docs/HANDOFF.md`.
+Cold start: `AGENTS.md` → [`docs/HANDOFF.md`](docs/HANDOFF.md) → [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md) → current `docs/phases/PHASE_*.md` → [`docs/10_FEATURE_MATRIX.md`](docs/10_FEATURE_MATRIX.md).
+
+## Step quality gate (locked)
+
+Every phase has **multiple steps**. End of each step, in order:
+
+1. Test (read full output)
+2. Phase/step audit against that step’s acceptance criteria
+3. Retest to **100%** (≤99% = fail → redo)
+4. Commit + push `main` (app repo only)
+5. Devlog in `docs/devlogs/` using [`docs/reference/authentic-voice-notes.md`](docs/reference/authentic-voice-notes.md)
+
+End of phase: **FULL STOP** — publish human UI/UX checklist; wait for Jeremy clear before next phase.
+
+Details: [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md).
 
 ## How to run
 
@@ -28,6 +42,14 @@ cd apps/web && npm install && npm run dev
 
 Open http://127.0.0.1:5173 — API proxied to `:8787`.
 
+Tests:
+
+```bash
+source .venv/bin/activate
+pytest
+cd apps/web && npm run build
+```
+
 ## Dual VCS (never mix)
 
 1. **App repo** (`~/Developer/storyworks`) → public GitHub `main`. Product code only.
@@ -40,7 +62,7 @@ Open http://127.0.0.1:5173 — API proxied to `:8787`.
 - Light mode only (no dark mode)
 - Archive before delete; typed full project name to delete
 - Muse: idle suggest → **Tab** accept → **any other key** dismiss
-- Build interference with user projects → `projects/backup/` + temp archive → restore when safe
+- Build interference → `projects/backup/` + temp archive → restore when safe
 - See `docs/05_GIT_SYNC.md`, `INSTRUCTIONS.md`
 
 ## Docs map
@@ -49,10 +71,13 @@ Open http://127.0.0.1:5173 — API proxied to `:8787`.
 |------|---------|
 | `README.md` | Human overview + quick start |
 | `INSTRUCTIONS.md` | Operator manual |
+| `docs/PHASE_STEP_PROTOCOL.md` | Step/phase quality gate law |
+| `docs/devlogs/` | Jeremy-voice step logs |
+| `docs/reference/authentic-voice-notes.md` | Devlog voice guide |
 | `docs/` | Specs, matrix, phases, research |
-| `docs/HANDOFF.md` | Short next-agent checklist |
-| `docs/CURSOR_HANDOFF_PROMPT.md` | Full Phase 1 briefing prompt |
-| `.cursor/rules/*.mdc` | Behavioral rules (short; link here) |
+| `docs/HANDOFF.md` | Short current-phase checklist |
+| `docs/CURSOR_HANDOFF_PROMPT.md` | Cold-start briefing |
+| `.cursor/rules/*.mdc` | Behavioral rules |
 
 Area rules: `apps/web/AGENTS.md`, `apps/api/AGENTS.md`.
 

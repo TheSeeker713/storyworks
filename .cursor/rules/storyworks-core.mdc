@@ -6,11 +6,12 @@ alwaysApply: true
 # Storyworks core
 
 - Canonical entry: `@AGENTS.md`. Specs live in `docs/` — do not duplicate long essays here.
-- Phase 0 is complete. Do not re-scaffold.
-- Phase 1 = human-gated design in `apps/web` `/design` only until human sign-off.
-- Phase 2+ production only after design approval.
+- Do not re-scaffold Phase 0. Follow `@docs/phases/PHASE_0.md` until human clears Phase 0 checklist.
+- Phase 1 = human-gated design in `apps/web` `/design` only after Phase 0 human clear.
+- Phase 2+ production only after Phase 1 design approval.
 - Light mode only. No dark mode.
 - Archive before delete; typed full name required to delete.
 - Muse: Tab accept, other key dismiss; never auto-insert.
 - Dual VCS: never commit `projects/` or `data/` into the public app repo.
 - Interfering builds → backup + temp archive → restore. See `@docs/05_GIT_SYNC.md`.
+- Step quality gate + phase FULL STOP: `@docs/PHASE_STEP_PROTOCOL.md` and `@.cursor/rules/storyworks-quality-gate.mdc`.

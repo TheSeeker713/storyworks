@@ -62,6 +62,17 @@ If a build/migration might interfere with user projects:
 
 Cloud private remotes per story project: specified in `docs/05_GIT_SYNC.md` (implement later).
 
+## Tests (developers / agents)
+
+```bash
+cd ~/Developer/storyworks
+source .venv/bin/activate
+pytest
+cd apps/web && npm run build
+```
+
+Agents must follow [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md): every step ends with tests → audit → 100% → commit/push → `docs/devlogs/` entry. End of each phase is a **FULL STOP** for your manual UI/UX checklist before the next phase starts.
+
 ## Env overrides
 
 | Variable | Default |
@@ -69,3 +80,5 @@ Cloud private remotes per story project: specified in `docs/05_GIT_SYNC.md` (imp
 | `STORYWORKS_OLLAMA_URL` | `http://127.0.0.1:11434` |
 | `STORYWORKS_OLLAMA_MODEL` | `huihui_ai/qwen3-abliterated:14b` |
 | `STORYWORKS_OLLAMA_FALLBACK` | `qwen3:8b` |
+| `STORYWORKS_DATA_DIR` | `data/` (override for tests) |
+| `STORYWORKS_PROJECTS_DIR` | `projects/` (override for tests) |

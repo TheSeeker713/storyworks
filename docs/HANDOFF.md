@@ -1,11 +1,10 @@
-# Handoff — next agent
+# Handoff — current phase
 
-1. **Phase 0 is complete.** Do **not** re-scaffold.
-2. Open **`docs/CURSOR_HANDOFF_PROMPT.md` first** (full briefing).
-3. Your job is **Phase 1 only**: human-gated visual/UX design in `apps/web` **`/design` sandbox**.
-4. Also read: `AGENTS.md` → `INSTRUCTIONS.md` → `docs/phases/PHASE_1.md` → `docs/06_UI_UX.md`
-5. Do **not** implement Phase 2 production until the human signs off design.
-6. Never disrupt `projects/` without backup + temp archive protocol.
-7. Preserve Muse and the early writing path (`/`, editor) while redesigning chrome in the sandbox.
+1. **Phase 0 is CLOSING**, not abandoned. Functional thin slice works; quality-gate closure steps must finish, then **human UI/UX checklist**.
+2. Read **`docs/PHASE_STEP_PROTOCOL.md`** and **`docs/phases/PHASE_0.md`**.
+3. **Do not start Phase 1** (`/design` expansion) until Jeremy clears **`docs/phases/PHASE_0_HUMAN_CHECKLIST.md`**.
+4. Also read: `AGENTS.md` → `INSTRUCTIONS.md` → `docs/10_FEATURE_MATRIX.md`.
+5. Never disrupt `projects/` without backup + temp archive protocol.
+6. Preserve Muse and the early writing path while closing Phase 0 docs/tests.
 
-When Phase 1 completes, update this file and `CURSOR_HANDOFF_PROMPT.md` for the Phase 2 agent.
+When Phase 0 human clear is done: update this file for Phase 1 only.

@@ -1,0 +1,13 @@
+---
+description: Current phase ownership — close Phase 0 before Phase 1
+alwaysApply: true
+---
+
+# Current phase
+
+- Do not re-scaffold the monorepo.
+- **Phase 0** must reach human checklist clear before any Phase 1 `/design` production work.
+- After Phase 0 human clear: Phase 1 = human-gated design in `apps/web` `/design` only.
+- Phase 2+ production only after Phase 1 human design sign-off.
+- Ollama-first for Muse; OpenClaw is probe/optional later — not Grok by default.
+- Update `@docs/HANDOFF.md` when leaving a phase.
