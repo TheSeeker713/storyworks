@@ -60,19 +60,29 @@ export default function ModuleStage({ active, animating }: Props) {
     <div
       className={`module-stage module-${active}${animating ? " is-animating" : ""}`}
       data-module={active}
+      title={`${meta.label} module — solid writing panel over daily background`}
     >
-      <div className="module-stage-label">
-        <span className="wire-label">Writing module</span>
+      <div className="module-stage-label" title="Module identity and purpose">
+        <span className="aide-label wire-label">Writing module · maxed surface</span>
         <h2>{meta.label}</h2>
         <p className="muted">{meta.blurb}</p>
       </div>
-      <div className="module-panel" role="region" aria-label={`${meta.label} writing surface`}>
+      <div
+        className="module-panel"
+        role="region"
+        aria-label={`${meta.label} writing surface`}
+        title={`${meta.label}: solid flat panel (not translucent)`}
+      >
+        <span className="aide-label wire-label">Solid panel · sample ink</span>
         <pre className="module-body">
           {sample.body}
           {sample.ghost ? <span className="ghost-text">{sample.ghost}</span> : null}
         </pre>
         {active === "novel" && (
-          <p className="module-muse-hint muted">
+          <p
+            className="module-muse-hint muted"
+            title="Muse behavior lock: Tab accepts ghost text; any other key dismisses"
+          >
             Muse mock · Tab accept · any other key dismiss
           </p>
         )}

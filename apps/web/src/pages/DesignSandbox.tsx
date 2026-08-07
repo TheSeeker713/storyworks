@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import DailyBackground from "../design/DailyBackground";
+import DrawerR3F from "../design/DrawerR3F";
 import ModuleStage, { MODULES, type WritingModule } from "../design/ModuleStage";
 import {
   loadManifest,
@@ -23,6 +24,8 @@ export default function DesignSandbox() {
   const [module, setModule] = useState<WritingModule>("novel");
   const [transitioning, setTransitioning] = useState(false);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [hintPulse, setHintPulse] = useState(false);
   const transitionTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -45,11 +48,21 @@ export default function DesignSandbox() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawerOpen]);
+
   const today = playlist ? todaysItem(items, playlist) : null;
 
   function selectModule(next: WritingModule) {
     if (next === module) return;
-    const dir = MODULES.findIndex((m) => m.id === next) - MODULES.findIndex((m) => m.id === module);
+    const dir =
+      MODULES.findIndex((m) => m.id === next) - MODULES.findIndex((m) => m.id === module);
     setParallax({ x: dir * 18, y: Math.abs(dir) * 6 });
     setTransitioning(true);
     setModule(next);
@@ -66,6 +79,8 @@ export default function DesignSandbox() {
   function onOpacity(value: number) {
     setOpacity(value);
     writeOpacity(value);
+    setHintPulse(true);
+    window.setTimeout(() => setHintPulse(false), 280);
   }
 
   return (
@@ -79,31 +94,39 @@ export default function DesignSandbox() {
       />
 
       <header className="design-chrome">
-        <div className="design-chrome-brand">
-          <Link to="/" className="design-brand" title="Back to Projects">
+        <div className="design-chrome-brand" title="Storyworks design sandbox — returns to Projects">
+          <span className="aide-label wire-label">Brand · home</span>
+          <Link to="/" className="design-brand" title="Back to Projects (production writing path)">
             Storyworks
           </Link>
           <span className="wire-label design-chrome-tag">Phase 1B · /design</span>
         </div>
 
-        <nav className="module-switcher" aria-label="Writing modules">
-          {MODULES.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              className={module === m.id ? "active" : ""}
-              title={`${m.label}: ${m.blurb}`}
-              aria-pressed={module === m.id}
-              onClick={() => selectModule(m.id)}
-            >
-              {m.label}
-            </button>
-          ))}
-        </nav>
+        <div className="module-switcher-wrap">
+          <span className="aide-label wire-label">Modules · switch writing surface</span>
+          <nav className="module-switcher" aria-label="Writing modules">
+            {MODULES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={module === m.id ? "active" : ""}
+                title={`${m.label}: ${m.blurb}`}
+                aria-pressed={module === m.id}
+                onClick={() => selectModule(m.id)}
+              >
+                <span className="btn-aide">{m.id}</span>
+                {m.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-        <div className="design-settings" title="Background opacity and today’s playlist asset">
-          <label className="design-opacity">
-            <span className="wire-label">BG opacity</span>
+        <div className="design-settings">
+          <label
+            className={`design-opacity${hintPulse ? " pulse" : ""}`}
+            title="Background opacity — dims the daily webp without changing the solid modules"
+          >
+            <span className="aide-label wire-label">BG opacity · dim backdrop</span>
             <input
               type="range"
               min={0.15}
@@ -116,21 +139,36 @@ export default function DesignSandbox() {
             />
             <span className="design-opacity-value">{Math.round(opacity * 100)}%</span>
           </label>
-          <div className="design-asset-id" title="Today’s background asset id from the daily playlist">
-            <span className="wire-label">Today’s asset</span>
+          <div
+            className="design-asset-id"
+            title="Today’s background asset id from the daily playlist (debug)"
+          >
+            <span className="aide-label wire-label">Today’s asset · playlist debug</span>
             <code>{today?.id ?? "fallback"}</code>
           </div>
+          <button
+            type="button"
+            className="btn primary design-drawer-open"
+            title="Open R3F side drawer prototype (WebGL card — not the daily BG)"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <span className="btn-aide">drawer</span>
+            Open drawer
+          </button>
         </div>
       </header>
 
-      <main className="design-main">
+      <main className="design-main" title="Active writing module stage">
         <ModuleStage active={module} animating={transitioning} />
       </main>
 
-      <footer className="design-footer muted">
-        Full-bleed sandbox · webp playlist behind solid modules · R3F drawers come next · production
-        routes untouched
+      <footer className="design-footer muted" title="Sandbox status strip">
+        <span className="aide-label">Status</span>
+        Full-bleed sandbox · webp playlist · solid modules · R3F drawer prototype · production routes
+        untouched
       </footer>
+
+      <DrawerR3F open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
   );
 }
