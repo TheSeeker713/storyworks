@@ -16,6 +16,7 @@ import { api } from "@/lib/api";
 type Props = {
   projectSlug: string;
   boardId: string;
+  onDraftText?: (text: string) => void;
 };
 
 function plaintextFromShape(editor: Editor, shapeId: string): string {
@@ -30,7 +31,7 @@ function plaintextFromShape(editor: Editor, shapeId: string): string {
   }
 }
 
-export default function CanvasBoard({ projectSlug, boardId }: Props) {
+export default function CanvasBoard({ projectSlug, boardId, onDraftText }: Props) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hashesRef = useRef<Record<string, string>>({});
 
@@ -39,11 +40,13 @@ export default function CanvasBoard({ projectSlug, boardId }: Props) {
       const snapshot = editor.getSnapshot();
       await api.putBoard(boardId, snapshot as unknown as Record<string, unknown>);
 
+      const bodies: string[] = [];
       for (const shape of editor.getCurrentPageShapes()) {
         if (shape.type !== "note" && shape.type !== "text") continue;
         const meta = (shape.meta || {}) as { contentId?: string; title?: string };
         let contentId = meta.contentId;
         const body = plaintextFromShape(editor, shape.id);
+        bodies.push(body);
         const title = meta.title || body.split("\n")[0]?.slice(0, 80) || "Untitled note";
         if (!contentId) {
           const created = await api.writeContent(projectSlug, {
@@ -75,8 +78,9 @@ export default function CanvasBoard({ projectSlug, boardId }: Props) {
           hashesRef.current[contentId] = result.content_hash;
         }
       }
+      onDraftText?.(bodies.join("\n\n"));
     },
-    [boardId, projectSlug],
+    [boardId, onDraftText, projectSlug],
   );
 
   const schedulePersist = useCallback(

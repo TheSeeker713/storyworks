@@ -77,4 +77,13 @@ export const api = {
     req<{ ok: boolean; installed?: boolean; state?: string; error?: string; model?: string }>(
       "/api/connectors/stt",
     ),
+  museSuggest: (body: { text: string; title: string; projectName: string }) =>
+    req<{ ok: boolean; suggestion?: string; error?: string; disabled?: boolean }>("/api/muse/suggest", {
+      method: "POST",
+      body: JSON.stringify({
+        text: body.text,
+        title: body.title,
+        project_name: body.projectName,
+      }),
+    }),
 };

@@ -79,6 +79,30 @@ def stt_transcribe(body: TranscribeIn):
     return result
 
 
+class MuseIn(BaseModel):
+    text: str = ""
+    title: str = ""
+    project_name: str = ""
+
+
+@app.post("/api/muse/suggest")
+def muse_suggest(body: MuseIn):
+    try:
+        store = state.get_vault()
+        settings = store.settings()
+    except RuntimeError:
+        settings = {"ai_master_enabled": True, "muse_enabled": True}
+
+    if not settings.get("ai_master_enabled", True):
+        return {"ok": False, "error": "AI master switch is off", "disabled": True}
+    if not settings.get("muse_enabled", True):
+        return {"ok": False, "error": "Muse is off", "disabled": True}
+
+    from engine.muse import muse_suggest as _muse
+
+    return _muse(body.text, title=body.title, project_name=body.project_name)
+
+
 class OpenVaultIn(BaseModel):
     path: str = Field(min_length=1)
 
