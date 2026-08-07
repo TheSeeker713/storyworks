@@ -6,11 +6,11 @@ Local-first pre-production writing studio. **Read this first**, then follow the 
 
 | Phase | Owner | Scope |
 |-------|--------|--------|
-| **0** | Closing | Thin usable slice + quality-gate closure; **FULL STOP** for human UI/UX checklist before Phase 1 |
-| **1** | After Phase 0 clear | Human-gated visual/UX in `apps/web` **`/design` sandbox only** |
+| **0** | Complete | Thin usable slice + quality-gate closure |
+| **1** | Awaiting human clear | Visual/UX sandbox at `/design` shipped; **FULL STOP** on `PHASE_1_HUMAN_CHECKLIST.md` |
 | **2+** | After Phase 1 clear | Production feature matrix (Writers Room, modules, git sync, procedural…) |
 
-**Do not** re-scaffold Phase 0. **Do not** start Phase 1 until Jeremy clears `docs/phases/PHASE_0_HUMAN_CHECKLIST.md`. **Do not** implement Phase 2 until Phase 1 design sign-off.
+**Do not** re-scaffold Phase 0. **Do not** implement Phase 2 until Jeremy clears `docs/phases/PHASE_1_HUMAN_CHECKLIST.md`.
 
 Cold start: `AGENTS.md` → [`docs/HANDOFF.md`](docs/HANDOFF.md) → [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md) → current `docs/phases/PHASE_*.md` → [`docs/10_FEATURE_MATRIX.md`](docs/10_FEATURE_MATRIX.md).
 

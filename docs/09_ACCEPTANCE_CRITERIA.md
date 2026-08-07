@@ -19,7 +19,7 @@
 
 ### Human gate (required to leave Phase 0)
 
-- [ ] Jeremy clears `docs/phases/PHASE_0_HUMAN_CHECKLIST.md`
+- [x] Jeremy clears `docs/phases/PHASE_0_HUMAN_CHECKLIST.md` (2026-08-06)
 
 ## Phase 1
 

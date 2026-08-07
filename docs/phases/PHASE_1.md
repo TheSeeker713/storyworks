@@ -1,24 +1,18 @@
 # Phase 1 — Human-gated visual / UX design
 
-**Primary surface:** `apps/web` route **`/design`** (live sandbox).
+**Status: AWAITING HUMAN UI/UX CLEAR** — sandbox steps done at 100%. **FULL STOP.** Do not start Phase 2 until Jeremy clears [`PHASE_1_HUMAN_CHECKLIST.md`](PHASE_1_HUMAN_CHECKLIST.md).
 
-## Goals
+**Primary surface:** `/design`. Writing path preserved.
 
-- Iterate layouts, gold chrome, Muse chrome, project browser with the human
-- Optional notes/screenshots under `docs/design/`
-- Preserve Phase 0 writing path
+## Steps
 
-## Stop conditions
+| Step | Name | Status |
+|------|------|--------|
+| 1.1 | Design tokens + sandbox shell (tabs, fonts, motion) | done |
+| 1.2 | Project browser chrome variants (wire / cards / rail) | done |
+| 1.3 | Editor + Muse chrome variants | done |
+| 1.4 | Archive/delete mock + IA notes + human checklist | done — waiting on human |
 
-- Human reviews sandbox
-- Human explicitly signs off design exit criteria
-- Then update HANDOFF for Phase 2 agent
+## Out of scope (unchanged)
 
-## Out of scope
-
-- Production dashboard modules
-- Writers Room / git cloud push / procedural engines
-- Dark mode
-- Re-scaffolding Phase 0
-
-Briefing: `docs/CURSOR_HANDOFF_PROMPT.md`.
+Production module rewrite, Writers Room runtime, private git push, procedural, dark mode.
