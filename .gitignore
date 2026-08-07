@@ -27,6 +27,7 @@ apps/web/.vite/
 # User vaults are never in the app repo
 .vaults/
 tmp/
+tmp/**
 
 # Bulky unconverted background dumps (converted webp + manifest are tracked)
 assets/backgrounds/raw/**
