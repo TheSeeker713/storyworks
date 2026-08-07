@@ -33,7 +33,7 @@ End of phase: **FULL STOP** — publish human UI/UX checklist; run `./scripts/ch
 
 Details: [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md).
 
-## How to run (current tree until Step 0.2 replaces it)
+## How to run
 
 ```bash
 # API (repo root)
@@ -45,16 +45,18 @@ uvicorn apps.api.app.main:app --reload --port 8787
 cd apps/web && npm install && npm run dev
 ```
 
-Open http://127.0.0.1:5173 — API proxied to `:8787`.
+Open http://127.0.0.1:3000 — `/api/*` rewritten to FastAPI `:8787` in dev.
 
-After Step 0.2, run commands follow the Next.js + FastAPI scaffold (documented in that step).
+Static export: `cd apps/web && npm run build` → `apps/web/out/`.
+
+Packaging later: Tauri + Python sidecar — see `docs/PACKAGING.md`. Not built in Phase 0.
 
 Tests:
 
 ```bash
 source .venv/bin/activate
 pytest
-# web build command follows the active frontend stack for the current step
+cd apps/web && npm run build
 ```
 
 Clearance gate:

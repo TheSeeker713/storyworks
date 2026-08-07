@@ -14,6 +14,8 @@ __pycache__/
 .pytest_cache/
 node_modules/
 apps/web/dist/
+apps/web/.next/
+apps/web/out/
 apps/web/.vite/
 *.tsbuildinfo
 .DS_Store
@@ -22,6 +24,9 @@ apps/web/.vite/
 *.sqlite
 *.sqlite-*
 .openclaw-token
+# User vaults are never in the app repo
+.vaults/
+tmp/
 
 # Bulky unconverted background dumps (converted webp + manifest are tracked)
 assets/backgrounds/raw/**

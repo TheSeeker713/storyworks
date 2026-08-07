@@ -8,8 +8,8 @@ Prior Vite thin-slice / Phase 1B work is superseded. This phase builds the rebui
 
 | Step | Name | Status |
 |------|------|--------|
-| 0.1 | Prove clearance gate + rewrite governance (per-day devlogs, macOS/MyKAIA) | done (100%) — awaiting Jeremy review of gate failure output before 0.2 |
-| 0.2 | Scaffold new stack; remove old `apps/web` Vite tree and superseded product code | pending |
+| 0.1 | Prove clearance gate + rewrite governance (per-day devlogs, macOS/MyKAIA) | done (100%) |
+| 0.2 | Scaffold new stack; remove old `apps/web` Vite tree and superseded product code | done (100%) |
 | 0.3 | Vault `.md` truth + SQLite cache; replace old storage; continuous backup | pending |
 | 0.4 | tldraw Home + TipTap Note cards (durable writing) | pending |
 | 0.5 | Repair local STT; prove one transcription path; basic header toggle | pending |
