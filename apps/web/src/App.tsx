@@ -9,12 +9,22 @@ export default function App() {
   const [ollamaOk, setOllamaOk] = useState<boolean | null>(null);
   const [openclawOk, setOpenclawOk] = useState<boolean | null>(null);
   const location = useLocation();
-  const wide = location.pathname.startsWith("/design");
+  const isDesign = location.pathname.startsWith("/design");
 
   useEffect(() => {
     api.ollama().then((r) => setOllamaOk(!!r.ok)).catch(() => setOllamaOk(false));
     api.openclaw().then((r) => setOpenclawOk(!!r.ok)).catch(() => setOpenclawOk(false));
   }, []);
+
+  if (isDesign) {
+    return (
+      <div className="shell shell-design">
+        <Routes>
+          <Route path="/design" element={<DesignSandbox />} />
+        </Routes>
+      </div>
+    );
+  }
 
   return (
     <div className="shell">
@@ -35,11 +45,10 @@ export default function App() {
           <NavLink to="/design">Design</NavLink>
         </nav>
       </header>
-      <main className={`main${wide ? " main-wide" : ""}`}>
+      <main className="main">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/project/:id" element={<EditorPage />} />
-          <Route path="/design" element={<DesignSandbox />} />
         </Routes>
       </main>
     </div>
