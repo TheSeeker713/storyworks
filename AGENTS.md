@@ -7,7 +7,7 @@ Local-first pre-production writing studio. **Read this first**, then follow the 
 | Phase | Owner | Scope |
 |-------|--------|--------|
 | **0** | Complete | Thin usable slice + quality-gate closure |
-| **1** | Awaiting human clear | Visual/UX sandbox at `/design` shipped; **FULL STOP** on `PHASE_1_HUMAN_CHECKLIST.md` |
+| **1** | Awaiting human clear | Phase 1B full-bleed `/design` shell shipped; **FULL STOP** on `PHASE_1_HUMAN_CHECKLIST.md` |
 | **2+** | After Phase 1 clear | Production feature matrix (Writers Room, modules, git sync, procedural…) |
 
 **Do not** re-scaffold Phase 0. **Do not** implement Phase 2 until Jeremy clears `docs/phases/PHASE_1_HUMAN_CHECKLIST.md`.

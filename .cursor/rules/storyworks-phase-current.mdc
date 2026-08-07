@@ -6,8 +6,8 @@ alwaysApply: true
 # Current phase
 
 - Do not re-scaffold the monorepo.
-- **Phase 0 COMPLETE** (human cleared). Current work = **Phase 1** `/design` sandbox only.
-- Preserve writing path at `/` and `/project/:id`.
-- Phase 2+ production only after Phase 1 human design sign-off (`PHASE_1_HUMAN_CHECKLIST.md`).
+- **Phase 0 COMPLETE** (human cleared). **Phase 1B redesign COMPLETE** — **FULL STOP** on `PHASE_1_HUMAN_CHECKLIST.md`.
+- Preserve writing path at `/` and `/project/:id` (Phase 0 wire).
+- Phase 2+ production only after Phase 1 human design sign-off.
 - Ollama-first for Muse; OpenClaw is probe/optional later — not Grok by default.
 - Update `@docs/HANDOFF.md` when leaving a phase.
