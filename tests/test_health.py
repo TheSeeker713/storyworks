@@ -16,3 +16,4 @@ def test_health_ok():
     assert body["ok"] is True
     assert body["service"] == "storyworks-api"
     assert body["stack"] == "v2"
+    assert "vault_open" in body
