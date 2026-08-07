@@ -36,13 +36,13 @@ docs/        Specs and handoffs
 
 See `docs/05_GIT_SYNC.md`.
 
-## Phases
+## Phases (v2 rebuild)
 
-- **Phase 0** (shipped): thin writing slice + agent docs
-- **Phase 1**: visual/UX design in `/design`
-- **Phase 2+**: full feature matrix (`docs/10_FEATURE_MATRIX.md`)
+- **Phase 0** (in progress): enforcement gate, new stack, vault truth, durable canvas writing, STT prove, FULL STOP
+- **Phase 1**: studio chrome / nesting (after Phase 0 human clear via gate script)
+- **Phase 2+**: OpenClaw roles, STT polish, Codex, pipelines (`docs/10_FEATURE_MATRIX.md` evolving)
 
-Agents: start at `AGENTS.md`. Operators: `INSTRUCTIONS.md`.
+Agents: start at `AGENTS.md`. Operators: `INSTRUCTIONS.md`. Clearance: `./scripts/check-phase-clear.sh`.
 
 ## License
 

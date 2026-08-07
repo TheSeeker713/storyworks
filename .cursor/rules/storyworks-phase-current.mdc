@@ -1,13 +1,13 @@
 ---
-description: Current phase ownership — close Phase 0 before Phase 1
+description: Current phase ownership — rebuild Phase 0 in progress
 alwaysApply: true
 ---
 
 # Current phase
 
-- Do not re-scaffold the monorepo.
-- **Phase 0 COMPLETE** (human cleared). **Phase 1B redesign COMPLETE** — **FULL STOP** on `PHASE_1_HUMAN_CHECKLIST.md`.
-- Preserve writing path at `/` and `/project/:id` (Phase 0 wire).
-- Phase 2+ production only after Phase 1 human design sign-off.
-- Ollama-first for Muse; OpenClaw is probe/optional later — not Grok by default.
-- Update `@docs/HANDOFF.md` when leaving a phase.
+- **Storyworks v2 rebuild.** Prior Vite/Phase 0–1B line is historical only.
+- **Phase 0 is NOT complete.** Do not write COMPLETE / human cleared for Phase 0 without `./scripts/check-phase-clear.sh` exiting 0 on `docs/phases/PHASE_0_HUMAN_CHECKLIST.md`.
+- Current work follows `docs/phases/PHASE_0.md` steps **0.1 → 0.8** in order. After 0.1 proof-of-failure, wait for Jeremy review before 0.2.
+- Phase 1+ only after Phase 0 human checklist passes the gate script.
+- Ollama-first for Muse; defaults: write `huihui_ai/qwen3-abliterated:14b`, agentic `qwen2.5-coder:7b`. OpenClaw roles off by default.
+- Update `@docs/HANDOFF.md` when leaving a phase (only after gate script passes).

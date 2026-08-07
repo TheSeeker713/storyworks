@@ -1,11 +1,11 @@
 # Handoff — current phase
 
-1. **Phase 0 COMPLETE.** Do not re-scaffold.
-2. **Phase 1B redesign COMPLETE at 100%.** Status: **FULL STOP — human UI/UX gate.**
-3. Clear **`docs/phases/PHASE_1_HUMAN_CHECKLIST.md`** before any Phase 2 production chrome port.
-4. Live workbench: http://127.0.0.1:5173/design — full-bleed shell, daily webp playlist, solid modules, R3F drawer prototype.
-5. Writing path at `/` and `/project/:id` preserved (Phase 0 wire).
-6. Protocol: `docs/PHASE_STEP_PROTOCOL.md`. Voice: `docs/reference/authentic-voice-notes.md`.
-7. Dual VCS: never stage `projects/` or `data/` into the app repo.
+1. **Storyworks v2 rebuild.** Prior Vite/Phase 0–1B line is historical only.
+2. **Phase 0 is NOT complete.** Current step track: **0.1 → 0.8** in `docs/phases/PHASE_0.md`.
+3. **Clearance is mechanical:** `./scripts/check-phase-clear.sh docs/phases/PHASE_0_HUMAN_CHECKLIST.md` must exit 0 before any COMPLETE status or Phase 1 work. Chat phrases alone do not clear.
+4. Protocol: `docs/PHASE_STEP_PROTOCOL.md`. Devlogs: one `docs/devlogs/YYYY-MM-DD.md` per day. Voice: `docs/reference/authentic-voice-notes.md`.
+5. Platform: **macOS only.** Long-term: MyKAIA Big App micro-app absorption.
+6. Dual VCS: never stage vault contents, `projects/`, or `data/` into the app repo.
+7. After Step 0.1: Jeremy reviews the gate script’s raw proof-of-failure output before Step 0.2.
 
-When Phase 1 is cleared: update this file for Phase 2.
+When Phase 0 is cleared (gate script + filled checklist): update this file for Phase 1.

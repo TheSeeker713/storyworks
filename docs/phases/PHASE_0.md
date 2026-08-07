@@ -1,13 +1,24 @@
-# Phase 0 — Scaffold, wire, early use
+# Phase 0 — v2 rebuild foundation
 
-**Status: COMPLETE** — human cleared UI/UX checklist (2026-08-06). Do not re-scaffold.
+**Status: IN PROGRESS** — not complete. Do **not** mark COMPLETE until `./scripts/check-phase-clear.sh docs/phases/PHASE_0_HUMAN_CHECKLIST.md` exits 0 with a filled sign-off.
 
-## Steps (closure)
+Prior Vite thin-slice / Phase 1B work is superseded. This phase builds the rebuild foundation.
+
+## Steps
 
 | Step | Name | Status |
 |------|------|--------|
-| 0.1 | Quality protocol, agent rules, reference cleanup | done |
-| 0.2 | Automated Phase 0 regression tests | done |
-| 0.3 | Human UI/UX checklist + FULL STOP | done — cleared |
+| 0.1 | Prove clearance gate + rewrite governance (per-day devlogs, macOS/MyKAIA) | done (100%) — awaiting Jeremy review of gate failure output before 0.2 |
+| 0.2 | Scaffold new stack; remove old `apps/web` Vite tree and superseded product code | pending |
+| 0.3 | Vault `.md` truth + SQLite cache; replace old storage; continuous backup | pending |
+| 0.4 | tldraw Home + TipTap Note cards (durable writing) | pending |
+| 0.5 | Repair local STT; prove one transcription path; basic header toggle | pending |
+| 0.6 | Onboarding + AI master kill switch | pending |
+| 0.7 | Muse (Ollama) optional path | pending |
+| 0.8 | Phase 0 human checklist + FULL STOP | pending |
 
-Thin slice: projects, editor, Muse, archive/typed delete, Ollama/OpenClaw probe, dual VCS, docs/rules.
+Each step: test → audit → 100% → commit + push `main` → append today’s `docs/devlogs/YYYY-MM-DD.md`. See `docs/PHASE_STEP_PROTOCOL.md`.
+
+## After human clear
+
+Only when the gate script passes: mark this file **COMPLETE**, update `docs/HANDOFF.md` for Phase 1, then begin Phase 1 step 1.

@@ -6,12 +6,13 @@ alwaysApply: true
 # Storyworks core
 
 - Canonical entry: `@AGENTS.md`. Specs live in `docs/` — do not duplicate long essays here.
-- Do not re-scaffold Phase 0. Follow `@docs/phases/PHASE_0.md` until human clears Phase 0 checklist.
-- Phase 1 = human-gated design in `apps/web` `/design` only after Phase 0 human clear.
-- Phase 2+ production only after Phase 1 design approval.
+- **macOS only.** Not a cross-platform product target.
+- **MyKAIA Big App:** design data/API so Storyworks can later connect to or be absorbed as a micro-app in that ecosystem.
+- Phase status may read COMPLETE only when `./scripts/check-phase-clear.sh` passes on that phase’s human checklist. Chat phrases alone are not clearance.
+- Do not treat the superseded Vite/Phase 0–1B tree as current product law after the rebuild boundary.
 - Light mode only. No dark mode.
 - Archive before delete; typed full name required to delete.
 - Muse: Tab accept, other key dismiss; never auto-insert.
-- Dual VCS: never commit `projects/` or `data/` into the public app repo.
-- Interfering builds → backup + temp archive → restore. See `@docs/05_GIT_SYNC.md`.
+- Dual VCS: never commit vault contents, `projects/`, or `data/` into the public app repo.
+- Interfering builds → vault `.storyworks/backup/` (from Step 0.3) → restore when safe. See `@docs/05_GIT_SYNC.md`.
 - Step quality gate + phase FULL STOP: `@docs/PHASE_STEP_PROTOCOL.md` and `@.cursor/rules/storyworks-quality-gate.mdc`.

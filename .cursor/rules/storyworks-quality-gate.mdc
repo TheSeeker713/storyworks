@@ -1,13 +1,13 @@
 ---
-description: Per-step tests/audit/100%/commit-push/devlog; end-of-phase human UI/UX FULL STOP
+description: Per-step tests/audit/100%/commit-push/per-day devlog; end-of-phase gate script
 alwaysApply: true
 ---
 
 # Quality gate
 
 - Every phase has multiple steps listed in `docs/phases/PHASE_N.md`.
-- End of each step, in order: test → phase/step audit → retest → **100% only** (≤99% = fail, redo) → commit + push `main` → Jeremy-voice devlog in `docs/devlogs/`.
+- End of each step, in order: test → phase/step audit → retest → **100% only** (≤99% = fail, redo) → commit + push `main` → append today’s `docs/devlogs/YYYY-MM-DD.md` (Jeremy voice).
 - Voice guide: `@docs/reference/authentic-voice-notes.md`
 - Full protocol: `@docs/PHASE_STEP_PROTOCOL.md`
-- End of phase: **FULL STOP.** Publish `docs/phases/PHASE_N_HUMAN_CHECKLIST.md`. Do not start the next phase until Jeremy clears the UI/UX checklist.
-- Never stage `projects/`, `data/`, or secrets into the app repo.
+- End of phase: **FULL STOP.** Publish `docs/phases/PHASE_N_HUMAN_CHECKLIST.md`. Do not start the next phase and do not mark COMPLETE until `./scripts/check-phase-clear.sh` exits 0 on that checklist.
+- Never stage vault contents, `projects/`, `data/`, or secrets into the app repo.
