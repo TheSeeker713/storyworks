@@ -4,6 +4,8 @@
 
 Chat phrases alone are not clearance.
 
+**Phase 0 writing shape (locked 2026-08-08):** project list + TipTap text editor bound to vault markdown. No third-party canvas SDK.
+
 ## How to run
 
 ```bash
@@ -28,7 +30,7 @@ Optional: `ollama list` so Muse can suggest when AI is on.
 ### First launch / onboarding
 
 - [ ] Onboarding appears (or can be forced by clearing `storyworks.onboarded` in localStorage)
-- [ ] Can enter a vault folder path and continue
+- [ ] Can choose a vault folder (macOS folder picker) and continue
 - [ ] “Hate AI?” choice turns master AI off (header shows AI off; Muse/STT stay off)
 - [ ] Alternate path keeps AI available but helpers start off until toggled
 - [ ] Light mode only — no dark mode toggle anywhere
@@ -38,25 +40,27 @@ Optional: `ollama list` so Muse can suggest when AI is on.
 - [ ] Brand shows **Storyworks**
 - [ ] **AI** master toggle is visible and works both ways
 - [ ] **Muse** toggle is visible; disabled / ineffective when AI master is off
-- [ ] **STT** toggle shows real state: working on/off, or **STT not installed** (never silent failure / hang)
+- [ ] **STT** toggle shows real state: working on/off, or **STT not installed** / unreachable (never silent hang on “checking…”)
 
 ### Vault + projects
 
 - [ ] Open vault creates/uses folder with `.storyworks/` on disk
-- [ ] Create a project — it appears in the project selector
-- [ ] Archive / restore / typed-name delete still enforced by API (spot-check via UI or API is OK for Phase 0)
+- [ ] Create a project — it appears under Available
+- [ ] Open a project — TipTap writing surface loads (not a canvas)
+- [ ] Archive moves project to Archived; restore brings it back
+- [ ] Delete requires archive first + typing the full exact project name
 
-### Canvas writing (durable)
+### Writing (durable)
 
-- [ ] Select/create project → tldraw canvas loads
-- [ ] Type in a Note card; after a short pause, a `.md` file exists under `projects/<slug>/content/`
-- [ ] Refresh the page → board/notes still load from vault
+- [ ] Type in the project editor; after a short pause, status shows saved
+- [ ] A `.md` file exists under `projects/<slug>/content/` (manuscript)
+- [ ] Refresh the page → text is still there
 - [ ] Writing works with AI master **off** (no AI required)
 
 ### Muse (when AI on)
 
 - [ ] Muse on + idle ~2.5s → ghost suggestion appears (needs Ollama + `huihui_ai/qwen3-abliterated:14b`)
-- [ ] **Tab** accepts suggestion
+- [ ] **Tab** accepts suggestion into the manuscript
 - [ ] Any other key dismisses suggestion
 - [ ] With Ollama stopped or model missing, Muse fails gracefully (message / no hang)
 

@@ -70,11 +70,27 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ patch }),
     }),
-  listProjects: () => req<{ projects: { slug: string; name: string; archived: boolean }[] }>("/api/projects"),
+  listProjects: (archived = false) =>
+    req<{ projects: { slug: string; name: string; archived: boolean }[] }>(
+      `/api/projects?archived=${archived ? "true" : "false"}`,
+    ),
   createProject: (name: string) =>
     req<{ slug: string; name: string }>("/api/projects", {
       method: "POST",
       body: JSON.stringify({ name }),
+    }),
+  archiveProject: (slug: string) =>
+    req<{ slug: string; name: string; archived: boolean }>(`/api/projects/${slug}/archive`, {
+      method: "POST",
+    }),
+  restoreProject: (slug: string) =>
+    req<{ slug: string; name: string; archived: boolean }>(`/api/projects/${slug}/restore`, {
+      method: "POST",
+    }),
+  deleteProject: (slug: string, typedName: string) =>
+    req<{ ok: boolean; slug: string }>(`/api/projects/${slug}/delete`, {
+      method: "POST",
+      body: JSON.stringify({ typed_name: typedName }),
     }),
   writeContent: (
     slug: string,

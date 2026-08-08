@@ -1,14 +1,13 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { runConnectorBootChecks, type SttUiState } from "@/lib/connectors";
 import BootScreen from "@/components/BootScreen";
 import MuseLayer from "@/components/MuseLayer";
 import Onboarding from "@/components/Onboarding";
-
-const CanvasBoard = dynamic(() => import("@/components/CanvasBoard"), { ssr: false });
+import ProjectList, { type ProjectRow } from "@/components/ProjectList";
+import WritingEditor from "@/components/WritingEditor";
 
 const VAULT_KEY = "storyworks.vaultPath";
 const PROJECT_KEY = "storyworks.projectSlug";
@@ -21,7 +20,8 @@ export default function StudioApp() {
   const [vaultPath, setVaultPath] = useState("");
   const [inputPath, setInputPath] = useState("");
   const [projectSlug, setProjectSlug] = useState<string | null>(null);
-  const [projects, setProjects] = useState<{ slug: string; name: string }[]>([]);
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [archivedProjects, setArchivedProjects] = useState<ProjectRow[]>([]);
   const [newName, setNewName] = useState("My Project");
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -30,18 +30,19 @@ export default function StudioApp() {
   const [museEnabled, setMuseEnabled] = useState(false);
   const [masterOn, setMasterOn] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  /** First launch until tour finishes; later reopens (e.g. Settings) set this false. */
   const [onboardingFirstRun, setOnboardingFirstRun] = useState(true);
   const [ollamaSummary, setOllamaSummary] = useState("checking…");
   const [sttSummary, setSttSummary] = useState("checking…");
   const [draftText, setDraftText] = useState("");
+  const [museAppend, setMuseAppend] = useState<string | null>(null);
   const [pickingFolder, setPickingFolder] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
   const [completingOnboard, setCompletingOnboard] = useState(false);
 
   const refreshProjects = useCallback(async () => {
-    const data = await api.listProjects();
-    setProjects(data.projects);
+    const [live, archived] = await Promise.all([api.listProjects(false), api.listProjects(true)]);
+    setProjects(live.projects.filter((p) => !p.archived));
+    setArchivedProjects(archived.projects.filter((p) => p.archived));
   }, []);
 
   const openVault = useCallback(
@@ -102,10 +103,6 @@ export default function StudioApp() {
     };
   }, [openVault]);
 
-  /**
-   * Dismissible when a vault folder is already chosen, or when this is not a locked first-run.
-   * First run with no folder → locked (Esc / outside ignored).
-   */
   const onboardingDismissible = Boolean(inputPath.trim()) || !onboardingFirstRun;
 
   async function pickVaultFolder() {
@@ -154,12 +151,10 @@ export default function StudioApp() {
 
   function dismissOnboarding() {
     if (!onboardingDismissible) return;
-    // Later reopen or post-folder dismiss: close without forcing tour again if already onboarded.
     if (localStorage.getItem(ONBOARD_KEY) === "1") {
       setShowOnboarding(false);
       return;
     }
-    // First run, vault chosen, user dismissed before / during AI choice → keep helpers available (off).
     void finishOnboardingSetup({ hateAi: false })
       .then(() => finishOnboardingTour())
       .catch((e: Error) => setError(e.message));
@@ -170,6 +165,37 @@ export default function StudioApp() {
     const p = await api.createProject(newName.trim() || "Untitled");
     localStorage.setItem(PROJECT_KEY, p.slug);
     setProjectSlug(p.slug);
+    await refreshProjects();
+  }
+
+  function openProject(slug: string) {
+    localStorage.setItem(PROJECT_KEY, slug);
+    setProjectSlug(slug);
+  }
+
+  async function archiveProject(slug: string) {
+    setError(null);
+    await api.archiveProject(slug);
+    if (projectSlug === slug) {
+      setProjectSlug(null);
+      localStorage.removeItem(PROJECT_KEY);
+    }
+    await refreshProjects();
+  }
+
+  async function restoreProject(slug: string) {
+    setError(null);
+    await api.restoreProject(slug);
+    await refreshProjects();
+  }
+
+  async function deleteProject(slug: string, typedName: string) {
+    setError(null);
+    await api.deleteProject(slug, typedName);
+    if (projectSlug === slug) {
+      setProjectSlug(null);
+      localStorage.removeItem(PROJECT_KEY);
+    }
     await refreshProjects();
   }
 
@@ -216,13 +242,16 @@ export default function StudioApp() {
           ? "STT unreachable"
           : "STT…";
 
+  const selectedProject =
+    projects.find((p) => p.slug === projectSlug) || archivedProjects.find((p) => p.slug === projectSlug);
+
   const getMuseContext = useCallback(
     () => ({
       text: draftText,
-      title: "canvas note",
-      projectName: projectSlug || "",
+      title: selectedProject?.name || "manuscript",
+      projectName: selectedProject?.name || projectSlug || "",
     }),
-    [draftText, projectSlug],
+    [draftText, projectSlug, selectedProject?.name],
   );
 
   const headerBtn =
@@ -316,63 +345,54 @@ export default function StudioApp() {
           >
             Open vault
           </button>
-          {vaultPath && (
-            <>
-              <input
-                className="w-36 rounded-sm border border-stone-300 bg-white px-2 py-1"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
-              <button
-                type="button"
-                className={`${headerBtn} border-stone-400 bg-white hover:bg-teal-50`}
-                onClick={() => void createProject().catch((e: Error) => setError(e.message))}
-              >
-                New project
-              </button>
-              <select
-                className="cursor-pointer rounded-sm border border-stone-300 bg-white px-2 py-1 hover:border-teal-800"
-                value={projectSlug || ""}
-                onChange={(e) => {
-                  const slug = e.target.value || null;
-                  setProjectSlug(slug);
-                  if (slug) localStorage.setItem(PROJECT_KEY, slug);
-                }}
-              >
-                <option value="">Select project…</option>
-                {projects.map((p) => (
-                  <option key={p.slug} value={p.slug}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </>
+          {vaultPath && projectSlug && (
+            <button
+              type="button"
+              className={`${headerBtn} border-stone-400 bg-white hover:bg-teal-50`}
+              onClick={() => setProjectSlug(null)}
+            >
+              All projects
+            </button>
           )}
         </div>
         <p className="text-xs text-stone-500">{status}</p>
       </header>
       {error && <p className="bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>}
       <main className="relative min-h-0 flex-1">
-        {projectSlug ? (
+        {!vaultPath ? (
+          <div className="flex h-full items-center justify-center p-8 text-stone-600">
+            Choose a vault folder to get started.
+          </div>
+        ) : projectSlug && selectedProject && !selectedProject.archived ? (
           <>
-            <CanvasBoard
-              key={`board-${projectSlug}`}
+            <WritingEditor
+              key={projectSlug}
               projectSlug={projectSlug}
-              boardId={`board-${projectSlug}`}
-              vaultPath={vaultPath || inputPath}
+              projectName={selectedProject.name}
               onDraftText={setDraftText}
+              appendText={museAppend}
+              onAppendConsumed={() => setMuseAppend(null)}
             />
             <MuseLayer
               enabled={museEnabled}
               masterOn={masterOn}
               getContext={getMuseContext}
-              onAccept={(s) => setDraftText((t) => `${t}${s}`)}
+              onAccept={(s) => setMuseAppend(s)}
             />
           </>
         ) : (
-          <div className="flex h-full items-center justify-center p-8 text-stone-600">
-            Open a vault and create or select a project to write on the canvas.
-          </div>
+          <ProjectList
+            projects={projects}
+            archivedProjects={archivedProjects}
+            selectedSlug={projectSlug}
+            newName={newName}
+            onNewName={setNewName}
+            onCreate={() => void createProject().catch((e: Error) => setError(e.message))}
+            onOpen={openProject}
+            onArchive={(slug) => void archiveProject(slug).catch((e: Error) => setError(e.message))}
+            onRestore={(slug) => void restoreProject(slug).catch((e: Error) => setError(e.message))}
+            onDelete={(slug, typed) => void deleteProject(slug, typed).catch((e: Error) => setError(e.message))}
+          />
         )}
       </main>
     </div>

@@ -179,19 +179,19 @@ export default function Onboarding({
             <ul className="mt-6 list-disc space-y-3 pl-5 text-sm text-stone-800">
               <li>
                 <span className="font-medium">Header</span> — Storyworks brand, AI / Muse / STT
-                toggles, vault folder, and New project.
+                toggles, and vault folder controls.
               </li>
               <li>
-                <span className="font-medium">Canvas</span> — the main writing surface (tldraw). Create
-                a project, then type in Note cards; they save as vault markdown.
+                <span className="font-medium">Projects</span> — create, open, archive, restore, or
+                typed-name delete. No canvas in Phase 0.
               </li>
               <li>
-                <span className="font-medium">Tool tray</span> — canvas tools once a project is open
-                (Select, Hand, Note, Text, Arrow — not freehand drawing).
+                <span className="font-medium">Writing</span> — open a project and type in the TipTap
+                editor; it autosaves to vault markdown.
               </li>
               <li>
-                <span className="font-medium">Cmd+K</span> — command palette (wired in a later phase;
-                the shortcut is reserved so you know it is coming).
+                <span className="font-medium">Cmd+K</span> — command palette (later phase; shortcut
+                reserved).
               </li>
             </ul>
             <button

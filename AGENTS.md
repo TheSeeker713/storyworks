@@ -11,7 +11,7 @@ Local-first pre-production writing studio. **Read this first**, then follow the 
 
 | Phase | Owner | Scope |
 |-------|--------|--------|
-| **0** | In progress | Enforcement gate, new stack scaffold, vault truth, durable canvas writing, STT repair-and-prove, onboarding/Muse, FULL STOP |
+| **0** | In progress | Enforcement gate, new stack scaffold, vault truth, project list + TipTap writing (canvas descoped), STT repair-and-prove, onboarding/Muse, FULL STOP |
 | **1** | After Phase 0 human clear | Studio chrome, nesting, Cmd+K, list index |
 | **2+** | After Phase 1 clear | OpenClaw roles, STT polish, Codex, pipelines, procedural |
 
@@ -99,6 +99,8 @@ Area rules: `apps/web/AGENTS.md`, `apps/api/AGENTS.md` (until replaced in 0.2).
 
 ## Stack (target for rebuild)
 
-Next.js (static export) + React 19 + Tailwind · tldraw · TipTap-via-tldraw · FastAPI + SQLite WAL **index** · markdown vault source of truth · Ollama-first Muse · OpenClaw (three roles, off by default) · local STT (`mlx_audio`)
+Next.js (static export) + React 19 + Tailwind · TipTap (manuscript editor) · FastAPI + SQLite WAL **index** · markdown vault source of truth · Ollama-first Muse · OpenClaw (three roles, off by default) · local STT (`mlx_audio`)
+
+**Canvas:** no third-party canvas SDK. In-house infinite canvas is a later phase — see `docs/phases/PHASE_3_CUSTOM_CANVAS.md`.
 
 Default models when AI enabled: writing `huihui_ai/qwen3-abliterated:14b`; agentic `qwen2.5-coder:7b`.

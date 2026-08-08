@@ -1,6 +1,6 @@
 # Spike — canvas engine license / TipTap cards (2026-08-08)
 
-**Status:** research only. Current tldraw integration paused, not removed. No canvas rewrite until Jeremy approves a path.
+**Status:** CLOSED — decision taken 2026-08-08. Drop all third-party canvas SDKs. Descope canvas from Phase 0 (TipTap manuscript + project list). Build in-house canvas later as Phase 3 (`docs/phases/PHASE_3_CUSTOM_CANVAS.md`). tldraw package removed from `apps/web`.
 
 **Why now:** tldraw SDK needs a paid commercial license (or hobby license with permanent “made with tldraw” watermark) for non-localhost production. Storyworks → Mycelia Interactive LLC → MyKAIA is a commercial trajectory. Tauri packaging will not stay “localhost HTTPS.” Decide before more product surface is built on tldraw.
 
@@ -78,9 +78,4 @@ Always available. Full control, TipTap trivial, bindings/nesting all custom. Hig
 
 **Decision fork (Jeremy picks before any canvas rewrite):**
 
-1. **Pay for tldraw commercial** — keep current direction; watermark gone; best tech fit.
-2. **Switch canvas product model to React Flow** — TipTap cards + edges + parent nesting; accept node-graph UX; implement “pages” as separate flow documents in the vault if needed.
-3. **Excalidraw** — only if we deliberately shrink the product to sketch+arrows and give up real TipTap card shapes (or accept a bad embeddable hack). Not recommended for the locked Milanote-style writing surface.
-4. **Hand-roll** — last resort after rejecting 1–2.
-
-**Paused:** do not rip out tldraw until one of the above is approved.
+**Decision (Jeremy, 2026-08-08):** Do not buy tldraw commercial. Do not force-fit Excalidraw. Do not pivot the primary writing surface to React Flow. Descope canvas from Phase 0; ship TipTap + project list now; schedule in-house custom canvas as Phase 3 (`PHASE_3_CUSTOM_CANVAS.md`). Options 1–3 above are rejected; option 4 (hand-roll) is the chosen path, deferred to that phase.

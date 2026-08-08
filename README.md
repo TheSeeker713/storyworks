@@ -38,9 +38,10 @@ See `docs/05_GIT_SYNC.md`.
 
 ## Phases (v2 rebuild)
 
-- **Phase 0** (in progress): enforcement gate, new stack, vault truth, durable canvas writing, STT prove, FULL STOP
+- **Phase 0** (in progress): enforcement gate, new stack, vault truth, project list + TipTap writing (canvas descoped), STT prove, FULL STOP
 - **Phase 1**: studio chrome / nesting (after Phase 0 human clear via gate script)
 - **Phase 2+**: OpenClaw roles, STT polish, Codex, pipelines (`docs/10_FEATURE_MATRIX.md` evolving)
+- **Phase 3**: custom in-house canvas (after Phase 2; no third-party canvas SDK)
 
 Agents: start at `AGENTS.md`. Operators: `INSTRUCTIONS.md`. Clearance: `./scripts/check-phase-clear.sh`.
 

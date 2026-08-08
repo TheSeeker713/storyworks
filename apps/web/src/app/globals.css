@@ -11,7 +11,10 @@ body {
   color: #1c1917;
 }
 
-.tldraw__editor {
-  height: 100%;
-  width: 100%;
+.ProseMirror p {
+  margin: 0.5em 0;
+}
+
+.ProseMirror p:first-child {
+  margin-top: 0;
 }

@@ -14,7 +14,7 @@
 
 - [x] 0.2 New stack scaffold; old Vite product tree removed after rebuild-boundary commit
 - [x] 0.3 Vault `.md` truth + SQLite cache; old storage replaced; continuous backup
-- [x] 0.4 Durable tldraw/TipTap writing path
+- [ ] 0.4 Project list + TipTap vault-bound writing (canvas SDK removed; awaiting human verify)
 - [x] 0.5 One local STT path proven; header toggle reflects real state
 - [x] 0.6 Onboarding + AI master kill switch
 - [x] 0.7 Muse Tab/dismiss optional path
