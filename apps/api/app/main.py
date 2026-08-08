@@ -118,6 +118,19 @@ def vault_open(body: OpenVaultIn):
     return {"ok": True, "path": str(store.root), "indexed": store.reindex()}
 
 
+@app.post("/api/vault/pick-directory")
+def vault_pick_directory():
+    """Native macOS Choose Folder dialog. Blocks until the user picks or cancels."""
+    from engine.vault.pick import pick_folder_macos
+
+    result = pick_folder_macos()
+    if result.get("cancelled"):
+        return {"ok": False, "cancelled": True, "path": None}
+    if not result.get("ok"):
+        raise HTTPException(400, result.get("error") or "folder picker failed")
+    return {"ok": True, "cancelled": False, "path": result["path"]}
+
+
 @app.get("/api/vault")
 def vault_info():
     try:
@@ -248,6 +261,8 @@ def content_write(slug: str, body: WriteContentIn):
             expected_hash=body.expected_hash,
             dirty=body.dirty,
         )
+    except OSError as exc:
+        raise HTTPException(500, f"content write failed: {exc}") from exc
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
 
@@ -309,6 +324,8 @@ def board_get(board_id: str):
         return store.load_board(board_id)
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(500, f"board read failed: {exc}") from exc
 
 
 class BoardIn(BaseModel):
@@ -322,3 +339,7 @@ def board_put(board_id: str, body: BoardIn):
         return store.save_board(board_id, body.document)
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(500, f"board write failed: {exc}") from exc

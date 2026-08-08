@@ -122,7 +122,8 @@ class VaultStore:
             "updated_at": _utc_now(),
         }
         atomic_write(base / "project.md", dump_markdown(meta, f"# {name}\n"))
-        board = {"id": f"board-{slug}", "project_slug": slug, "shapes": []}
+        # Empty marker only — tldraw snapshot is written on first canvas persist for this project.
+        board = {"id": f"board-{slug}", "project_slug": slug, "empty": True}
         atomic_write(boards_dir(self.root) / f"board-{slug}.json", json.dumps(board, indent=2) + "\n")
         return {"slug": slug, "name": name, "archived": False}
 
@@ -292,15 +293,29 @@ class VaultStore:
         return {"ok": True, "id": content_id}
 
     def save_board(self, board_id: str, document: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(document, dict):
+            raise TypeError("board document must be a JSON object")
+        # Keep each project's board under boards/<board_id>.json (board_id already includes project slug).
         path = boards_dir(self.root) / f"{board_id}.json"
-        atomic_write(path, json.dumps(document, indent=2) + "\n")
+        try:
+            payload = json.dumps(document, indent=2, allow_nan=False) + "\n"
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"board document is not JSON-serializable: {exc}") from exc
+        atomic_write(path, payload)
         return {"ok": True, "id": board_id, "path": str(path.relative_to(self.root))}
 
     def load_board(self, board_id: str) -> dict[str, Any]:
         path = boards_dir(self.root) / f"{board_id}.json"
         if not path.exists():
-            return {"id": board_id, "shapes": []}
-        return json.loads(path.read_text(encoding="utf-8"))
+            return {"id": board_id, "empty": True}
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            # Corrupt/partial write must not 500 the API — treat as empty and let the client re-seed.
+            return {"id": board_id, "empty": True, "corrupt": True}
+        if not isinstance(data, dict):
+            return {"id": board_id, "empty": True, "corrupt": True}
+        return data
 
     def reindex(self) -> int:
         self.index.clear()

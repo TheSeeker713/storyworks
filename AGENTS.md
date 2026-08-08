@@ -35,13 +35,15 @@ Details: [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md).
 
 ## How to run
 
+**Agents never boot these.** Jeremy pastes the commands in his own terminals and does every browser check himself. Cursor may run `pytest` / `npm run build` / lint / typecheck only — not `uvicorn`, not `npm run dev`, not a browser.
+
 ```bash
-# API (repo root)
+# API (repo root) — Jeremy runs this
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn apps.api.app.main:app --reload --port 8787
 
-# Web (separate terminal)
+# Web (separate terminal) — Jeremy runs this
 cd apps/web && npm install && npm run dev
 ```
 

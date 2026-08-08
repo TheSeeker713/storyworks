@@ -1,0 +1,21 @@
+---
+description: Cursor never boots servers or browsers — Jeremy runs all live checks
+alwaysApply: true
+---
+
+# No servers, no browser (locked)
+
+Cursor **never** starts, stops, or restarts long-running servers, and **never** opens or drives a browser. That includes “just to check.”
+
+Forbidden examples:
+
+- `npm run dev`, `next dev`, `uvicorn … --reload`, or any other live app/API process
+- Killing or restarting those processes
+- Browser MCP / IDE browser / screenshot loops against the running app
+
+Allowed verification:
+
+- `pytest`, `npm run build`, `npm run lint`, typecheck
+- Static reads, `rg`/grep, tracing code paths
+
+When a check needs a live server or UI: write the exact terminal commands for Jeremy (separate code boxes for API and web), say what to watch for, and wait for his pasted output. The human checklist exists so Cursor does not test the product in a loop instead of Jeremy.
