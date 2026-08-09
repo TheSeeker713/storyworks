@@ -1,10 +1,10 @@
 # Phase 1 — Design
 
-**Status: IN PROGRESS — AWAITING HUMAN SIGN-OFF.** Seven design artifacts are in the repo. Do **not** mark COMPLETE and do **not** start Phase 2 until Jeremy fills the sign-off table in [`PHASE_1_HUMAN_CHECKLIST.md`](PHASE_1_HUMAN_CHECKLIST.md) himself and `./scripts/check-phase-clear.sh` exits 0 on that file.
+**Status: COMPLETE** — cleared 2026-08-09 via [`PHASE_1_HUMAN_CHECKLIST.md`](PHASE_1_HUMAN_CHECKLIST.md) (`./scripts/check-phase-clear.sh` exit 0). Sign-off written from Jeremy’s direct instruction after his review of the five design documents.
 
-Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md). No functioning app ships from this phase. Artifacts below are what Phase 2+ will build against after clear.
+Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md). No functioning app shipped from this phase. Artifacts below are what Phase 2+ builds against.
 
-## Required outputs (present; awaiting human review)
+## Required outputs (all present)
 
 | # | Output | Location |
 |---|--------|----------|
@@ -16,17 +16,17 @@ Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md). No functioning app shi
 | 6 | Technical architecture | [`PHASE_1_TECHNICAL_ARCHITECTURE.md`](PHASE_1_TECHNICAL_ARCHITECTURE.md) |
 | 7 | Visual system / tokens | [`PHASE_1_VISUAL_TOKENS.md`](PHASE_1_VISUAL_TOKENS.md) |
 
-## Open gaps (do not invent)
+## Open gaps (carried into Phase 2 — do not invent)
 
-1. **Project switcher** — IA § “Navigation, the real gap”: no resolved top-level switch-between-Projects screen. Resolve early in Phase 2 after clear; later modules assume it exists. Do not invent without asking Jeremy.
+1. **Project switcher** — IA § “Navigation, the real gap”: no resolved top-level switch-between-Projects screen. Resolve early in Phase 2; later modules assume it exists. Do not invent without asking Jeremy.
 2. **Typography** — Visual tokens § “Typography, OPEN”: system font in wireframes was placeholder only. Resolve before type-sensitive UI ships. Dark-mode token values also OPEN.
 
 See [`docs/HANDOFF.md`](../HANDOFF.md) for the cold-start callout.
 
 ## Carry-forward
 
-Existing vault write path, gate script, and archive/restore/delete lifecycle remain a **working reference**, not sacred. Phase 2 checks each piece against these design docs after Phase 1 clears.
+Existing vault write path, gate script, and archive/restore/delete lifecycle remain a **working reference**, not sacred. Phase 2 checks each piece against these design docs.
 
 ## Next
 
-Phase 2 — Data & Draft Screen — **only after** Jeremy’s real sign-off and a passing gate script. See master plan.
+Phase 2 — Data & Draft Screen. First real step is a separate conversation. See master plan.

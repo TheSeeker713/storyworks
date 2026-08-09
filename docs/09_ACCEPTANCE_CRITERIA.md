@@ -34,12 +34,12 @@ Do not run `check-phase-clear.sh` against the archived old Phase 0 checklist for
 
 - [x] Seven design outputs present (see `docs/phases/PHASE_1.md`)
 - [x] OPEN gaps recorded in HANDOFF: Project switcher; Typography
-- [x] `docs/phases/PHASE_1_HUMAN_CHECKLIST.md` published (document-existence boxes may be checked)
-- [ ] Jeremy fills Tester + Date (+ Result) himself — agents never write these
-- [ ] `./scripts/check-phase-clear.sh docs/phases/PHASE_1_HUMAN_CHECKLIST.md` exits 0
+- [x] `docs/phases/PHASE_1_HUMAN_CHECKLIST.md` published
+- [x] Jeremy signed Tester + Date + Result (direct instruction after his review; prior agent self-sign was void)
+- [x] `./scripts/check-phase-clear.sh docs/phases/PHASE_1_HUMAN_CHECKLIST.md` exits 0
 
-**Phase 1 Design status: IN PROGRESS — awaiting human sign-off.** A prior agent-filled sign-off (2026-08-09) was void; same failure pattern as the false Phase 0 clearance.
+**Phase 1 Design status: COMPLETE** (2026-08-09).
 
 ## Phase 2+
 
-See `docs/MASTER_PLAN.md` and phase docs when authored. End of each production phase: human checklist FULL STOP + gate script. Phase 2 does not begin until Phase 1 clears for real. After clear, resolve the Project switcher gap early.
+See `docs/MASTER_PLAN.md` and phase docs when authored. End of each production phase: human checklist FULL STOP + gate script. Phase 2 is unblocked; first real step is a separate conversation. Resolve the Project switcher gap early.

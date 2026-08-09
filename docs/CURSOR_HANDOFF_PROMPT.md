@@ -7,8 +7,9 @@ You are the Cursor agent on **Storyworks** at `~/Developer/storyworks` (`TheSeek
 Follow [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) and [`docs/HANDOFF.md`](HANDOFF.md).
 
 - **Phase 0 Setup** is done (0.1 gate + 0.2 scaffold only).
-- **Phase 1 Design is IN PROGRESS** — artifacts are in the repo; Jeremy has not signed the checklist. Do not mark COMPLETE. Do not start Phase 2. Do not invent answers for OPEN gaps (Project switcher; typography).
-- **Never fill Tester, Date, or Result** on any `PHASE_*_HUMAN_CHECKLIST.md` sign-off table.
+- **Phase 1 Design is COMPLETE** (Jeremy signed 2026-08-09). Build against the Phase 1 artifacts. Do not invent answers for OPEN gaps (Project switcher; typography) — ask Jeremy.
+- **Next: Phase 2 — Data & Draft Screen** when Jeremy starts that separate session. Resolve the project-switcher gap early. Do not begin Phase 2 implementation unprompted.
+- **Never fill Tester, Date, or Result** on any human checklist unless Jeremy provides the exact text to write.
 
 ## Locked facts
 
@@ -25,10 +26,10 @@ Follow [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) and [`docs/HANDOFF.md`](HANDOFF.m
 
 ## Do not
 
-- Fill human checklist sign-off fields (Tester / Date / Result)
+- Fill human checklist sign-off fields unless Jeremy dictates the exact values
 - Mark any phase COMPLETE without a passing gate script on a checklist Jeremy signed
 - Stage vault / `projects/` / `data/` into the app repo
 - Boot servers, run `npm run dev` / `uvicorn`, or open a browser
 - Skip step quality gate (test → audit → 100% → commit/push → day-devlog append)
 - Invent a Project switcher or product typography without Jeremy
-- Start Phase 2 before Phase 1 clears
+- Start Phase 2 implementation until Jeremy opens that session
