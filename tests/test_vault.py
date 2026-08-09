@@ -94,6 +94,27 @@ def test_api_vault_flow(vault_dir: Path):
     assert Path(r.json()["backup"]).is_dir()
 
 
+def test_index_lives_under_cache_nosync(store: VaultStore, vault_dir: Path):
+    """SQLite must not sit at vault root under iCloud-synced Documents."""
+    db = vault_dir / ".storyworks" / "cache.nosync" / "index.sqlite"
+    assert db.is_file()
+    assert not (vault_dir / ".storyworks" / "index.sqlite").exists()
+
+
+def test_migrates_legacy_index_out_of_icloud_path(tmp_path: Path):
+    from engine.vault.paths import index_path, legacy_index_path, migrate_legacy_index, storyworks_dir
+
+    vault = tmp_path / "v"
+    storyworks_dir(vault).mkdir(parents=True)
+    legacy = legacy_index_path(vault)
+    legacy.write_bytes(b"legacy-db")
+    (Path(str(legacy) + "-wal")).write_bytes(b"wal")
+    migrate_legacy_index(vault)
+    assert index_path(vault).read_bytes() == b"legacy-db"
+    assert (Path(str(index_path(vault)) + "-wal")).read_bytes() == b"wal"
+    assert not legacy.exists()
+
+
 def test_concurrent_writes_do_not_crash(store: VaultStore):
     """FastAPI sync routes hit the store from a threadpool; sqlite must not segfault."""
     proj = store.create_project("Race Proj")

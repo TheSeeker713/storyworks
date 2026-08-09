@@ -62,13 +62,16 @@ export default function StudioApp() {
   const [pickingFolder, setPickingFolder] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
   const [completingOnboard, setCompletingOnboard] = useState(false);
+  const [zen, setZen] = useState(false);
 
   const goHome = useCallback(() => {
+    setZen(false);
     setView("home");
     localStorage.setItem(VIEW_KEY, "home");
   }, []);
 
   const goDraft = useCallback((slug: string) => {
+    setZen(false);
     localStorage.setItem(PROJECT_KEY, slug);
     pushRecent(slug);
     setProjectSlug(slug);
@@ -321,6 +324,7 @@ export default function StudioApp() {
           onTourFinished={finishOnboardingTour}
         />
       )}
+      {!zen && (
       <header
         className="flex flex-wrap items-center gap-2 border-b px-4 py-2"
         style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
@@ -404,8 +408,9 @@ export default function StudioApp() {
           {status}
         </p>
       </header>
-      {error && <p className="bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>}
-      <main className="relative min-h-0 flex-1">
+      )}
+      {error && !zen && <p className="bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>}
+      <main className={`relative min-h-0 flex-1 ${zen ? "fixed inset-0 z-[90]" : ""}`}>
         {!vaultPath ? (
           <div className="flex h-full items-center justify-center p-8" style={{ color: "var(--sw-ink-muted)" }}>
             Choose a vault folder to get started.
@@ -423,6 +428,7 @@ export default function StudioApp() {
             museAppend={museAppend}
             onMuseAppendConsumed={() => setMuseAppend(null)}
             onMuseAccept={(s) => setMuseAppend(s)}
+            onZenChange={setZen}
           />
         ) : (
           <ProjectList

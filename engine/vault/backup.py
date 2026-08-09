@@ -29,6 +29,9 @@ def backup_vault_snapshot(vault: Path, slug: str = "vault") -> Path:
             for sw_child in storyworks_dir(vault).iterdir():
                 if sw_child.resolve() == skip_backup or sw_child.name == "backup":
                     continue
+                # Skip local-only SQLite cache (also avoids copying iCloud-corrupted WAL).
+                if sw_child.name == "cache.nosync" or sw_child.name.startswith("index.sqlite"):
+                    continue
                 target = sw_dest / sw_child.name
                 if sw_child.is_dir():
                     shutil.copytree(sw_child, target)

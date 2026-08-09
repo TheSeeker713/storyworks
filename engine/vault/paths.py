@@ -12,8 +12,37 @@ def storyworks_dir(vault: Path) -> Path:
     return vault / ".storyworks"
 
 
+def index_dir(vault: Path) -> Path:
+    """Local-only SQLite cache dir. `.nosync` keeps iCloud Drive from syncing WAL files."""
+    return storyworks_dir(vault) / "cache.nosync"
+
+
 def index_path(vault: Path) -> Path:
+    return index_dir(vault) / "index.sqlite"
+
+
+def legacy_index_path(vault: Path) -> Path:
+    """Pre-`.nosync` location (was corrupted under iCloud Documents)."""
     return storyworks_dir(vault) / "index.sqlite"
+
+
+def migrate_legacy_index(vault: Path) -> None:
+    """Move old `.storyworks/index.sqlite*` into `cache.nosync/` once."""
+    dest = index_path(vault)
+    if dest.exists():
+        return
+    src = legacy_index_path(vault)
+    if not src.exists():
+        index_dir(vault).mkdir(parents=True, exist_ok=True)
+        return
+    index_dir(vault).mkdir(parents=True, exist_ok=True)
+    for suffix in ("", "-wal", "-shm"):
+        old = Path(f"{src}{suffix}") if suffix else src
+        if not old.exists():
+            continue
+        new = Path(f"{dest}{suffix}") if suffix else dest
+        if not new.exists():
+            old.replace(new)
 
 
 def settings_path(vault: Path) -> Path:

@@ -28,6 +28,7 @@ from engine.vault.paths import (
     folder_meta_path,
     index_path,
     legacy_content_dir,
+    migrate_legacy_index,
     project_dir,
     settings_path,
     storyworks_dir,
@@ -52,15 +53,17 @@ def _hash_bytes(data: bytes) -> str:
 
 def atomic_write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
+    # Dot-prefix + .tmp so Finder/iCloud are less likely to treat temps as user docs.
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(text)
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp, path)
+        tmp = ""  # replaced; nothing to unlink
     finally:
-        if os.path.exists(tmp):
+        if tmp and os.path.exists(tmp):
             try:
                 os.unlink(tmp)
             except OSError:
@@ -70,6 +73,7 @@ def atomic_write(path: Path, text: str) -> None:
 class VaultStore:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
+        migrate_legacy_index(self.root)
         self.index = VaultIndex(index_path(self.root))
         # Serialize file + index writes: FastAPI sync routes run in a threadpool.
         self._write_lock = threading.RLock()
@@ -79,6 +83,7 @@ class VaultStore:
         root = root.resolve()
         root.mkdir(parents=True, exist_ok=True)
         storyworks_dir(root).mkdir(parents=True, exist_ok=True)
+        migrate_legacy_index(root)
         (root / "projects").mkdir(exist_ok=True)
         boards_dir(root).mkdir(exist_ok=True)
         meta = {"schema_version": 2, "created_at": _utc_now()}
