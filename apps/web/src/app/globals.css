@@ -28,6 +28,12 @@ body {
   color: var(--sw-ink);
 }
 
+/* Draft / TipTap writing surface — 16px default (Journal may override higher later). */
+.ProseMirror {
+  font-size: 16px;
+  line-height: 1.65;
+}
+
 .ProseMirror p {
   margin: 0.5em 0;
 }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import pytest
@@ -91,3 +92,34 @@ def test_api_vault_flow(vault_dir: Path):
     r = client.post("/api/vault/backup", params={"slug": "api"})
     assert r.status_code == 200
     assert Path(r.json()["backup"]).is_dir()
+
+
+def test_concurrent_writes_do_not_crash(store: VaultStore):
+    """FastAPI sync routes hit the store from a threadpool; sqlite must not segfault."""
+    proj = store.create_project("Race Proj")
+    slug = proj["slug"]
+    errors: list[BaseException] = []
+
+    def worker(i: int) -> None:
+        try:
+            store.write_content(
+                slug,
+                content_id="manuscript" if i % 3 == 0 else f"doc-{i}",
+                type_="manuscript" if i % 3 == 0 else "note",
+                title="Untitled",
+                body=f"line {i}\n",
+                dirty=True,
+            )
+        except BaseException as exc:  # noqa: BLE001 — collect for assertion
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(24)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert errors == []
+    again = store.read_content(slug, "manuscript")
+    assert again["id"] == "manuscript"
+    listed = store.index.list_project(slug)
+    assert len(listed) >= 1

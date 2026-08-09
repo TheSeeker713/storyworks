@@ -36,8 +36,9 @@ Every phase has **multiple steps**. End of each step, in order:
 3. Retest to **100%** (≤99% = fail → redo)
 4. Commit + push `main` (app repo only)
 5. Append today’s `docs/devlogs/YYYY-MM-DD.md` using [`docs/reference/authentic-voice-notes.md`](docs/reference/authentic-voice-notes.md)
+6. Short **in-chat** verify list for Jeremy (no separate routine checklist file)
 
-End of phase: **FULL STOP** — publish human checklist; run `./scripts/check-phase-clear.sh` before any COMPLETE status. Chat phrases alone are not clearance. **Agents never fill Tester/Date/Result on any human checklist sign-off table** — Jeremy types those himself. Phase 1 Design is document-gated (seven outputs + Jeremy’s sign-off), not a UI walk of the old Setup checklist.
+End of phase: **FULL STOP** — phase-closing checklist in the chat reply; Jeremy’s own reply is sign-off. **An agent never originates a human confirmation** in a file or in chat. Absence of objection is not confirmation. Historical `PHASE_*_HUMAN_CHECKLIST.md` files stay as record only.
 
 Details: [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md).
 
@@ -69,11 +70,7 @@ pytest
 cd apps/web && npm run build
 ```
 
-Clearance gate:
-
-```bash
-./scripts/check-phase-clear.sh docs/phases/PHASE_N_HUMAN_CHECKLIST.md
-```
+Human clearance going forward is Jeremy’s chat reply after the agent’s in-chat checklist / FULL STOP summary. `scripts/check-phase-clear.sh` is historical for old signed checklist files only.
 
 ## Dual VCS (never mix)
 

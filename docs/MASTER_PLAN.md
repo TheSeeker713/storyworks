@@ -18,9 +18,10 @@ retest to 100% → **commit → push `main` → append that day's devlog entry
 in first person**, in that order, before moving to the next step or
 reporting anything as done. No pausing for approval between steps.
 
-The **only** human checkpoint inside a phase is the end-of-phase FULL STOP,
-gated by a script that checks for zero unchecked boxes and a real filled
-sign-off, not a chat claim. A phase may not be marked COMPLETE any other way.
+The **only** human checkpoint inside a phase is the end-of-phase FULL STOP.
+Going forward, that checklist lives in chat; Jeremy’s own reply is sign-off.
+An agent never originates a human confirmation. A phase may not be marked
+COMPLETE any other way. Details: `docs/PHASE_STEP_PROTOCOL.md`.
 
 Cursor never boots a server, runs `npm run dev`, runs `uvicorn`, or opens a
 browser, under any circumstance. Jeremy alone tests live, every time. Cursor's

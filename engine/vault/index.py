@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any, Optional
 
@@ -32,6 +33,7 @@ class VaultIndex:
     def __init__(self, db_path: Path) -> None:
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.RLock()
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL;")
@@ -47,59 +49,65 @@ class VaultIndex:
             self._conn.execute("ALTER TABLE content ADD COLUMN folder_id TEXT")
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()
 
     def upsert(self, row: dict[str, Any]) -> None:
-        self._conn.execute(
-            """
-            INSERT INTO content (
-              id, project_slug, type, parent, book_id, folder_id,
-              title, subject, archived, path, content_hash, mtime, updated_at
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO content (
+                  id, project_slug, type, parent, book_id, folder_id,
+                  title, subject, archived, path, content_hash, mtime, updated_at
+                )
+                VALUES (
+                  :id, :project_slug, :type, :parent, :book_id, :folder_id,
+                  :title, :subject, :archived, :path, :content_hash, :mtime, :updated_at
+                )
+                ON CONFLICT(id) DO UPDATE SET
+                  project_slug=excluded.project_slug,
+                  type=excluded.type,
+                  parent=excluded.parent,
+                  book_id=excluded.book_id,
+                  folder_id=excluded.folder_id,
+                  title=excluded.title,
+                  subject=excluded.subject,
+                  archived=excluded.archived,
+                  path=excluded.path,
+                  content_hash=excluded.content_hash,
+                  mtime=excluded.mtime,
+                  updated_at=excluded.updated_at
+                """,
+                row,
             )
-            VALUES (
-              :id, :project_slug, :type, :parent, :book_id, :folder_id,
-              :title, :subject, :archived, :path, :content_hash, :mtime, :updated_at
-            )
-            ON CONFLICT(id) DO UPDATE SET
-              project_slug=excluded.project_slug,
-              type=excluded.type,
-              parent=excluded.parent,
-              book_id=excluded.book_id,
-              folder_id=excluded.folder_id,
-              title=excluded.title,
-              subject=excluded.subject,
-              archived=excluded.archived,
-              path=excluded.path,
-              content_hash=excluded.content_hash,
-              mtime=excluded.mtime,
-              updated_at=excluded.updated_at
-            """,
-            row,
-        )
-        self._conn.commit()
+            self._conn.commit()
 
     def delete(self, content_id: str) -> None:
-        self._conn.execute("DELETE FROM content WHERE id = ?", (content_id,))
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute("DELETE FROM content WHERE id = ?", (content_id,))
+            self._conn.commit()
 
     def get(self, content_id: str) -> Optional[dict[str, Any]]:
-        cur = self._conn.execute("SELECT * FROM content WHERE id = ?", (content_id,))
-        row = cur.fetchone()
-        return dict(row) if row else None
+        with self._lock:
+            cur = self._conn.execute("SELECT * FROM content WHERE id = ?", (content_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
 
     def list_project(self, project_slug: str, *, include_archived: bool = False) -> list[dict[str, Any]]:
-        if include_archived:
-            cur = self._conn.execute(
-                "SELECT * FROM content WHERE project_slug = ? ORDER BY updated_at DESC",
-                (project_slug,),
-            )
-        else:
-            cur = self._conn.execute(
-                "SELECT * FROM content WHERE project_slug = ? AND archived = 0 ORDER BY updated_at DESC",
-                (project_slug,),
-            )
-        return [dict(r) for r in cur.fetchall()]
+        with self._lock:
+            if include_archived:
+                cur = self._conn.execute(
+                    "SELECT * FROM content WHERE project_slug = ? ORDER BY updated_at DESC",
+                    (project_slug,),
+                )
+            else:
+                cur = self._conn.execute(
+                    "SELECT * FROM content WHERE project_slug = ? AND archived = 0 ORDER BY updated_at DESC",
+                    (project_slug,),
+                )
+            return [dict(r) for r in cur.fetchall()]
 
     def clear(self) -> None:
-        self._conn.execute("DELETE FROM content")
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute("DELETE FROM content")
+            self._conn.commit()

@@ -46,6 +46,7 @@ export default function DraftShell({
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
   const [books, setBooks] = useState<{ id: string; title: string }[]>([]);
   const [structure, setStructure] = useState<string>("");
+  const [shellError, setShellError] = useState<string | null>(null);
 
   const loadStructure = useCallback(async () => {
     try {
@@ -94,16 +95,21 @@ export default function DraftShell({
   async function newTab() {
     const id = `doc-${Date.now().toString(36)}`;
     const title = `Untitled ${tabs.length}`;
-    await api.writeContent(project.slug, {
-      id,
-      type: "note",
-      title,
-      body: "",
-      book_id: "main",
-      folder_id: "main",
-    });
-    setTabs((t) => [...t, { id, title }]);
-    setActiveId(id);
+    try {
+      await api.writeContent(project.slug, {
+        id,
+        type: "note",
+        title,
+        body: "",
+        book_id: "main",
+        folder_id: "main",
+      });
+      setShellError(null);
+      setTabs((t) => [...t, { id, title }]);
+      setActiveId(id);
+    } catch (e) {
+      setShellError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   function closeTab(id: string) {
@@ -139,6 +145,11 @@ export default function DraftShell({
         >
           Exit Zen (Esc)
         </button>
+        {shellError && (
+          <p className="absolute left-4 top-4 z-10 max-w-md rounded bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+            {shellError}
+          </p>
+        )}
         <WritingEditor
           key={`${project.slug}-${active.id}`}
           projectSlug={project.slug}
@@ -156,6 +167,11 @@ export default function DraftShell({
 
   return (
     <div className="flex h-full min-h-0 flex-col" onClick={() => { setCtx(null); setMenuOpen(null); }}>
+      {shellError && (
+        <p className="bg-red-50 px-4 py-2 text-xs text-red-700" role="alert">
+          {shellError}
+        </p>
+      )}
       {/* Two-tier header */}
       <div className="border-b" style={{ borderColor: "var(--sw-border)", background: "var(--sw-teal)", color: "var(--sw-parchment)" }}>
         <div className="flex flex-wrap items-center gap-3 px-3 py-1.5 text-xs">

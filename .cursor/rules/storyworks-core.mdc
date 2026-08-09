@@ -8,8 +8,8 @@ alwaysApply: true
 - Canonical entry: `@AGENTS.md`. Standing plan: `@docs/MASTER_PLAN.md`. Specs live in `docs/` — do not duplicate long essays here.
 - **macOS only.** Not a cross-platform product target.
 - **MyKAIA Big App:** design data/API so Storyworks can later connect to or be absorbed as a micro-app in that ecosystem.
-- Phase status may read COMPLETE only when `./scripts/check-phase-clear.sh` passes on that phase’s human checklist. Chat phrases alone are not clearance.
-- Agents never fill Tester/Date/Result on any human checklist sign-off table. Jeremy only.
+- Phase status may read COMPLETE only when Jeremy confirms in his own chat message after FULL STOP. Agents never invent that confirmation.
+- Step/bug-fix verify lists go in chat; see `@docs/PHASE_STEP_PROTOCOL.md`.
 - Pre-master-plan Vite / Phase 0–1B / vault-in-Setup structures are historical. Archive: `docs/archive/2026-08-08-pre-master-plan.zip`.
 - Theme follows Phase 1 visual system once published (plan: light default, dark as a setting). Do not invent dark-mode UI before those docs exist.
 - Archive before delete; typed full name required to delete.

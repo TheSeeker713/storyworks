@@ -53,7 +53,7 @@ export default function WritingEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-stone max-w-none min-h-[22rem] px-1 py-2 focus:outline-none text-[var(--sw-ink)]",
+          "prose prose-stone max-w-none min-h-[22rem] px-1 py-2 focus:outline-none text-[16px] leading-relaxed text-[var(--sw-ink)]",
       },
     },
     onUpdate: ({ editor: ed }) => {

@@ -1,5 +1,5 @@
 ---
-description: Per-step tests/audit/100%/commit-push/per-day devlog; end-of-phase gate script
+description: Per-step tests/audit/100%/commit-push/per-day devlog; in-chat human confirm
 alwaysApply: true
 ---
 
@@ -7,9 +7,9 @@ alwaysApply: true
 
 - Standing phase map: `@docs/MASTER_PLAN.md` (Setup → Design → Production 2–8 → Deployment).
 - Every active phase has steps listed in `docs/phases/PHASE_N.md` (Phases 2–8 authored at phase start).
-- End of each step, in order: test → phase/step audit → retest → **100% only** (≤99% = fail, redo) → commit + push `main` → append today’s `docs/devlogs/YYYY-MM-DD.md` (Jeremy voice).
+- End of each step, in order: test → phase/step audit → retest → **100% only** (≤99% = fail, redo) → commit + push `main` → append today’s `docs/devlogs/YYYY-MM-DD.md` (Jeremy voice) → short **in-chat** verify list for Jeremy.
 - Voice guide: `@docs/reference/authentic-voice-notes.md`
 - Full protocol: `@docs/PHASE_STEP_PROTOCOL.md`
-- End of phase: **FULL STOP.** Publish `docs/phases/PHASE_N_HUMAN_CHECKLIST.md`. Do not start the next phase and do not mark COMPLETE until `./scripts/check-phase-clear.sh` exits 0 on that checklist.
-- **Never fill Tester, Date, or Result** on any human checklist sign-off table. Jeremy types those himself. Blank table until he does.
+- End of phase: **FULL STOP.** Phase-closing checklist goes in the chat reply (same rigor as the old file). Do not start the next phase and do not mark COMPLETE until Jeremy confirms in his own chat message.
+- **Never originate a human confirmation** in a file, commit, devlog, or chat. Jeremy’s own words only. Absence of objection ≠ confirmation.
 - Never stage vault contents, `projects/`, `data/`, or secrets into the app repo.

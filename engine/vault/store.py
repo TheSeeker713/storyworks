@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import tempfile
+import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -70,6 +71,8 @@ class VaultStore:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
         self.index = VaultIndex(index_path(self.root))
+        # Serialize file + index writes: FastAPI sync routes run in a threadpool.
+        self._write_lock = threading.RLock()
 
     @classmethod
     def init_vault(cls, root: Path) -> "VaultStore":
@@ -390,91 +393,92 @@ class VaultStore:
         expected_hash: Optional[str] = None,
         dirty: bool = False,
     ) -> dict[str, Any]:
-        self.migrate_project(project_slug)
-        content_id = content_id or uuid.uuid4().hex
-        # Prefer existing path if updating
-        if self.resolve_content_path(project_slug, content_id).exists() and content_id:
-            path = self.resolve_content_path(project_slug, content_id)
-            # infer book/folder from path when possible
+        with self._write_lock:
+            self.migrate_project(project_slug)
+            content_id = content_id or uuid.uuid4().hex
+            # Prefer existing path if updating
+            if self.resolve_content_path(project_slug, content_id).exists() and content_id:
+                path = self.resolve_content_path(project_slug, content_id)
+                # infer book/folder from path when possible
+                try:
+                    parts = path.relative_to(project_dir(self.root, project_slug)).parts
+                    # books/<book>/folders/<folder>/content/<id>.md
+                    if len(parts) >= 5 and parts[0] == "books":
+                        book_id = parts[1]
+                        folder_id = parts[3]
+                except ValueError:
+                    pass
+            else:
+                path = content_path(
+                    self.root, project_slug, content_id, book_id=book_id, folder_id=folder_id
+                )
+
+            disk_hash = None
+            if path.exists():
+                disk_bytes = path.read_bytes()
+                disk_hash = _hash_bytes(disk_bytes)
+                if expected_hash and disk_hash != expected_hash:
+                    if dirty:
+                        conflict = path.with_name(
+                            f"{content_id}.conflict-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.md"
+                        )
+                        shutil.copy2(path, conflict)
+                        return {
+                            "ok": False,
+                            "conflict": True,
+                            "conflict_path": str(conflict.relative_to(self.root)),
+                            "disk_hash": disk_hash,
+                            "id": content_id,
+                        }
+                    if expected_hash is not None:
+                        return {
+                            "ok": False,
+                            "conflict": True,
+                            "message": "file changed on disk",
+                            "disk_hash": disk_hash,
+                            "id": content_id,
+                        }
+
+            meta = {
+                "id": content_id,
+                "type": type_,
+                "parent": parent,
+                "book_id": book_id,
+                "folder_id": folder_id,
+                "title": title,
+                "subject": subject,
+                "tags": [],
+                "archived": False,
+                "canvas": canvas or {},
+                "updated_at": _utc_now(),
+            }
+            text = dump_markdown(meta, body)
+            atomic_write(path, text)
+            self._index_file(project_slug, path)
+            # bump project updated_at
+            pmd = project_dir(self.root, project_slug) / "project.md"
+            if pmd.exists():
+                pmeta, pbody = parse_markdown(pmd.read_text(encoding="utf-8"))
+                pmeta["updated_at"] = meta["updated_at"]
+                atomic_write(pmd, dump_markdown(pmeta, pbody))
+            st = path.stat()
             try:
-                parts = path.relative_to(project_dir(self.root, project_slug)).parts
-                # books/<book>/folders/<folder>/content/<id>.md
-                if len(parts) >= 5 and parts[0] == "books":
-                    book_id = parts[1]
-                    folder_id = parts[3]
-            except ValueError:
+                from engine.committer import checkpoint_project
+
+                checkpoint_project(project_dir(self.root, project_slug), message=f"save {content_id}")
+            except Exception:
                 pass
-        else:
-            path = content_path(
-                self.root, project_slug, content_id, book_id=book_id, folder_id=folder_id
-            )
-
-        disk_hash = None
-        if path.exists():
-            disk_bytes = path.read_bytes()
-            disk_hash = _hash_bytes(disk_bytes)
-            if expected_hash and disk_hash != expected_hash:
-                if dirty:
-                    conflict = path.with_name(
-                        f"{content_id}.conflict-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.md"
-                    )
-                    shutil.copy2(path, conflict)
-                    return {
-                        "ok": False,
-                        "conflict": True,
-                        "conflict_path": str(conflict.relative_to(self.root)),
-                        "disk_hash": disk_hash,
-                        "id": content_id,
-                    }
-                if expected_hash is not None:
-                    return {
-                        "ok": False,
-                        "conflict": True,
-                        "message": "file changed on disk",
-                        "disk_hash": disk_hash,
-                        "id": content_id,
-                    }
-
-        meta = {
-            "id": content_id,
-            "type": type_,
-            "parent": parent,
-            "book_id": book_id,
-            "folder_id": folder_id,
-            "title": title,
-            "subject": subject,
-            "tags": [],
-            "archived": False,
-            "canvas": canvas or {},
-            "updated_at": _utc_now(),
-        }
-        text = dump_markdown(meta, body)
-        atomic_write(path, text)
-        self._index_file(project_slug, path)
-        # bump project updated_at
-        pmd = project_dir(self.root, project_slug) / "project.md"
-        if pmd.exists():
-            pmeta, pbody = parse_markdown(pmd.read_text(encoding="utf-8"))
-            pmeta["updated_at"] = meta["updated_at"]
-            atomic_write(pmd, dump_markdown(pmeta, pbody))
-        st = path.stat()
-        try:
-            from engine.committer import checkpoint_project
-
-            checkpoint_project(project_dir(self.root, project_slug), message=f"save {content_id}")
-        except Exception:
-            pass
-        return {
-            "ok": True,
-            "id": content_id,
-            "path": str(path.relative_to(self.root)),
-            "content_hash": _hash_bytes(text.encode("utf-8")),
-            "mtime": st.st_mtime,
-            "meta": meta,
-            "body": body,
-            "book_id": book_id,
-            "folder_id": folder_id,
-        }
+            return {
+                "ok": True,
+                "id": content_id,
+                "path": str(path.relative_to(self.root)),
+                "content_hash": _hash_bytes(text.encode("utf-8")),
+                "mtime": st.st_mtime,
+                "meta": meta,
+                "body": body,
+                "book_id": book_id,
+                "folder_id": folder_id,
+            }
 
     def read_content(self, project_slug: str, content_id: str) -> dict[str, Any]:
         self.migrate_project(project_slug)

@@ -295,10 +295,11 @@ def content_write(slug: str, body: WriteContentIn):
             expected_hash=body.expected_hash,
             dirty=body.dirty,
         )
-    except OSError as exc:
-        raise HTTPException(500, f"content write failed: {exc}") from exc
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:
+        # Surface real cause (sqlite races used to segfault the worker → opaque 500).
+        raise HTTPException(500, f"content write failed: {type(exc).__name__}: {exc}") from exc
 
 
 @app.get("/api/projects/{slug}/content/{content_id}")
