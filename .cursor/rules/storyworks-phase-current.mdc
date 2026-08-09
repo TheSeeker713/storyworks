@@ -1,13 +1,14 @@
 ---
-description: Current phase ownership — Phase 2 FULL STOP awaiting human clear
+description: Current phase ownership — Phase 2 FULL STOP, Zen failure recorded
 alwaysApply: true
 ---
 
 # Current phase
 
 - Standing law: `@docs/MASTER_PLAN.md`. Steps: `@docs/phases/PHASE_2.md`.
-- **Phase 2 machine work done.** Status: **FULL STOP — awaiting Jeremy sign-off** on `docs/phases/PHASE_2_HUMAN_CHECKLIST.md`.
-- Do not mark COMPLETE. Do not start Phase 3 until gate script exits 0 on a checklist Jeremy signed.
-- **Agents never write Tester/Date/Result** unless Jeremy provides exact text.
+- **Phase 2 FULL STOP — Zen FAILURE recorded** (`docs/build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md`). Not COMPLETE. Do not start Phase 3 until Jeremy clears in his own chat words.
+- Zen UI revert proposed, not applied until Jeremy says go. Do not claim Zen fixed.
+- Agents never write live human vaults — throwaway/`tmp_path` only.
+- Agents never invent Jeremy’s confirmation (file or chat).
 - Project switcher RESOLVED (Option 3). Typography OPEN.
 - Canvas = PENS only (Phase 6).
