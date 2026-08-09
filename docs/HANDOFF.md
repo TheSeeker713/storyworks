@@ -1,18 +1,9 @@
 # Handoff — current phase
 
-1. **Storyworks v2 rebuild.** Prior Vite/Phase 0–1B line is historical only.
-2. **Phase 0:** steps 0.1–0.3 and 0.5–0.8 machine-done. **0.4 revised 2026-08-08** — tldraw removed; project list + TipTap writing. Awaiting Jeremy live verify. Status: **FULL STOP — human UI/UX gate.** No third-party canvas SDK; custom canvas is Phase 3 (`PHASE_3_CUSTOM_CANVAS.md`).
-3. Clear **`docs/phases/PHASE_0_HUMAN_CHECKLIST.md`** (project list + TipTap, not canvas), then run:
-
-   ```bash
-   ./scripts/check-phase-clear.sh docs/phases/PHASE_0_HUMAN_CHECKLIST.md
-   ```
-
-   Exit code must be **0**. Chat phrases alone do not clear.
-4. **Do not start Phase 1** and do not mark Phase 0 COMPLETE until that script passes.
-5. Run app: API `:8787` + `apps/web` `npm run dev` → http://127.0.0.1:3000
-6. Protocol: `docs/PHASE_STEP_PROTOCOL.md`. Devlogs: `docs/devlogs/YYYY-MM-DD.md`.
-7. Platform: **macOS only.** Long-term: MyKAIA Big App micro-app absorption.
-8. Dual VCS: never stage vault contents, `projects/`, or `data/` into the app repo.
-
-When Phase 0 is cleared (gate script + filled checklist): update this file for Phase 1.
+1. **Master plan is law:** [`docs/MASTER_PLAN.md`](MASTER_PLAN.md).
+2. **Phase 0 Setup** is done for its real scope only: **0.1** (gate script + per-day devlog protocol) and **0.2** (bare stack scaffold).
+3. The old Phase 0 human checklist is **superseded** — not completed, not failed. Do not walk it. Do not mark old Phase 0 COMPLETE via `check-phase-clear.sh` against that checklist. History: [`docs/archive/2026-08-08-pre-master-plan.zip`](archive/2026-08-08-pre-master-plan.zip).
+4. **Phase 1 Design** is current. Jeremy + Claude only. Cursor does not fill the seven design outputs and does not start Phase 2 product code until those documents exist.
+5. Vault, TipTap, Muse, onboarding, and STT code in the tree are a **working reference implementation** awaiting Phase 1 design review (keep what fits, rebuild what doesn’t). Not COMPLETE under any phase.
+6. Protocol: [`docs/PHASE_STEP_PROTOCOL.md`](PHASE_STEP_PROTOCOL.md). Dual VCS: never stage vault / `projects/` / `data`. Agents never boot servers or browsers.
+7. Pre-master-plan numbered specs (`00_VISION`, `06_UI_UX`, `10_FEATURE_MATRIX`, `docs/design/`, etc.) are subordinate until Phase 1 replaces them.

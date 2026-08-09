@@ -1,39 +1,25 @@
-# Phase 1 — Human-gated visual / UX design (1B redesign)
+# Phase 1 — Design
 
-**Status: AWAITING HUMAN UI/UX CLEAR** — Phase 1B steps done at 100%. **FULL STOP.** Do not start Phase 2 until Jeremy clears [`PHASE_1_HUMAN_CHECKLIST.md`](PHASE_1_HUMAN_CHECKLIST.md).
+**Status: IN PROGRESS** — Jeremy + Claude only. No Cursor product implementation. No functioning app ships from this phase.
 
-**Primary surface:** `/design` full-bleed studio shell. Production writing path (`/`, `/project/:id`) stays Phase 0 wire until clear.
+Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md).
 
-## Locked redesign decisions
+## Required outputs (gate before Phase 2)
 
-| Decision | Choice |
-|----------|--------|
-| Scope | `/design` only until human clear |
-| Chrome | Full-bleed edge-to-edge shell — old tab experiments **rejected** |
-| Daily BG | Playlist A: shuffle once → one webp per calendar day → loop/reshuffle → same image all day |
-| Backdrop | webp behind UI (`public/backgrounds/`) |
-| R3F / WebGL | Side drawer / panel prototypes only — **not** full-screen BG |
-| Writing modules | Flat **solid** panels: Prompt / Note / Novel / Screenplay / Journal |
-| Motion | Module transition + BG parallax **only during** module switch; drawer slide; opacity feedback |
-| Aides | Every control has a visible aide and/or hover `title` |
-| Muse | Tab accept / other key dismiss unchanged when shown in mocks |
-| Muse prose training | Out of scope this pass |
+These must exist as real documents before Phase 2 may begin. Do not fill them in this governance pass; they are produced in the Jeremy+Claude design session.
 
-## Steps (Phase 1B)
+1. Product thesis and target customer, locked
+2. Full feature list by tool: Novel, Screenplay, Blog, Notes, Journal, PENS — each with AI-agentic capabilities named explicitly
+3. Pain-point-driven design principles, want vs need, sourced from research already done
+4. Wireframes or static mockups for every core screen: onboarding, Draft Screen, each module’s writing surface, PENS, Settings, the tool tray, Cmd+K
+5. Information architecture doc: Projects → Books → Folders → Content, Codex, how they nest and navigate
+6. Technical architecture on paper: vault `.md`-as-truth + SQLite-as-cache, canvas scoped to PENS only (engine researched fresh, license-checked before adoption), editor library choice, AI model roles, Lite vs Full build split
+7. Visual system: color tokens (blues/greens/light-browns/reflective-gold), light default with dark available as a setting, typography, component states
 
-| Step | Name | Status |
-|------|------|--------|
-| 1B.1 | R3F/three/drei deps + ffmpeg/cwebp + convert script + placeholder playlist | done |
-| 1B.2 | Full-bleed shell + daily playlist BG + opacity + solid modules + transition parallax | done |
-| 1B.3 | Hover/visual aides + R3F side-drawer prototype | done |
-| 1B.4 | Docs + human checklist + FULL STOP | done — waiting on human |
+## Carry-forward
 
-## Asset tooling
+Existing vault write path, gate script, and archive/restore/delete lifecycle are a **working reference**, not sacred. Phase 2 checks each piece against these design docs.
 
-- Drop sources in `assets/backgrounds/` (jpg/png/webp). Bulky dumps may go under `assets/backgrounds/raw/` (gitignored).
-- Run `scripts/convert-backgrounds.sh` → `apps/web/public/backgrounds/bg-NNN.webp` + `manifest.json`.
-- Requires `cwebp` (`brew install webp`) and/or ffmpeg with libwebp. Homebrew’s default ffmpeg bottle often lacks the encoder — prefer `cwebp`.
+## Human checklist
 
-## Out of scope (unchanged)
-
-Porting shell to production `/` / editor, Writers Room runtime, Codex production, private git push, procedural, dark mode, Muse prose fingerprint/LoRA ladder.
+Publish `PHASE_1_HUMAN_CHECKLIST.md` when the seven outputs are ready (document gate + sign-off). The old 1B `/design` checklist is superseded and archived in [`docs/archive/2026-08-08-pre-master-plan.zip`](../archive/2026-08-08-pre-master-plan.zip).

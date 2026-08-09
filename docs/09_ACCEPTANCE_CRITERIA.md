@@ -1,32 +1,39 @@
 # Acceptance criteria
 
-## Phase 0 (v2 rebuild)
+Standing law: [`docs/MASTER_PLAN.md`](MASTER_PLAN.md).
 
-### Governance / enforcement (Step 0.1)
+## Phase 0 — Setup
+
+### 0.1 Governance / enforcement
 
 - [x] Per-day `docs/devlogs/YYYY-MM-DD.md` convention documented
 - [x] `docs/PHASE_STEP_PROTOCOL.md` requires gate script before COMPLETE
-- [x] `./scripts/check-phase-clear.sh` exists, executable, fails on unfilled checklist (proof in day-devlog)
-- [x] AGENTS + core/phase-current rules state macOS-only + MyKAIA; Phase 0 NOT complete
-- [x] No living false-clearance claims in `PHASE_0.md`, `HANDOFF.md`, this file
+- [x] `./scripts/check-phase-clear.sh` exists, executable, fails on unfilled checklist
+- [x] AGENTS + rules state macOS-only + MyKAIA
 
-### Later Phase 0 steps
+### 0.2 Bare scaffold
 
-- [x] 0.2 New stack scaffold; old Vite product tree removed after rebuild-boundary commit
-- [x] 0.3 Vault `.md` truth + SQLite cache; old storage replaced; continuous backup
-- [ ] 0.4 Project list + TipTap vault-bound writing (canvas SDK removed; awaiting human verify)
-- [x] 0.5 One local STT path proven; header toggle reflects real state
-- [x] 0.6 Onboarding + AI master kill switch
-- [x] 0.7 Muse Tab/dismiss optional path
-- [x] 0.8 Human UI/UX checklist published; status awaiting clear (not COMPLETE)
+- [x] New stack scaffold (Next.js / FastAPI / `engine/`); old Vite product tree removed after rebuild-boundary commit
 
-### Human gate (required to leave Phase 0)
+**Phase 0 Setup status: DONE** for 0.1–0.2 only.
 
-- [ ] Jeremy fills `docs/phases/PHASE_0_HUMAN_CHECKLIST.md` (all boxes + Tester + Date)
-- [ ] `./scripts/check-phase-clear.sh docs/phases/PHASE_0_HUMAN_CHECKLIST.md` exits 0
+### Superseded (old Phase 0 shape — not COMPLETE)
 
-**Note:** A prior claim that Jeremy cleared Phase 0 on 2026-08-06 was false (checklist never signed). That claim is void.
+These were built under a prior phase map. They are working reference code, not Setup deliverables, and are not marked COMPLETE under any phase:
 
-## Phase 1+
+- ~~0.3 Vault `.md` truth + SQLite cache~~ — reference
+- ~~0.4 Project list + TipTap~~ — reference
+- ~~0.5 Local STT~~ — reference
+- ~~0.6 Onboarding + AI master kill~~ — reference
+- ~~0.7 Muse optional path~~ — reference
+- ~~0.8 Old human UI checklist~~ — **superseded** (not completed, not failed); archived in `docs/archive/2026-08-08-pre-master-plan.zip`
 
-See phase docs. End of each phase: human UI/UX checklist FULL STOP + gate script.
+Do not run `check-phase-clear.sh` against the archived old Phase 0 checklist for clearance.
+
+## Phase 1 — Design
+
+Seven design outputs listed in `docs/phases/PHASE_1.md` / master plan. Document gate + checklist when published. Not started as filled artifacts in the master-plan adoption pass.
+
+## Phase 2+
+
+See `docs/MASTER_PLAN.md` and phase docs when authored. End of each production phase: human checklist FULL STOP + gate script.

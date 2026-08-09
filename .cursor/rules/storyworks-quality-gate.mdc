@@ -5,7 +5,8 @@ alwaysApply: true
 
 # Quality gate
 
-- Every phase has multiple steps listed in `docs/phases/PHASE_N.md`.
+- Standing phase map: `@docs/MASTER_PLAN.md` (Setup → Design → Production 2–8 → Deployment).
+- Every active phase has steps listed in `docs/phases/PHASE_N.md` (Phases 2–8 authored at phase start).
 - End of each step, in order: test → phase/step audit → retest → **100% only** (≤99% = fail, redo) → commit + push `main` → append today’s `docs/devlogs/YYYY-MM-DD.md` (Jeremy voice).
 - Voice guide: `@docs/reference/authentic-voice-notes.md`
 - Full protocol: `@docs/PHASE_STEP_PROTOCOL.md`

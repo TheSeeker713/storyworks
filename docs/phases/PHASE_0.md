@@ -1,24 +1,20 @@
-# Phase 0 — v2 rebuild foundation
+# Phase 0 — Setup
 
-**Status: AWAITING HUMAN UI/UX CLEAR** — **FULL STOP.** Do **not** mark COMPLETE and do **not** start Phase 1 until `./scripts/check-phase-clear.sh docs/phases/PHASE_0_HUMAN_CHECKLIST.md` exits 0 with a filled sign-off.
+**Status: DONE** for real Setup scope only (0.1 and 0.2).
 
-**Canvas descoped (2026-08-08):** No third-party canvas SDK in Phase 0. Writing is project list + TipTap bound to vault `.md`. In-house infinite canvas is a later phase (`PHASE_3_CUSTOM_CANVAS.md`).
+Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md). Setup’s only job is prove the machinery works — nothing user-facing.
 
 ## Steps
 
 | Step | Name | Status |
 |------|------|--------|
-| 0.1 | Prove clearance gate + rewrite governance (per-day devlogs, macOS/MyKAIA) | done (100%) |
-| 0.2 | Scaffold new stack; remove old `apps/web` Vite tree and superseded product code | done (100%) |
-| 0.3 | Vault `.md` truth + SQLite cache; replace old storage; continuous backup | done (100%) |
-| 0.4 | Project list + TipTap writing surface (vault-bound autosave; no canvas SDK) | revised — awaiting human verify |
-| 0.5 | Repair local STT; prove one transcription path; basic header toggle | done (100%) |
-| 0.6 | Onboarding + AI master kill switch | done (100%) |
-| 0.7 | Muse (Ollama) optional path | done (100%) |
-| 0.8 | Phase 0 human checklist + FULL STOP | done (100%) — waiting on human |
+| 0.1 | Clearance gate script + per-day devlog protocol | done |
+| 0.2 | Bare Next.js / FastAPI / `engine/` scaffold; green pytest/build/lint on nothing | done |
 
-Human checklist: [`PHASE_0_HUMAN_CHECKLIST.md`](PHASE_0_HUMAN_CHECKLIST.md)
+## Out of Setup scope (working reference in repo, not COMPLETE)
 
-## After human clear
+Code that landed under the old “Phase 0” shape — vault `.md` + SQLite, project list + TipTap, STT, onboarding, Muse — is retained as a **working reference implementation**. It is not marked COMPLETE under Setup or any other phase. Phase 2 opens by checking each piece against Phase 1 design docs.
 
-Only when the gate script passes: mark this file **COMPLETE**, update `docs/HANDOFF.md` for Phase 1, then begin Phase 1 step 1.
+## Human checklist
+
+There is no live Setup UI checklist. The pre-master-plan `PHASE_0_HUMAN_CHECKLIST.md` is **superseded** (not completed, not failed) and lives in [`docs/archive/2026-08-08-pre-master-plan.zip`](../archive/2026-08-08-pre-master-plan.zip).

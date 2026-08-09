@@ -6,8 +6,7 @@ alwaysApply: false
 
 # AI
 
-- Ollama-first for Muse and local generate.
-- OpenClaw optional (probe only in Phase 0).
-- Prefer a single heavy local model; use fallback if missing.
-- Creative Constitution / style lint / Writers Room = Phase 2+ (do not invent half-baked governors in Phase 1).
-- See `@docs/04_AI_GOVERNOR.md` and `@docs/04b_WRITERS_ROOM.md`.
+- Product AI work is **Phase 5** (Muse, STT, sandboxed draft + human approval, provenance). Onboarding / Lite vs Full / BYOM messaging is **Phase 7**. See `@docs/MASTER_PLAN.md`.
+- Code already in the tree (Muse, STT, kill switch) is working reference until Phase 1 design review — not sacred, not COMPLETE.
+- Prefer local inference; Deployment embeds inference for Full build (no required external Ollama dependency). Defaults until revised: write `huihui_ai/qwen3-abliterated:14b`; agentic `qwen2.5-coder:7b`.
+- Do not invent half-baked governors ahead of Phase 5. Older notes: `@docs/04_AI_GOVERNOR.md`, `@docs/04b_WRITERS_ROOM.md` (subordinate until Phase 1 replaces them).

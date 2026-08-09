@@ -1,10 +1,12 @@
 # Phase / step protocol (locked)
 
-Applies to every Storyworks phase from the v2 rebuild onward. macOS only.
+Applies to every Storyworks phase under [`docs/MASTER_PLAN.md`](MASTER_PLAN.md). macOS only.
+
+Standing phase map: Setup (0) → Design (1) → Production (2–8) → Deployment. The pre-master-plan structure that packed vault/editor/AI into “Phase 0” is historical only (see `docs/archive/2026-08-08-pre-master-plan.zip`). Setup’s real scope is **0.1** (gate + per-day devlogs) and **0.2** (bare scaffold).
 
 ## Phases have multiple steps
 
-Each phase’s `docs/phases/PHASE_N.md` lists numbered steps with acceptance criteria. Do not treat a whole phase as one undivided blob of work.
+Each phase’s `docs/phases/PHASE_N.md` lists numbered steps with acceptance criteria when that phase is active. Phases 2–8 and Deployment live in the master plan until their `PHASE_N.md` files are authored at phase start. Do not treat a whole phase as one undivided blob of work.
 
 ## End of every step (mandatory order)
 
@@ -15,13 +17,17 @@ Each phase’s `docs/phases/PHASE_N.md` lists numbered steps with acceptance cri
 5. **Commit + push `main`** — App repo only (`origin` → public Storyworks). Message focuses on why.
 6. **Devlog** — Append a `## HH:MM` entry to today’s `docs/devlogs/YYYY-MM-DD.md` in Jeremy’s first-person voice using [`docs/reference/authentic-voice-notes.md`](reference/authentic-voice-notes.md). Create the day file if needed. Commit + push the devlog if it was not in the same commit.
 
-## End of every phase — FULL STOP (human UI/UX gate)
+No pausing for approval between steps inside a phase.
+
+## End of every phase — FULL STOP
 
 After the last step of a phase passes the step gate:
 
 1. **FULL STOP.** Do not start the next phase.
-2. Publish a human checklist: `docs/phases/PHASE_N_HUMAN_CHECKLIST.md` (how to run, routes, click/keyboard paths, expected results, pass/fail, sign-off table).
-3. Wait for Jeremy to clear the checklist (manual UI/UX pass). Chat phrases alone are **not** clearance.
+2. Publish a human checklist: `docs/phases/PHASE_N_HUMAN_CHECKLIST.md`.
+   - **Production / UI phases:** how to run, routes, click/keyboard paths, expected results, pass/fail, sign-off table.
+   - **Phase 1 Design:** document gate — the seven required outputs exist as real docs, plus checklist + sign-off when published. Not a UI walk of the old Setup checklist.
+3. Wait for Jeremy to clear the checklist. Chat phrases alone are **not** clearance.
 4. Until cleared: only fix reported checklist failures — no next-phase scope.
 5. **Before** marking the phase COMPLETE or beginning the next phase, agents **must** run:
 
@@ -45,6 +51,6 @@ Writing “COMPLETE (human cleared)” (or equivalent) without a passing gate sc
 ## What “100%” means
 
 - Every check listed for that step is green
-- Audit finds no unmet acceptance item and no locked-rule regressions (Muse Tab/dismiss, light mode, dual VCS, archive→typed delete, markdown vault truth once Step 0.3+ exists)
+- Audit finds no unmet acceptance item and no locked-rule regressions (Muse Tab/dismiss when Muse is in scope, theme rules as locked by current phase / Phase 1 visual system once published, dual VCS, archive→typed delete, markdown vault truth once that surface is in-phase)
 - If the step marks “Jeremy manual pass required,” that pass is part of 100% for that step
 - End-of-phase COMPLETE additionally requires the clearance script to pass

@@ -23,4 +23,4 @@ Use local time. At the end of every phase step, append an entry to **today’s**
 
 ## Archive
 
-Older per-step filenames (`YYYY-MM-DD-phase-step-slug.md`) live under [`archive/`](archive/) for history only. Do not create new per-step files.
+Pre-master-plan per-step filenames (`YYYY-MM-DD-phase-step-slug.md`) and superseded phase docs live in [`../archive/2026-08-08-pre-master-plan.zip`](../archive/2026-08-08-pre-master-plan.zip). Do not create new per-step files. Do not leave a loose `docs/devlogs/archive/` folder.

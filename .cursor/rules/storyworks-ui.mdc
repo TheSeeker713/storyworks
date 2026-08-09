@@ -6,8 +6,7 @@ alwaysApply: false
 
 # Web UI
 
-- Light mode only. Gold wire aesthetic direction (Phase 0 = wireframes).
-- Primary Phase 1 workbench: `/design` sandbox. Expand experiments there.
-- Preserve writing path (`/`, editor, Muse) while redesigning chrome.
-- No dark mode themes or toggles.
-- Muse UX: ghost suggestion, Tab accept, other key dismiss.
+- UI product work waits on Phase 1 design artifacts (`@docs/MASTER_PLAN.md` / `@docs/phases/PHASE_1.md`). `/design` sandbox is not current Phase 1 law.
+- Theme follows Phase 1 visual system once published. Do not invent dark-mode themes or toggles before then.
+- Muse UX (when in scope): ghost suggestion, Tab accept, other key dismiss.
+- Existing TipTap / chrome in the tree is working reference until Phase 1 review.

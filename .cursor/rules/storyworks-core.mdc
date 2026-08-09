@@ -5,14 +5,14 @@ alwaysApply: true
 
 # Storyworks core
 
-- Canonical entry: `@AGENTS.md`. Specs live in `docs/` — do not duplicate long essays here.
+- Canonical entry: `@AGENTS.md`. Standing plan: `@docs/MASTER_PLAN.md`. Specs live in `docs/` — do not duplicate long essays here.
 - **macOS only.** Not a cross-platform product target.
 - **MyKAIA Big App:** design data/API so Storyworks can later connect to or be absorbed as a micro-app in that ecosystem.
 - Phase status may read COMPLETE only when `./scripts/check-phase-clear.sh` passes on that phase’s human checklist. Chat phrases alone are not clearance.
-- Do not treat the superseded Vite/Phase 0–1B tree as current product law after the rebuild boundary.
-- Light mode only. No dark mode.
+- Pre-master-plan Vite / Phase 0–1B / vault-in-Setup structures are historical. Archive: `docs/archive/2026-08-08-pre-master-plan.zip`.
+- Theme follows Phase 1 visual system once published (plan: light default, dark as a setting). Do not invent dark-mode UI before those docs exist.
 - Archive before delete; typed full name required to delete.
 - Muse: Tab accept, other key dismiss; never auto-insert.
 - Dual VCS: never commit vault contents, `projects/`, or `data/` into the public app repo.
-- Interfering builds → vault `.storyworks/backup/` (from Step 0.3) → restore when safe. See `@docs/05_GIT_SYNC.md`.
+- Interfering builds → vault `.storyworks/backup/` → restore when safe. See `@docs/05_GIT_SYNC.md`.
 - Step quality gate + phase FULL STOP: `@docs/PHASE_STEP_PROTOCOL.md` and `@.cursor/rules/storyworks-quality-gate.mdc`.
