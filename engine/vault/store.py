@@ -210,6 +210,16 @@ class VaultStore:
         self.ensure_default_hierarchy(slug)
         board = {"id": f"board-{slug}", "project_slug": slug, "empty": True}
         atomic_write(boards_dir(self.root) / f"board-{slug}.json", json.dumps(board, indent=2) + "\n")
+        # Seed empty manuscript immediately so Draft Screen has a durable path before first keystroke.
+        self.write_content(
+            slug,
+            content_id="manuscript",
+            type_="manuscript",
+            title="Untitled draft",
+            body="",
+            book_id=DEFAULT_BOOK_ID,
+            folder_id=DEFAULT_FOLDER_ID,
+        )
         try:
             from engine.committer import init_project_git
 

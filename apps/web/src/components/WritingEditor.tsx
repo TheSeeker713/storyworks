@@ -49,6 +49,7 @@ export default function WritingEditor({
     extensions: [StarterKit],
     content: textToDoc(""),
     immediatelyRender: false,
+    autofocus: true,
     editorProps: {
       attributes: {
         class:
@@ -114,7 +115,7 @@ export default function WritingEditor({
         const created = await api.writeContent(projectSlug, {
           id: contentId,
           type: "manuscript",
-          title: contentTitle || projectName || "Manuscript",
+          title: contentTitle || projectName || "Untitled draft",
           body: "",
           book_id: "main",
           folder_id: "main",
@@ -125,6 +126,7 @@ export default function WritingEditor({
       }
       readyRef.current = true;
       setSaveState("saved");
+      editor.commands.focus("end");
     })().catch((e: Error) => {
       setError(e.message);
       setSaveState("error");

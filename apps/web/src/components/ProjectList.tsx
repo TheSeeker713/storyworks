@@ -9,8 +9,6 @@ type Props = {
   projects: ProjectRow[];
   archivedProjects: ProjectRow[];
   selectedSlug: string | null;
-  newName: string;
-  onNewName: (name: string) => void;
   onCreate: () => void;
   onOpen: (slug: string) => void;
   onArchive: (slug: string) => void;
@@ -31,8 +29,6 @@ export default function ProjectList({
   projects,
   archivedProjects,
   selectedSlug,
-  newName,
-  onNewName,
   onCreate,
   onOpen,
   onArchive,
@@ -45,25 +41,17 @@ export default function ProjectList({
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto p-6" style={{ background: "var(--sw-parchment)" }}>
-      <div>
-        <h2 className="text-lg font-semibold" style={{ color: "var(--sw-teal)" }}>
-          Home
-        </h2>
-        <p className="mt-1 text-sm" style={{ color: "var(--sw-ink-muted)" }}>
-          List/grid triage for every project. Archive, restore, and typed delete live here. Header switcher is a
-          shortcut only.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          className="min-w-[12rem] flex-1 rounded-lg border bg-white px-3 py-2 text-sm"
-          style={{ borderColor: "var(--sw-border)" }}
-          value={newName}
-          onChange={(e) => onNewName(e.target.value)}
-          placeholder="New project name"
-        />
-        <button type="button" className="sw-btn" onClick={onCreate} disabled={!newName.trim()}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold" style={{ color: "var(--sw-teal)" }}>
+            Home
+          </h2>
+          <p className="mt-1 text-sm" style={{ color: "var(--sw-ink-muted)" }}>
+            Triage at scale — organize, archive, restore, typed delete. Writing starts on the Draft Screen; this is not
+            the front door.
+          </p>
+        </div>
+        <button type="button" className="sw-btn" onClick={onCreate} title="Create untitled project and open Draft">
           New project
         </button>
       </div>
@@ -74,7 +62,7 @@ export default function ProjectList({
         </h3>
         {projects.length === 0 ? (
           <p className="text-sm" style={{ color: "var(--sw-ink-faint)" }}>
-            No projects yet.
+            No projects yet. New project creates an untitled draft instantly.
           </p>
         ) : (
           <div className="overflow-hidden rounded-lg border" style={{ borderColor: "var(--sw-border)" }}>

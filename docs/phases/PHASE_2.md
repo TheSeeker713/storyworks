@@ -1,8 +1,8 @@
 # Phase 2 — Data & Draft Screen
 
-**Status: AWAITING HUMAN UI/UX CLEAR — FULL STOP.**
+**Status: FAILED human clear — fixing zero-friction Draft entry (IN PROGRESS).**
 
-Do **not** mark COMPLETE and do **not** start Phase 3 until Jeremy fills [`PHASE_2_HUMAN_CHECKLIST.md`](PHASE_2_HUMAN_CHECKLIST.md) and `./scripts/check-phase-clear.sh` exits 0. Agents never write the sign-off table.
+Jeremy marked [`PHASE_2_HUMAN_CHECKLIST.md`](PHASE_2_HUMAN_CHECKLIST.md) Result: fail — post-onboarding landed on Home and required typing a project name before writing. That violates “writing reachable with zero typing first.” Fix in progress; do **not** mark COMPLETE / do **not** start Phase 3 until a fresh human walk passes and the gate exits 0. Agents never write the sign-off table.
 
 Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md). Project switcher Option 3 resolved in IA. Typography remains OPEN.
 

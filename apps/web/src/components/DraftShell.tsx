@@ -36,7 +36,7 @@ export default function DraftShell({
   onMuseAppendConsumed,
   onMuseAccept,
 }: Props) {
-  const [tabs, setTabs] = useState<Tab[]>([{ id: "manuscript", title: "Manuscript" }]);
+  const [tabs, setTabs] = useState<Tab[]>([{ id: "manuscript", title: "Untitled draft" }]);
   const [activeId, setActiveId] = useState("manuscript");
   const [trayOpen, setTrayOpen] = useState(false);
   const [zen, setZen] = useState(false);
@@ -109,7 +109,7 @@ export default function DraftShell({
   function closeTab(id: string) {
     setTabs((t) => {
       const next = t.filter((x) => x.id !== id);
-      if (next.length === 0) return [{ id: "manuscript", title: "Manuscript" }];
+      if (next.length === 0) return [{ id: "manuscript", title: "Untitled draft" }];
       if (activeId === id) setActiveId(next[0].id);
       return next;
     });

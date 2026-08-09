@@ -19,6 +19,9 @@ def test_create_project_has_default_hierarchy(tmp_path: Path):
     folders = store.list_folders(slug, DEFAULT_BOOK_ID)
     assert any(f["id"] == DEFAULT_FOLDER_ID for f in folders)
     assert (store.root / "projects" / slug / ".git").is_dir()
+    # Seeded manuscript exists immediately (zero-friction Draft path)
+    seeded = store.read_content(slug, "manuscript")
+    assert seeded["meta"].get("title") == "Untitled draft"
     store.close()
 
 

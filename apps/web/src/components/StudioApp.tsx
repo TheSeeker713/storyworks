@@ -10,6 +10,7 @@ import ProjectList from "@/components/ProjectList";
 
 const VAULT_KEY = "storyworks.vaultPath";
 const PROJECT_KEY = "storyworks.projectSlug";
+const VIEW_KEY = "storyworks.view";
 const RECENT_KEY = "storyworks.recentProjects";
 const STT_KEY = "storyworks.sttEnabled";
 const MUSE_KEY = "storyworks.museEnabled";
@@ -26,14 +27,26 @@ function pushRecent(slug: string) {
   }
 }
 
+async function ensureWritingProject(): Promise<ProjectRow> {
+  const live = await api.listProjects(false);
+  const projects = live.projects.filter((p) => !p.archived);
+  const saved = localStorage.getItem(PROJECT_KEY);
+  if (saved) {
+    const hit = projects.find((p) => p.slug === saved);
+    if (hit) return hit;
+  }
+  if (projects.length > 0) return projects[0];
+  return api.createProject("Untitled");
+}
+
 export default function StudioApp() {
   const [booting, setBooting] = useState(true);
   const [vaultPath, setVaultPath] = useState("");
   const [inputPath, setInputPath] = useState("");
   const [projectSlug, setProjectSlug] = useState<string | null>(null);
+  const [view, setView] = useState<"draft" | "home">("draft");
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<ProjectRow[]>([]);
-  const [newName, setNewName] = useState("My Project");
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [sttState, setSttState] = useState<SttUiState>("unknown");
@@ -50,6 +63,19 @@ export default function StudioApp() {
   const [pickError, setPickError] = useState<string | null>(null);
   const [completingOnboard, setCompletingOnboard] = useState(false);
 
+  const goHome = useCallback(() => {
+    setView("home");
+    localStorage.setItem(VIEW_KEY, "home");
+  }, []);
+
+  const goDraft = useCallback((slug: string) => {
+    localStorage.setItem(PROJECT_KEY, slug);
+    pushRecent(slug);
+    setProjectSlug(slug);
+    setView("draft");
+    localStorage.setItem(VIEW_KEY, "draft");
+  }, []);
+
   const refreshProjects = useCallback(async () => {
     const [live, archived] = await Promise.all([api.listProjects(false), api.listProjects(true)]);
     setProjects(live.projects.filter((p) => !p.archived));
@@ -57,7 +83,7 @@ export default function StudioApp() {
   }, []);
 
   const openVault = useCallback(
-    async (path: string) => {
+    async (path: string, opts?: { forceDraft?: boolean }) => {
       setError(null);
       setStatus("Opening vault…");
       await api.openVault(path);
@@ -71,9 +97,18 @@ export default function StudioApp() {
       setInputPath(path);
       const v = await api.vault();
       setMasterOn(Boolean(v.settings.ai_master_enabled !== false));
+      const writing = await ensureWritingProject();
+      localStorage.setItem(PROJECT_KEY, writing.slug);
+      pushRecent(writing.slug);
+      setProjectSlug(writing.slug);
       await refreshProjects();
-      const saved = localStorage.getItem(PROJECT_KEY);
-      if (saved) setProjectSlug(saved);
+      if (opts?.forceDraft) {
+        setView("draft");
+        localStorage.setItem(VIEW_KEY, "draft");
+      } else {
+        const savedView = localStorage.getItem(VIEW_KEY);
+        setView(savedView === "home" ? "home" : "draft");
+      }
       setStatus(`Vault: ${path}`);
     },
     [refreshProjects],
@@ -139,7 +174,7 @@ export default function StudioApp() {
     setCompletingOnboard(true);
     setError(null);
     try {
-      await openVault(path);
+      await openVault(path, { forceDraft: true });
       const patch = opts.hateAi
         ? { ai_master_enabled: false, muse_enabled: false, stt_enabled: false }
         : { ai_master_enabled: true, muse_enabled: false, stt_enabled: false };
@@ -158,6 +193,8 @@ export default function StudioApp() {
     localStorage.setItem(ONBOARD_KEY, "1");
     setOnboardingFirstRun(false);
     setShowOnboarding(false);
+    setView("draft");
+    localStorage.setItem(VIEW_KEY, "draft");
   }
 
   function dismissOnboarding() {
@@ -171,29 +208,26 @@ export default function StudioApp() {
       .catch((e: Error) => setError(e.message));
   }
 
-  async function createProject() {
+  async function createUntitledProject() {
     setError(null);
-    const p = await api.createProject(newName.trim() || "Untitled");
-    localStorage.setItem(PROJECT_KEY, p.slug);
-    pushRecent(p.slug);
-    setProjectSlug(p.slug);
+    const p = await api.createProject("Untitled");
     await refreshProjects();
+    goDraft(p.slug);
   }
 
   function openProject(slug: string) {
-    localStorage.setItem(PROJECT_KEY, slug);
-    pushRecent(slug);
-    setProjectSlug(slug);
+    goDraft(slug);
   }
 
   async function archiveProject(slug: string) {
     setError(null);
     await api.archiveProject(slug);
-    if (projectSlug === slug) {
-      setProjectSlug(null);
-      localStorage.removeItem(PROJECT_KEY);
-    }
     await refreshProjects();
+    if (projectSlug === slug) {
+      const writing = await ensureWritingProject();
+      goDraft(writing.slug);
+      await refreshProjects();
+    }
   }
 
   async function restoreProject(slug: string) {
@@ -205,11 +239,12 @@ export default function StudioApp() {
   async function deleteProject(slug: string, typedName: string) {
     setError(null);
     await api.deleteProject(slug, typedName);
-    if (projectSlug === slug) {
-      setProjectSlug(null);
-      localStorage.removeItem(PROJECT_KEY);
-    }
     await refreshProjects();
+    if (projectSlug === slug) {
+      const writing = await ensureWritingProject();
+      goDraft(writing.slug);
+      await refreshProjects();
+    }
   }
 
   async function toggleMaster() {
@@ -264,6 +299,8 @@ export default function StudioApp() {
   if (booting) {
     return <BootScreen ollamaSummary={ollamaSummary} sttSummary={sttSummary} />;
   }
+
+  const showDraft = Boolean(vaultPath && view === "draft" && projectSlug && selectedProject && !selectedProject.archived);
 
   return (
     <div className="flex h-screen flex-col" style={{ background: "var(--sw-parchment)", color: "var(--sw-ink)" }}>
@@ -345,7 +382,9 @@ export default function StudioApp() {
             type="button"
             className="sw-btn"
             disabled={!inputPath.trim()}
-            onClick={() => void openVault(inputPath.trim()).catch((e: Error) => setError(e.message))}
+            onClick={() =>
+              void openVault(inputPath.trim(), { forceDraft: true }).catch((e: Error) => setError(e.message))
+            }
           >
             Open vault
           </button>
@@ -354,10 +393,7 @@ export default function StudioApp() {
               type="button"
               className={headerBtn}
               style={{ borderColor: "var(--sw-border)", background: "white" }}
-              onClick={() => {
-                setProjectSlug(null);
-                localStorage.removeItem(PROJECT_KEY);
-              }}
+              onClick={goHome}
               title="List/grid Home — triage at scale"
             >
               Home
@@ -374,16 +410,13 @@ export default function StudioApp() {
           <div className="flex h-full items-center justify-center p-8" style={{ color: "var(--sw-ink-muted)" }}>
             Choose a vault folder to get started.
           </div>
-        ) : projectSlug && selectedProject && !selectedProject.archived ? (
+        ) : showDraft && selectedProject ? (
           <DraftShell
             project={selectedProject}
             projects={projects}
             museEnabled={museEnabled}
             masterOn={masterOn}
-            onHome={() => {
-              setProjectSlug(null);
-              localStorage.removeItem(PROJECT_KEY);
-            }}
+            onHome={goHome}
             onSwitchProject={openProject}
             onDraftText={setDraftText}
             draftText={draftText}
@@ -396,9 +429,7 @@ export default function StudioApp() {
             projects={projects}
             archivedProjects={archivedProjects}
             selectedSlug={projectSlug}
-            newName={newName}
-            onNewName={setNewName}
-            onCreate={() => void createProject().catch((e: Error) => setError(e.message))}
+            onCreate={() => void createUntitledProject().catch((e: Error) => setError(e.message))}
             onOpen={openProject}
             onArchive={(slug) => void archiveProject(slug).catch((e: Error) => setError(e.message))}
             onRestore={(slug) => void restoreProject(slug).catch((e: Error) => setError(e.message))}
