@@ -9,6 +9,7 @@ alwaysApply: true
 - **macOS only.** Not a cross-platform product target.
 - **MyKAIA Big App:** design data/API so Storyworks can later connect to or be absorbed as a micro-app in that ecosystem.
 - Phase status may read COMPLETE only when `./scripts/check-phase-clear.sh` passes on that phase’s human checklist. Chat phrases alone are not clearance.
+- Agents never fill Tester/Date/Result on any human checklist sign-off table. Jeremy only.
 - Pre-master-plan Vite / Phase 0–1B / vault-in-Setup structures are historical. Archive: `docs/archive/2026-08-08-pre-master-plan.zip`.
 - Theme follows Phase 1 visual system once published (plan: light default, dark as a setting). Do not invent dark-mode UI before those docs exist.
 - Archive before delete; typed full name required to delete.

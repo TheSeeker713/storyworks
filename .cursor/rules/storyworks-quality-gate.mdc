@@ -11,4 +11,5 @@ alwaysApply: true
 - Voice guide: `@docs/reference/authentic-voice-notes.md`
 - Full protocol: `@docs/PHASE_STEP_PROTOCOL.md`
 - End of phase: **FULL STOP.** Publish `docs/phases/PHASE_N_HUMAN_CHECKLIST.md`. Do not start the next phase and do not mark COMPLETE until `./scripts/check-phase-clear.sh` exits 0 on that checklist.
+- **Never fill Tester, Date, or Result** on any human checklist sign-off table. Jeremy types those himself. Blank table until he does.
 - Never stage vault contents, `projects/`, `data/`, or secrets into the app repo.

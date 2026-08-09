@@ -48,6 +48,12 @@ A phase status may read **COMPLETE** only when **all** of the following are true
 
 Writing “COMPLETE (human cleared)” (or equivalent) without a passing gate script is a protocol violation. The prior false Phase 0 clearance is why this gate exists.
 
+### Agents never write the sign-off table (locked)
+
+**No agent, ever, under any circumstance, fills in the Tester, Date, or Result fields of any human checklist sign-off table.** That table exists to be typed by Jeremy — in his own message or his own hand. Nothing else satisfies it.
+
+This applies even when a phase is document-only, even when every checkbox above the table is mechanically verifiable, and even when Jeremy has already said in chat that the work looks done. Chat is not sign-off. An agent pre-filling “Jeremy Robards” / today’s date / “Pass” and then running the gate script is the same failure pattern as the original Phase 0 false clearance. Publish the checklist with a blank sign-off table; leave status AWAITING HUMAN CLEAR / IN PROGRESS until Jeremy fills it.
+
 ## What “100%” means
 
 - Every check listed for that step is green

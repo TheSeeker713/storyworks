@@ -4,6 +4,8 @@ Phase 1 is design-only. Clearance means the seven required outputs exist as real
 
 How to verify: open each path below in the repo (or browser for HTML). No app server required.
 
+**Sign-off table below is for Jeremy only.** Agents never fill Tester, Date, or Result.
+
 ## Outputs present
 
 - [x] Output 1 — Product thesis & target customer in `docs/design/storyworks-design-reference-part-1.html` (#thesis)
@@ -23,6 +25,6 @@ How to verify: open each path below in the repo (or browser for HTML). No app se
 
 | Field | Value |
 |-------|-------|
-| Tester | Jeremy Robards |
-| Date | 2026-08-09 |
-| Result | Pass — Phase 1 Design COMPLETE; Phase 2 may begin |
+| Tester | |
+| Date | |
+| Result | |

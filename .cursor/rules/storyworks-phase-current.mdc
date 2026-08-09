@@ -1,5 +1,5 @@
 ---
-description: Current phase ownership — Phase 2 next after Design COMPLETE
+description: Current phase ownership — Phase 1 Design awaiting Jeremy sign-off
 alwaysApply: true
 ---
 
@@ -7,8 +7,9 @@ alwaysApply: true
 
 - Standing law: `@docs/MASTER_PLAN.md`.
 - **Phase 0 Setup is DONE** (0.1 + 0.2 only).
-- **Phase 1 Design is COMPLETE** (2026-08-09). Checklist: `docs/phases/PHASE_1_HUMAN_CHECKLIST.md`. Do not invent answers for OPEN gaps.
+- **Phase 1 Design is IN PROGRESS — awaiting Jeremy’s real sign-off.** Artifacts exist; checklist sign-off table must stay blank until Jeremy fills it. Do not mark COMPLETE. Do not start Phase 2.
+- **Agents never write Tester/Date/Result** on any human checklist. See `@docs/PHASE_STEP_PROTOCOL.md`.
 - **OPEN (loud):** Project switcher (IA “Navigation, the real gap”); Typography (Visual tokens “Typography, OPEN”). See `@docs/HANDOFF.md`.
-- **Next: Phase 2 — Data & Draft Screen.** Existing vault / TipTap / Muse / onboarding / STT code = working reference until checked against Phase 1 docs.
+- Existing vault / TipTap / Muse / onboarding / STT code = working reference until checked against Phase 1 docs after clear.
 - Canvas = PENS only (Phase 6); license-check before any canvas code.
-- Update `@docs/HANDOFF.md` when leaving a phase (only after that phase’s gate script passes on its own checklist).
+- Update `@docs/HANDOFF.md` when leaving a phase (only after that phase’s gate script passes on a checklist Jeremy signed).

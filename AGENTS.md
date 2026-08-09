@@ -14,8 +14,8 @@ Standing law: [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md). It supersedes all pr
 | Phase | Status | Scope |
 |-------|--------|--------|
 | **0 Setup** | Done (0.1–0.2 only) | Clearance gate script + per-day devlog protocol; bare Next.js/FastAPI/`engine/` scaffold. Nothing user-facing. |
-| **1 Design** | COMPLETE (2026-08-09) | Seven design artifacts (see `PHASE_1.md`). Two OPEN gaps: Project switcher, typography — see HANDOFF. |
-| **2–8 Production** | Next: Phase 2 | Data & Draft Screen → Novel/Screenplay/Codex → Notes/Journal/Blog → AI layer → PENS → Onboarding/Settings/Lite·Full → Export/Publish |
+| **1 Design** | IN PROGRESS — awaiting Jeremy sign-off | Seven artifacts in repo; checklist sign-off blank. Two OPEN gaps: Project switcher, typography — see HANDOFF. |
+| **2–8 Production** | Not started (blocked on Phase 1 clear) | Data & Draft Screen → Novel/Screenplay/Codex → Notes/Journal/Blog → AI layer → PENS → Onboarding/Settings/Lite·Full → Export/Publish |
 | **Deployment** | Not started | Tauri packaging, signing, pricing, distribution |
 
 **Do not** treat the prior Vite/Phase 0–1B tree, or the pre-master-plan “Phase 0 with vault/editor/Muse” structure, as current product law. Superseded history (old phase docs + per-step devlogs): [`docs/archive/2026-08-08-pre-master-plan.zip`](docs/archive/2026-08-08-pre-master-plan.zip).
@@ -36,7 +36,7 @@ Every phase has **multiple steps**. End of each step, in order:
 4. Commit + push `main` (app repo only)
 5. Append today’s `docs/devlogs/YYYY-MM-DD.md` using [`docs/reference/authentic-voice-notes.md`](docs/reference/authentic-voice-notes.md)
 
-End of phase: **FULL STOP** — publish human checklist; run `./scripts/check-phase-clear.sh` before any COMPLETE status. Chat phrases alone are not clearance. Phase 1 Design is document-gated (seven outputs + checklist when published), not a UI walk of the old Setup checklist.
+End of phase: **FULL STOP** — publish human checklist; run `./scripts/check-phase-clear.sh` before any COMPLETE status. Chat phrases alone are not clearance. **Agents never fill Tester/Date/Result on any human checklist sign-off table** — Jeremy types those himself. Phase 1 Design is document-gated (seven outputs + Jeremy’s sign-off), not a UI walk of the old Setup checklist.
 
 Details: [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md).
 
