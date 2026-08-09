@@ -1,25 +1,32 @@
 # Phase 1 — Design
 
-**Status: IN PROGRESS** — Jeremy + Claude only. No Cursor product implementation. No functioning app ships from this phase.
+**Status: COMPLETE** — cleared 2026-08-09 via [`PHASE_1_HUMAN_CHECKLIST.md`](PHASE_1_HUMAN_CHECKLIST.md) (`./scripts/check-phase-clear.sh` exit 0).
 
-Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md).
+Standing law: [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md). No functioning app shipped from this phase. Artifacts below are what Phase 2+ builds against.
 
-## Required outputs (gate before Phase 2)
+## Required outputs (all present)
 
-These must exist as real documents before Phase 2 may begin. Do not fill them in this governance pass; they are produced in the Jeremy+Claude design session.
+| # | Output | Location |
+|---|--------|----------|
+| 1 | Product thesis and target customer | [`docs/design/storyworks-design-reference-part-1.html`](../design/storyworks-design-reference-part-1.html) § thesis |
+| 2 | Full feature list by tool (Novel, Screenplay, Blog, Notes, Journal, PENS + AI-agentic capabilities) | same HTML, features section |
+| 3 | Pain-point-driven design principles (want vs need) | same HTML, principles section |
+| 4 | Wireframes / static mockups (core screens) | Part 1 + [`docs/design/storyworks-design-reference-part-2.html`](../design/storyworks-design-reference-part-2.html) |
+| 5 | Information architecture | [`PHASE_1_INFORMATION_ARCHITECTURE.md`](PHASE_1_INFORMATION_ARCHITECTURE.md) |
+| 6 | Technical architecture | [`PHASE_1_TECHNICAL_ARCHITECTURE.md`](PHASE_1_TECHNICAL_ARCHITECTURE.md) |
+| 7 | Visual system / tokens | [`PHASE_1_VISUAL_TOKENS.md`](PHASE_1_VISUAL_TOKENS.md) |
 
-1. Product thesis and target customer, locked
-2. Full feature list by tool: Novel, Screenplay, Blog, Notes, Journal, PENS — each with AI-agentic capabilities named explicitly
-3. Pain-point-driven design principles, want vs need, sourced from research already done
-4. Wireframes or static mockups for every core screen: onboarding, Draft Screen, each module’s writing surface, PENS, Settings, the tool tray, Cmd+K
-5. Information architecture doc: Projects → Books → Folders → Content, Codex, how they nest and navigate
-6. Technical architecture on paper: vault `.md`-as-truth + SQLite-as-cache, canvas scoped to PENS only (engine researched fresh, license-checked before adoption), editor library choice, AI model roles, Lite vs Full build split
-7. Visual system: color tokens (blues/greens/light-browns/reflective-gold), light default with dark available as a setting, typography, component states
+## Open gaps (carried into Phase 2 — do not invent)
+
+1. **Project switcher** — IA § “Navigation, the real gap”: no resolved top-level switch-between-Projects screen. Resolve early in Phase 2; later modules assume it exists. Do not invent without asking Jeremy.
+2. **Typography** — Visual tokens § “Typography, OPEN”: system font in wireframes was placeholder only. Resolve before type-sensitive UI ships. Dark-mode token values also OPEN.
+
+See [`docs/HANDOFF.md`](../HANDOFF.md) for the cold-start callout.
 
 ## Carry-forward
 
-Existing vault write path, gate script, and archive/restore/delete lifecycle are a **working reference**, not sacred. Phase 2 checks each piece against these design docs.
+Existing vault write path, gate script, and archive/restore/delete lifecycle remain a **working reference**, not sacred. Phase 2 checks each piece against these design docs.
 
-## Human checklist
+## Next
 
-Publish `PHASE_1_HUMAN_CHECKLIST.md` when the seven outputs are ready (document gate + sign-off). The old 1B `/design` checklist is superseded and archived in [`docs/archive/2026-08-08-pre-master-plan.zip`](../archive/2026-08-08-pre-master-plan.zip).
+Phase 2 — Data & Draft Screen. See master plan.

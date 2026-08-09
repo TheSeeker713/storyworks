@@ -7,21 +7,21 @@ You are the Cursor agent on **Storyworks** at `~/Developer/storyworks` (`TheSeek
 Follow [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) and [`docs/HANDOFF.md`](HANDOFF.md).
 
 - **Phase 0 Setup** is done (0.1 gate + 0.2 scaffold only).
-- **Phase 1 Design** is current and is **Jeremy + Claude only**. Do not fill the seven design outputs. Do not start Phase 2+ product code until those documents exist as real files.
-- Do not revive or clear the old Phase 0 human checklist from `docs/archive/2026-08-08-pre-master-plan.zip`.
+- **Phase 1 Design is COMPLETE.** Build against the Phase 1 artifacts. Do not invent answers for OPEN gaps (Project switcher; typography) — ask Jeremy.
+- **Next: Phase 2 — Data & Draft Screen** when Jeremy starts that phase. Resolve the project-switcher gap early.
 
 ## Locked facts
 
 - macOS only; MyKAIA Big App micro-app absorption is a long-term architecture principle
 - Per-day devlogs: `docs/devlogs/YYYY-MM-DD.md`
 - Clearance is mechanical via `scripts/check-phase-clear.sh` — chat phrases alone never clear a phase
-- Theme follows Phase 1 visual system once published; do not invent dark-mode UI before then
+- Theme / tokens: `docs/phases/PHASE_1_VISUAL_TOKENS.md` (typography OPEN; dark-mode tokens OPEN)
 - Canvas is PENS-only (Phase 6); license-check before any canvas dependency
 - Existing vault / TipTap / Muse / onboarding / STT code is working reference, not sacred
 
 ## Read order
 
-`AGENTS.md` → `docs/MASTER_PLAN.md` → `docs/HANDOFF.md` → `docs/PHASE_STEP_PROTOCOL.md` → current `docs/phases/PHASE_*.md`
+`AGENTS.md` → `docs/MASTER_PLAN.md` → `docs/HANDOFF.md` → `docs/phases/PHASE_1_INFORMATION_ARCHITECTURE.md` → `docs/phases/PHASE_1_TECHNICAL_ARCHITECTURE.md` → `docs/phases/PHASE_1_VISUAL_TOKENS.md` → `docs/PHASE_STEP_PROTOCOL.md` → current `docs/phases/PHASE_*.md`
 
 ## Do not
 
@@ -29,3 +29,4 @@ Follow [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) and [`docs/HANDOFF.md`](HANDOFF.m
 - Stage vault / `projects/` / `data/` into the app repo
 - Boot servers, run `npm run dev` / `uvicorn`, or open a browser
 - Skip step quality gate (test → audit → 100% → commit/push → day-devlog append)
+- Invent a Project switcher or product typography without Jeremy

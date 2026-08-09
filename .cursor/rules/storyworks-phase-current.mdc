@@ -1,14 +1,14 @@
 ---
-description: Current phase ownership — Phase 1 Design (Jeremy+Claude)
+description: Current phase ownership — Phase 2 next after Design COMPLETE
 alwaysApply: true
 ---
 
 # Current phase
 
 - Standing law: `@docs/MASTER_PLAN.md`.
-- **Phase 0 Setup is DONE** for real scope only: 0.1 (gate + per-day devlogs) and 0.2 (bare scaffold).
-- **Phase 1 Design is current** — Jeremy + Claude only. Do not fill the seven design outputs. Do not start Phase 2+ product code until those documents exist.
-- Old Phase 0 human checklist is **superseded** (not completed, not failed). History: `docs/archive/2026-08-08-pre-master-plan.zip`. Do not clear via gate script against that archived checklist.
-- Vault / TipTap / Muse / onboarding / STT in the tree = working reference, not COMPLETE under any phase.
+- **Phase 0 Setup is DONE** (0.1 + 0.2 only).
+- **Phase 1 Design is COMPLETE** (2026-08-09). Checklist: `docs/phases/PHASE_1_HUMAN_CHECKLIST.md`. Do not invent answers for OPEN gaps.
+- **OPEN (loud):** Project switcher (IA “Navigation, the real gap”); Typography (Visual tokens “Typography, OPEN”). See `@docs/HANDOFF.md`.
+- **Next: Phase 2 — Data & Draft Screen.** Existing vault / TipTap / Muse / onboarding / STT code = working reference until checked against Phase 1 docs.
 - Canvas = PENS only (Phase 6); license-check before any canvas code.
 - Update `@docs/HANDOFF.md` when leaving a phase (only after that phase’s gate script passes on its own checklist).

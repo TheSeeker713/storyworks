@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Storyworks — UI/UX Design Reference, Part Two</title>
+<style>
+  :root {
+    --teal: #1B4B43; --forest: #2D5940; --sage: #8AA888; --driftwood: #A68A6D;
+    --parchment: #FBF8F1; --parchment-deep: #EFE8D8; --ink: #2A2A26;
+    --ink-muted: #6B6656; --ink-faint: #A6A192; --gold: #C9A227; --border: #DDD5C4;
+    --green-bg: #EAF3DE; --green-text: #3B6D11; --green-border: #97C459;
+    --amber-bg: #FAEEDA; --amber-text: #854F0B; --amber-border: #EF9F27;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "SF Pro Text", "Segoe UI", sans-serif; background: #EDEAE0; color: var(--ink); margin: 0; line-height: 1.7; }
+  .doc { max-width: 880px; margin: 0 auto; padding: 0 32px 100px; }
+  header.masthead { background: var(--teal); color: var(--parchment); padding: 56px 32px 40px; }
+  header.masthead .inner { max-width: 880px; margin: 0 auto; }
+  header.masthead .kicker { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--sage); margin-bottom: 10px; }
+  header.masthead h1 { font-size: 32px; font-weight: 500; margin: 0 0 10px; }
+  header.masthead .sub { font-size: 14px; color: #C9DDD3; max-width: 620px; }
+  nav.toc { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 22px 26px; margin: -20px 0 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+  nav.toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin: 0 0 12px; }
+  nav.toc ol { margin: 0; padding-left: 20px; columns: 2; font-size: 13px; }
+  nav.toc li { margin-bottom: 6px; }
+  nav.toc a { color: var(--teal); text-decoration: none; }
+  section { margin: 56px 0; padding-top: 20px; }
+  section > h2 { font-size: 22px; font-weight: 500; color: var(--teal); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
+  h3 { font-size: 16px; font-weight: 500; color: var(--teal); margin: 28px 0 10px; }
+  p { font-size: 14px; color: var(--ink); }
+  .status-banner { background: #FFFFFF; border: 1px solid var(--gold); border-left: 4px solid var(--gold); border-radius: 6px; padding: 14px 18px; font-size: 13px; color: var(--ink-muted); margin: 0 0 32px; }
+  .status-banner strong { color: var(--ink); }
+  .card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+  .card h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--driftwood); margin: 0 0 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+  th { text-align: left; color: var(--driftwood); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 10px; border-bottom: 1px solid var(--parchment-deep); vertical-align: top; }
+  code { font-family: ui-monospace, monospace; background: var(--parchment-deep); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .open-item { border: 1px dashed var(--driftwood); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: var(--ink-muted); margin: 10px 0; background: #FFFDF7; }
+  .open-item strong { color: var(--ink); }
+  .future-phase { background: #FFFFFF; border: 1px solid var(--border); border-left: 4px solid var(--sage); border-radius: 6px; padding: 14px 18px; margin: 10px 0; font-size: 13px; }
+  .future-phase h4 { margin: 0 0 6px; font-size: 13px; color: var(--forest); }
+  .research-finding { background: var(--teal); color: var(--parchment); border-radius: 10px; padding: 18px 22px; margin: 14px 0; }
+  .research-finding h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--sage); margin: 0 0 8px; }
+  .research-finding p, .research-finding li { color: #E2ECE7; font-size: 13px; }
+
+  /* ---- Panel frame, wraps every card-panel illustration ---- */
+  .panel-frame { background: var(--parchment); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 18px 0; }
+  .panel-caption { padding: 10px 16px; font-size: 11.5px; color: var(--ink-muted); background: #FFFFFF; border-top: 1px solid var(--border); }
+  .panel-caption strong { color: var(--ink); }
+  .p-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: var(--teal); color: var(--parchment); font-size: 11px; }
+  .p-pill { font-size: 10px; padding: 3px 8px; border-radius: 14px; background: var(--forest); border: 1px solid #4A7362; }
+  .p-body { padding: 18px 20px; background: var(--parchment); }
+  .p-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--parchment-deep); font-size: 12px; }
+  .p-row:last-child { border-bottom: none; }
+  .p-btn { font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: 6px; display: inline-block; }
+  .p-btn.primary { background: var(--teal); color: var(--parchment); }
+  .p-btn.ghost { background: #FFFFFF; border: 1px solid var(--border); color: var(--ink-muted); }
+  .p-btn.gold { background: var(--gold); color: #412402; }
+  .toggle-dot { width: 30px; height: 17px; border-radius: 10px; position: relative; display: inline-block; }
+  .toggle-dot.on { background: var(--teal); }
+  .toggle-dot.on::after { content:''; position:absolute; right:2px; top:2px; width:13px; height:13px; border-radius:50%; background:var(--parchment); }
+  .toggle-dot.off { background: var(--border); }
+  .toggle-dot.off::after { content:''; position:absolute; left:2px; top:2px; width:13px; height:13px; border-radius:50%; background:#FFFFFF; }
+  footer { text-align: center; font-size: 12px; color: var(--ink-faint); padding: 40px 0 20px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <div class="kicker">Storyworks &middot; Phase 1, Design</div>
+    <h1>UI/UX Design Reference &mdash; Part Two</h1>
+    <div class="sub">Everything designed since Part One. Illustrated with static card panels built directly in this document rather than screenshots, since most of this batch was never captured as images. Written to stand alone &mdash; a cold reading of Part One plus Part Two should cover the entire Phase 1 design record.</div>
+  </div>
+</header>
+
+<div class="doc">
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#recovery">Crash recovery banner</a></li>
+    <li><a href="#blog">Blog module &amp; set-aside</a></li>
+    <li><a href="#notes">Notes module</a></li>
+    <li><a href="#journal">Journal, full redesign</a></li>
+    <li><a href="#scratchpad">Scratchpad v2, corrected</a></li>
+    <li><a href="#pens">PENS, vision &amp; roadmap decision</a></li>
+    <li><a href="#drawing">Drawing tool popup</a></li>
+    <li><a href="#settings">Settings, scrollable</a></li>
+    <li><a href="#cmdk">Cmd+K</a></li>
+    <li><a href="#research">Research findings this batch</a></li>
+    <li><a href="#future2">Future phases, updated log</a></li>
+    <li><a href="#open2">Open items, updated</a></li>
+  </ol>
+</nav>
+
+<div class="status-banner">
+  <strong>Where this picks up:</strong> Part One covered Draft Screen, the hidden tray, onboarding, Novel, Screenplay, and most of Codex. This document covers everything decided after that: Blog, Notes, the full Journal system, the scratchpad rebuild, PENS' scope reversal, drawing tools, Settings, and Cmd+K. All seven module and system wireframes referenced in Part One's open-items list are now complete. What's left before Phase 1 closes: consolidating Outputs 5&ndash;7 (information architecture, technical architecture, visual token sheet) into standalone documents, and resolving the open items listed at the end of this document.
+</div>
+
+<section id="recovery">
+  <h2>1. Crash recovery banner</h2>
+  <p>Confirms a principle established earlier: SQLite acts as a fast write-layer cache in front of slower <code>.md</code> saves, so a crash between two saves loses nothing. This banner is the on-screen proof of that, shown once on recovery.</p>
+  <div class="panel-frame">
+    <div class="p-header"><span style="font-weight:500;">Storyworks</span><div style="display:flex;gap:6px;"><span class="p-pill">AI on</span><span class="p-pill">Muse on</span></div></div>
+    <div style="padding:12px 18px;background:var(--amber-bg);border-bottom:1px solid var(--amber-border);display:flex;justify-content:space-between;align-items:center;gap:14px;">
+      <div>
+        <div style="font-size:12px;font-weight:500;color:#412402;">Recovered your last session</div>
+        <div style="font-size:11px;color:var(--amber-text);">Storyworks closed unexpectedly. Everything up to your last keystroke is here, chapter-nine.md was last saved to disk a moment before that.</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;"><span class="p-btn ghost">See what changed</span><span class="p-btn" style="background:#FFFFFF;border:1px solid var(--amber-border);color:#412402;">Dismiss</span></div>
+    </div>
+    <div class="p-body" style="min-height:60px;font-size:13px;color:var(--ink);">Delilah reached for the amulet and found nothing but cold air where it should have hung.</div>
+    <div class="panel-caption">Amber, not red, since this is a successful recovery, not an error. Distinguishes the SQLite recovery point from the last real markdown save, made legible instead of invisible.</div>
+  </div>
+</section>
+
+<section id="blog">
+  <h2>2. Blog module &amp; the "Set aside" mechanic</h2>
+  <p>Blog's defining feature is the review-gated stage workflow (Research &rarr; Outline &rarr; Draft &rarr; Edit), with AI-generated content held in a distinct sandboxed state until explicitly approved. Non-blocking was confirmed as a standing rule: ignoring an AI suggestion never traps the writer, and it never gets silently discarded either.</p>
+  <div class="panel-frame">
+    <div class="p-body" style="padding-top:14px;">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px;">
+        <span style="font-size:10px;padding:4px 10px;border-radius:14px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);">Research</span>
+        <span style="width:14px;height:1px;background:var(--border);"></span>
+        <span style="font-size:10px;padding:4px 10px;border-radius:14px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);">Outline</span>
+        <span style="width:14px;height:1px;background:var(--border);"></span>
+        <span style="font-size:10px;padding:4px 10px;border-radius:14px;background:var(--teal);color:var(--parchment);">Draft</span>
+        <span style="width:14px;height:1px;background:var(--border);"></span>
+        <span style="font-size:10px;padding:4px 10px;border-radius:14px;color:var(--ink-faint);border:1px solid var(--border);">Edit</span>
+        <span style="margin-left:auto;font-size:10px;padding:4px 10px;border-radius:14px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);">1 set aside</span>
+      </div>
+      <p style="font-size:13px;margin:0 0 12px;">Local-first isn't a privacy feature bolted onto a cloud app. It changes what the software is allowed to promise you in the first place.</p>
+      <p style="font-size:13px;color:var(--ink-muted);margin:0;">You keep writing right here, nothing waits on you to decide.</p>
+    </div>
+    <div class="panel-caption">Setting a suggestion aside moves it out of the writing surface into a small badge in the stage strip, retrievable anytime by clicking it. Never forced, never lost.</div>
+  </div>
+</section>
+
+<section id="notes">
+  <h2>3. Notes module</h2>
+  <p>Auto-organize, confirmed as fully automatic with zero confirmation, even for brand-new names never seen before. A deliberate asymmetry from the scratchpad: Notes exists for capture speed, the scratchpad exists for deliberate curation. Both are correct for what they're for.</p>
+  <div class="panel-frame">
+    <div class="p-body">
+      <p style="font-size:13px;margin:0 0 10px;">Delilah keeps mentioning the eastern docks. Might be worth a whole scene there before the storm hits.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:10px;padding:4px 9px;border-radius:14px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);">Character &middot; Delilah</span>
+        <span style="font-size:10px;padding:4px 9px;border-radius:14px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);">Scene &middot; Docks</span>
+        <span style="font-size:10px;padding:4px 9px;border-radius:14px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);">Scene &middot; Storm</span>
+      </div>
+    </div>
+    <div class="panel-caption">Tags appear with no confirmation step, click one to jump straight to that Codex entry. A genuinely new name silently creates a stub Codex entry behind it.</div>
+  </div>
+</section>
+
+<section id="journal">
+  <h2>4. Journal, full redesign</h2>
+  <p>The most heavily researched module this batch, benchmarked directly against Day One with real competitive and pain-point research (see Section 10). Confirmed as needing to fully match Day One's feature set while winning decisively on the one gap that's actually documented and real: genuine local-first privacy versus Day One's Tier C rating.</p>
+
+  <h3>4a. Main surface</h3>
+  <div class="panel-frame">
+    <div class="p-header"><span style="display:flex;align-items:center;gap:6px;">&#128274; Morning Pages &middot; private</span><span style="display:flex;gap:8px;"><span class="p-btn ghost" style="color:#C9DDD3;border-color:#4A7362;background:transparent;">Normal mode</span><span class="p-pill">42 entries &middot; 11 day streak</span></span></div>
+    <div style="padding:6px 14px 0;background:var(--parchment-deep);border-bottom:1px solid var(--border);font-size:11px;color:var(--ink);"><span style="padding:6px 12px;background:var(--parchment);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;display:inline-block;">08/09/2026</span></div>
+    <div class="p-body" style="font-size:16px;line-height:1.8;">Stayed up too late again finishing chapter nine. Worth it, but I'm dragging today.</div>
+    <div class="panel-caption">Defaults to Zen mode, not Draft Screen's opt-in model, with a Normal-mode toggle to back out. RTF controls, MM/DD/YYYY dated tabs, larger 18px body text than other modules.</div>
+  </div>
+
+  <h3>4b. Books, Private/Public, and the recovery key</h3>
+  <div class="panel-frame">
+    <div class="p-body">
+      <div class="p-row"><span>&#128274; Morning Pages</span><span style="color:var(--driftwood);font-size:11px;">Private &middot; 42 entries</span></div>
+      <div class="p-row"><span>&#128214; Travel Log</span><span style="color:var(--driftwood);font-size:11px;">Public &middot; 8 entries</span></div>
+    </div>
+    <div style="background:#12362F;color:var(--parchment);padding:16px 20px;">
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;">&#128273; Your recovery key, shown once</div>
+      <div style="font-family:ui-monospace,monospace;font-size:12px;background:#0D2B25;border:1px solid var(--forest);border-radius:6px;padding:10px 12px;margin-bottom:8px;">harbor &middot; lantern &middot; ninth &middot; docks &middot; slower &middot; woven &middot; amulet &middot; return</div>
+      <div style="font-size:10.5px;color:#B8C9C2;">Save this outside Storyworks. Lose both password and key, and this book's contents are gone for good.</div>
+    </div>
+    <div class="panel-caption">Cryptomator-style recovery key: local-only, no server, no 2FA, generated once when a Book turns private. macOS Keychain + Touch ID for daily unlock, the key stays the true fallback.</div>
+  </div>
+
+  <h3>4c. Map view</h3>
+  <div class="panel-frame">
+    <div class="p-header"><span>Where you've written from</span><span style="color:#C9DDD3;">Downloaded for offline use</span></div>
+    <div style="background:#E4E9E1;padding:26px 20px;position:relative;min-height:70px;">
+      <div style="position:absolute;left:60px;top:24px;width:10px;height:10px;border-radius:50%;background:var(--teal);border:2px solid var(--parchment);"></div>
+      <div style="position:absolute;left:180px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--teal);border:2px solid var(--parchment);"></div>
+      <div style="position:absolute;left:280px;top:40px;width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid var(--parchment);"></div>
+    </div>
+    <div class="panel-caption">MapLibre + OpenStreetMap + PMTiles, fully open-source, no Google dependency, precedented by Organic Maps and CoMaps. Opt-in, off by default.</div>
+  </div>
+
+  <h3>4d. iPad + Apple Pencil mirror</h3>
+  <div class="panel-frame">
+    <div class="p-body" style="display:flex;gap:16px;align-items:center;">
+      <div style="width:120px;height:80px;background:#0D0D0D;border-radius:10px;padding:6px;flex-shrink:0;">
+        <div style="background:var(--parchment);border-radius:5px;height:100%;padding:8px;font-size:9px;color:var(--ink-muted);">Mirrored entry&hellip;</div>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-muted);">Uses Apple's own Sidecar feature, a system-level OS capability, not something Storyworks builds or controls. Disclosure is liability framing, not a technical safety claim: "we didn't build this, read Apple's own docs, proceed at your own risk." Off by default.</div>
+    </div>
+    <div class="panel-caption">Sidecar is screen mirroring only, the app still runs entirely on the Mac. A genuine standalone iPad app is a completely different, much bigger idea, logged separately, not touched yet.</div>
+  </div>
+</section>
+
+<section id="scratchpad">
+  <h2>5. Scratchpad, corrected layout</h2>
+  <p>Revised from an earlier four-column-always-visible layout to a full-card writing surface with a reveal-on-demand side panel, matching the "don't show chrome before it's earned" principle used throughout.</p>
+  <div class="panel-frame">
+    <div style="display:flex;">
+      <div style="flex:0 0 130px;background:#FFFFFF;border-right:1px solid var(--border);padding:12px;">
+        <div style="font-size:9px;color:var(--driftwood);margin-bottom:8px;">FOUND SO FAR</div>
+        <div style="font-size:10px;color:var(--ink-muted);margin-bottom:4px;">Characters</div>
+        <div style="font-size:10px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);border-radius:5px;padding:4px 6px;margin-bottom:8px;">David</div>
+        <div style="font-size:10px;color:var(--ink-muted);margin-bottom:4px;">Scenes</div>
+        <div style="font-size:10px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);border-radius:5px;padding:4px 6px;">Lighthouse</div>
+      </div>
+      <div style="flex:1;padding:16px 18px;">
+        <div style="font-size:13px;font-weight:500;color:var(--teal);margin-bottom:2px;">Let's build your story</div>
+        <div style="font-size:10.5px;color:var(--ink-muted);margin-bottom:10px;">Write anything, or tap the mic and talk it out.</div>
+        <div style="background:#FFFFFF;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:11px;color:var(--ink-muted);">A lighthouse keeper named David finds a locket washed up on the shore&hellip;</div>
+      </div>
+    </div>
+    <div class="panel-caption">Panel doesn't exist until the first item is caught. Dummy mic icon placeholder for future STT. Broad heuristic detection stays instant and local; reformulating chaotic wording into structured sentences is honestly a job for a light AI pass, not pure pattern matching.</div>
+  </div>
+</section>
+
+<section id="pens">
+  <h2>6. PENS, vision and the roadmap decision</h2>
+  <div class="research-finding">
+    <h4>Scope correction, confirmed</h4>
+    <p>PENS needs a genuinely robust intelligence system (tracked state, relationship variables, real condition evaluation) plus a dedicated React Three Fiber / WebGL visual layer specific to this module, a deliberate, isolated exception to the "WebGL stays on the bezel only" rule locked earlier. Combined, this is complex enough to roughly double the build time of everything else in the app. <strong>Decision: PENS ships as a visible roadmap item only.</strong> The tray icon stays present. Clicking it shows an honest, warm "on the roadmap" explanation, not an error state, not hidden.</p>
+  </div>
+  <div class="panel-frame">
+    <div class="p-body" style="text-align:center;padding:28px 20px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--parchment-deep);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--driftwood);">&#8942;</div>
+      <div style="font-size:14px;font-weight:500;color:var(--teal);margin-bottom:6px;">PENS is on the roadmap</div>
+      <div style="font-size:11.5px;color:var(--ink-muted);max-width:340px;margin:0 auto;">A real procedural, nonlinear story editor is a genuinely large build, its own intelligence system, its own visual layer. We wanted it visible now rather than hidden, so you know it's coming, not forgotten.</div>
+    </div>
+    <div class="panel-caption">The full node-graph vision (Planning/Writing/Critique modes, condition-gated branches reading tracked project state) stays as real future-reference material for whenever PENS gets its dedicated phase, not near-term build scope.</div>
+  </div>
+</section>
+
+<section id="drawing">
+  <h2>7. Drawing tool popup</h2>
+  <p>Corrected from an initial three-option version. Input method (how you draw) and tool type (what you draw with) aren't the same kind of choice, shapes don't compete with iPad/trackpad as a third path, they're available either way.</p>
+  <div class="panel-frame">
+    <div class="p-body">
+      <div class="p-row"><span>&#128393; Connect to iPad</span><span style="color:var(--driftwood);font-size:11px;">Apple Pencil, via Sidecar</span></div>
+      <div class="p-row"><span>&#128433; Use trackpad</span><span style="color:var(--driftwood);font-size:11px;">Right here on your Mac</span></div>
+    </div>
+    <div class="panel-caption">Either choice leads to the same eight-tool kit, freehand, eraser, line, square, rectangle, triangle, circle, oval. Tools never change based on input method.</div>
+  </div>
+</section>
+
+<section id="settings">
+  <h2>8. Settings, scrollable</h2>
+  <p>Consolidates every toggle locked across the whole design session. Sticky header and search bar, scrollable body, since this list only grows as future phases (Skins, BYOM, Clipboard, Import/Export) each add their own section.</p>
+  <div class="panel-frame">
+    <div class="p-header"><span style="font-weight:500;">Settings</span></div>
+    <div class="p-body">
+      <div style="font-size:10px;color:var(--driftwood);margin-bottom:6px;">AI &amp; ASSISTANCE</div>
+      <div class="p-row"><span>AI, everywhere</span><span class="toggle-dot on"></span></div>
+      <div class="p-row"><span>OpenClaw research bridge</span><span class="toggle-dot off"></span></div>
+      <div class="p-row"><span>Codex entries</span><span style="color:var(--ink-muted);font-size:11px;">Simple</span></div>
+      <div style="font-size:10px;color:var(--driftwood);margin:12px 0 6px;">APPEARANCE</div>
+      <div class="p-row"><span>Theme</span><span style="color:var(--ink-muted);font-size:11px;">Light</span></div>
+      <div class="p-row"><span>Daily skins</span><span class="toggle-dot off"></span></div>
+    </div>
+    <div class="panel-caption">Search bar copy states the conversational-toggle capability directly: "search settings, or just tell the assistant what to change." Real technical requirement: the AI needs permitted, direct access to the settings API, not just content generation.</div>
+  </div>
+</section>
+
+<section id="cmdk">
+  <h2>9. Cmd+K</h2>
+  <div class="panel-frame">
+    <div class="p-body">
+      <div style="display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;font-size:12px;color:var(--ink-muted);">&#128269; <span>Jump to a project, search your writing, or run a tool</span></div>
+      <div style="font-size:9px;color:var(--driftwood);margin-bottom:4px;">SETTINGS</div>
+      <div class="p-row"><span>Turn on daily skins</span><span style="color:var(--driftwood);font-size:11px;">Appearance</span></div>
+      <div class="p-row"><span>Switch to dark mode</span><span style="color:var(--driftwood);font-size:11px;">Appearance</span></div>
+    </div>
+    <div class="panel-caption">Live grouped filtering across Projects, Codex, Tools, and Settings. Settings results are a second entry point into the same conversational-toggle mechanic shown in Section 8.</div>
+  </div>
+</section>
+
+<section id="research">
+  <h2>10. Research findings this batch</h2>
+
+  <h3>10a. Day One competitive research</h3>
+  <p>Full feature set confirmed: rich media, map view, On This Day, streaks, templates, auto-logged metadata, tags/search, IFTTT/Siri automation, print-to-book, cross-platform sync, an AI tier (Day One Gold).</p>
+  <div class="research-finding">
+    <h4>The real, documented gap</h4>
+    <p>Multiple independent 2026 privacy audits rank Day One Tier C on privacy: entries live on Automattic's servers, third-party analytics SDKs transmit usage data on launch, AI features route journal text to external servers including OpenAI, and encryption wasn't even present at launch. A documented backlash pattern exists specifically against AI in journaling (Google's Journal app is the clearest example), sharper than other writing categories because journaling processes grief, breakups, and anxiety. One competitor's founder's own words: "with the rise of cloud AI, I started getting seriously paranoid about where my deeply personal data was actually going." Combined with subscription fatigue ($49.99/yr, no monthly option), this confirms local-first, AI-optional, one-time-purchase isn't just consistent with Journal, it's the single most valuable thing Journal can offer that Day One structurally cannot.</p>
+  </div>
+
+  <h3>10b. Local encryption recovery pattern</h3>
+  <p>Cryptomator's model confirmed as the right precedent: a one-time, human-readable recovery key, independent of the password, no server or account needed. Notesnook's email-based recovery was reviewed and explicitly rejected, it requires a server/account, contradicting local-first, no-account philosophy.</p>
+
+  <h3>10c. Offline map stack</h3>
+  <p>MapLibre GL (MIT) + OpenStreetMap (ODbL) + PMTiles (offline-native format) confirmed as a real, working, fully open-source stack. OpenFreeMap offers free pre-generated global tiles. Organic Maps and CoMaps are real shipped precedents for exactly this privacy posture on macOS.</p>
+
+  <h3>10d. Sidecar feasibility</h3>
+  <p>Confirmed as a system-level macOS/iPadOS feature, not something requiring custom engineering. "All Mac apps work with Sidecar." Reframes iPad+Pencil drawing from "build a mirroring feature" to "make sure the canvas handles Pencil input well." A dedicated privacy audit of Sidecar itself wasn't found in this research pass, resolved as unnecessary for now since the disclosure is liability framing, not a technical safety claim.</p>
+</section>
+
+<section id="future2">
+  <h2>11. Future phases, updated log</h2>
+  <p>Carried forward from Part One (AI Audio/Podcast, Skins, Paper-physics cards, In-app clipboard history, Import/Export folded into Phase 8), plus one addition:</p>
+  <div class="future-phase">
+    <h4>Standalone iPad companion app</h4>
+    <p>Explicitly distinct from Sidecar mirroring. A genuine native iPadOS app would mean its own build target, a touch-first interface (the hover-dependent tray and right-click menus wouldn't translate as-is), its own vault sync mechanism, and a platform-scope expansion beyond the "macOS-only" rule locked in Phase 0. Not touched yet, logged for its own future research pass.</p>
+  </div>
+</section>
+
+<section id="open2">
+  <h2>12. Open items, updated</h2>
+  <div class="open-item"><strong>Default checked state on scratchpad pool cards:</strong> still defaults to checked (keep is the default action). Still not reconsidered.</div>
+  <div class="open-item"><strong>"Build your story" trigger:</strong> automatic on new project, or opt-in only? Still unresolved.</div>
+  <div class="open-item"><strong>Scratchpad-to-question handoff:</strong> a kept scratchpad item (e.g., David kept as Character) should pre-fill the matching question later in the flow. Not yet built.</div>
+  <div class="open-item"><strong>PENS coming-soon tone:</strong> built as warm and explanatory rather than a hard error state. Confirm that's the right call versus a more clinical "Coming soon" dead-end.</div>
+  <div class="open-item"><strong>PENS data model gap:</strong> condition-gated branches (e.g. "if trust &gt; 5") imply a tracked variable system. Where does that state actually live, manual, inferred from Codex progressions, or a separate system? Unresolved, matters once PENS' real phase starts.</div>
+  <div class="open-item"><strong>Still entirely unbuilt:</strong> Outputs 5&ndash;7, the information architecture doc, the technical architecture doc, and the visual token sheet, none exist as standalone documents yet, everything currently lives scattered across Part One and Part Two.</div>
+</section>
+
+</div>
+
+<footer>Storyworks &middot; Phase 1 Design Reference, Part Two &middot; card-panel illustrations, no screenshot dependencies &middot; stopped here per instruction, awaiting review</footer>
+
+</body>
+</html>

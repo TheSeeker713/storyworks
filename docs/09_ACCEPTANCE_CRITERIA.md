@@ -32,8 +32,13 @@ Do not run `check-phase-clear.sh` against the archived old Phase 0 checklist for
 
 ## Phase 1 — Design
 
-Seven design outputs listed in `docs/phases/PHASE_1.md` / master plan. Document gate + checklist when published. Not started as filled artifacts in the master-plan adoption pass.
+- [x] Seven design outputs present (see `docs/phases/PHASE_1.md`)
+- [x] `docs/phases/PHASE_1_HUMAN_CHECKLIST.md` filled (Tester + Date)
+- [x] `./scripts/check-phase-clear.sh docs/phases/PHASE_1_HUMAN_CHECKLIST.md` exits 0
+- [x] OPEN gaps recorded in HANDOFF: Project switcher; Typography
+
+**Phase 1 Design status: COMPLETE** (2026-08-09).
 
 ## Phase 2+
 
-See `docs/MASTER_PLAN.md` and phase docs when authored. End of each production phase: human checklist FULL STOP + gate script.
+See `docs/MASTER_PLAN.md` and phase docs when authored. End of each production phase: human checklist FULL STOP + gate script. Phase 2 should resolve the Project switcher gap early.

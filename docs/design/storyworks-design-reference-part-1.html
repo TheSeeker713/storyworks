@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Storyworks — UI/UX Design Reference, Part One</title>
+<style>
+  :root {
+    --teal: #1B4B43; --forest: #2D5940; --sage: #8AA888; --driftwood: #A68A6D;
+    --parchment: #FBF8F1; --parchment-deep: #EFE8D8; --ink: #2A2A26;
+    --ink-muted: #6B6656; --ink-faint: #A6A192; --gold: #C9A227; --border: #DDD5C4;
+    --green-bg: #EAF3DE; --green-text: #3B6D11; --green-border: #97C459;
+    --amber-bg: #FAEEDA; --amber-text: #854F0B; --amber-border: #EF9F27;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "SF Pro Text", "Segoe UI", sans-serif; background: #EDEAE0; color: var(--ink); margin: 0; line-height: 1.7; }
+  .doc { max-width: 880px; margin: 0 auto; padding: 0 32px 100px; }
+  header.masthead { background: var(--teal); color: var(--parchment); padding: 56px 32px 40px; }
+  header.masthead .inner { max-width: 880px; margin: 0 auto; }
+  header.masthead .kicker { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--sage); margin-bottom: 10px; }
+  header.masthead h1 { font-size: 32px; font-weight: 500; margin: 0 0 10px; }
+  header.masthead .sub { font-size: 14px; color: #C9DDD3; max-width: 620px; }
+  nav.toc { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 22px 26px; margin: -20px 0 40px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+  nav.toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); margin: 0 0 12px; }
+  nav.toc ol { margin: 0; padding-left: 20px; columns: 2; font-size: 13px; }
+  nav.toc li { margin-bottom: 6px; }
+  nav.toc a { color: var(--teal); text-decoration: none; }
+  section { margin: 56px 0; padding-top: 20px; }
+  section > h2 { font-size: 22px; font-weight: 500; color: var(--teal); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
+  h3 { font-size: 16px; font-weight: 500; color: var(--teal); margin: 28px 0 10px; }
+  p { font-size: 14px; color: var(--ink); }
+  .lede { font-size: 15px; color: var(--ink-muted); }
+  .status-banner { background: #FFFFFF; border: 1px solid var(--gold); border-left: 4px solid var(--gold); border-radius: 6px; padding: 14px 18px; font-size: 13px; color: var(--ink-muted); margin: 0 0 32px; }
+  .status-banner strong { color: var(--ink); }
+  .card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+  .card h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--driftwood); margin: 0 0 8px; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .split { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+  th { text-align: left; color: var(--driftwood); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 10px; border-bottom: 1px solid var(--parchment-deep); vertical-align: top; }
+  .pill-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .pill { font-size: 11px; padding: 4px 11px; border-radius: 20px; background: var(--parchment-deep); color: var(--ink-muted); border: 1px solid var(--border); }
+  .pill.need { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+  .pill.want { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-border); }
+  code { font-family: ui-monospace, monospace; background: var(--parchment-deep); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .decision-log { background: var(--teal); color: var(--parchment); border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+  .decision-log h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--sage); margin: 0 0 10px; }
+  .decision-log ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .decision-log li { margin-bottom: 6px; color: #E2ECE7; }
+  .open-item { border: 1px dashed var(--driftwood); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: var(--ink-muted); margin: 10px 0; background: #FFFDF7; }
+  .open-item strong { color: var(--ink); }
+  .future-phase { background: #FFFFFF; border: 1px solid var(--border); border-left: 4px solid var(--sage); border-radius: 6px; padding: 14px 18px; margin: 10px 0; font-size: 13px; }
+  .future-phase h4 { margin: 0 0 6px; font-size: 13px; color: var(--forest); }
+
+  /* ---- Panel frame, wraps every card-panel illustration ---- */
+  .panel-frame { background: var(--parchment); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 18px 0; }
+  .panel-caption { padding: 10px 16px; font-size: 11.5px; color: var(--ink-muted); background: #FFFFFF; border-top: 1px solid var(--border); }
+  .panel-caption strong { color: var(--ink); }
+  .p-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: var(--teal); color: var(--parchment); font-size: 11px; }
+  .p-pill { font-size: 10px; padding: 3px 8px; border-radius: 14px; background: var(--forest); border: 1px solid #4A7362; }
+  .p-tabs { display: flex; align-items: center; gap: 2px; padding: 5px 12px 0; background: var(--parchment-deep); border-bottom: 1px solid var(--border); font-size: 11px; }
+  .p-tab-active { padding: 6px 14px; background: var(--parchment); border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0; color: var(--ink); }
+  .p-tab { padding: 6px 14px; color: var(--driftwood); }
+  .p-body { padding: 18px 20px; background: var(--parchment); }
+  .p-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--parchment-deep); font-size: 12px; }
+  .p-row:last-child { border-bottom: none; }
+  .p-btn { font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: 6px; display: inline-block; }
+  .p-btn.primary { background: var(--teal); color: var(--parchment); }
+  .p-btn.ghost { background: #FFFFFF; border: 1px solid var(--border); color: var(--ink-muted); }
+  .p-btn.gold { background: var(--gold); color: #412402; }
+  .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .two-up { grid-template-columns: 1fr; } }
+  .two-up .panel-frame { margin: 0; }
+  footer { text-align: center; font-size: 12px; color: var(--ink-faint); padding: 40px 0 20px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <div class="kicker">Storyworks &middot; Phase 1, Design</div>
+    <h1>UI/UX Design Reference &mdash; Part One</h1>
+    <div class="sub">A working record of every design decision, wireframe, and open question from the Phase 1 design session so far. Illustrated with static card panels built directly in this document rather than screenshots, matching Part Two, so both documents stand alone with no external image dependencies.</div>
+  </div>
+</header>
+
+<div class="doc">
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#thesis">Product thesis &amp; target customer</a></li>
+    <li><a href="#features">Feature list by tool</a></li>
+    <li><a href="#principles">Pain-point-driven design principles</a></li>
+    <li><a href="#visual">Locked visual foundations</a></li>
+    <li><a href="#draft">Draft Screen</a></li>
+    <li><a href="#tray">Hidden tool tray</a></li>
+    <li><a href="#onboarding">Onboarding flow</a></li>
+    <li><a href="#novel">Novel module</a></li>
+    <li><a href="#screenplay">Screenplay module</a></li>
+    <li><a href="#codex">Codex, full system</a></li>
+    <li><a href="#storybuilder">Build your story &amp; scratchpad</a></li>
+    <li><a href="#future">Logged future phases</a></li>
+    <li><a href="#open">Open items, not yet resolved</a></li>
+  </ol>
+</nav>
+
+<div class="status-banner">
+  <strong>Where this picks up:</strong> Phase 0 (Setup) is done. Phase 1 (Design) is current, Jeremy and Claude only, no product code yet. This document captures everything settled toward the seven required Phase 1 outputs. Outputs 1&ndash;3 (thesis, features, principles) are written below. Output 4 (wireframes) is captured here and continues in Part Two. Outputs 5&ndash;7 (information architecture, technical architecture, visual token sheet) still need to be consolidated into standalone documents once all wireframes are done.
+</div>
+
+<section id="thesis">
+  <h2>1. Product thesis &amp; target customer</h2>
+  <p class="lede">Storyworks is a local-first, macOS-only creative writing suite built around six purpose-built tools &mdash; Novel, Screenplay, Blog, Notes, Journal, and PENS (Procedural Editor for Nonlinear Storytelling) &mdash; each with real, active AI agentic assistance woven directly into the writing experience.</p>
+  <p>The AI isn't a bolted-on assistant panel, it's a working creative partner the user can lean on as heavily as they want, sandboxed until a human explicitly approves anything it produces into the real manuscript. It's fully optional: every tool works completely by hand, with a permanent, one-click master switch to turn AI off entirely. The writer owns their work outright &mdash; plain <code>.md</code> files in a folder they choose, versioned automatically, never held hostage by a subscription or scraped for someone else's training data.</p>
+
+  <h3>Target customer</h3>
+  <p>Individual creative writers, not high-volume commercial content marketers and not enterprise workspace users. Three real sub-segments:</p>
+  <table>
+    <tr><th>Segment</th><th>Share</th><th>Cares most about</th></tr>
+    <tr><td>Money-motivated indie authors</td><td>~40%</td><td>Speed, Codex-driven series consistency, export/publish compliance</td></tr>
+    <tr><td>Hobbyists &amp; personal-expression writers</td><td>~35% combined</td><td>Privacy, ownership, zero or low cost, no pressure to use AI</td></tr>
+    <tr><td>Recognition-seekers</td><td>~16%</td><td>Polish and finishing, moderate AI adoption</td></tr>
+  </table>
+  <p>All three are underserved by the market's current split between AI-first/format-weak tools and format-strong/AI-absent tools &mdash; that gap runs through every one of Storyworks' six tools, not just one.</p>
+</section>
+
+<section id="features">
+  <h2>2. Feature list by tool</h2>
+  <div class="card">
+    <h4>Cross-cutting (applies to all six tools)</h4>
+    <p>Draft Screen (shared entry point) &middot; Codex (Characters, Props, Worldbuilding, Scenes, shared across Books) &middot; sandboxed AI drafts with human approval gate &middot; authorship/provenance word-count tracking &middot; Muse (idle ghost text, Tab accept) &middot; STT (available identically everywhere) &middot; master AI kill switch (onboarding and Settings)</p>
+  </div>
+  <div class="split">
+    <div class="card"><h4>Novel</h4><p>Story Bible-style setup, prompt transparency, mention-detection into Codex, scene expansion / Describe tools, full-novel generation available but never surfaced first.</p></div>
+    <div class="card"><h4>Screenplay</h4><p>Fountain-style auto-formatting, industry-standard export, Describe / Show-don't-tell tools scoped to scene and dialogue specifically.</p></div>
+    <div class="card"><h4>Blog</h4><p>Research &rarr; outline &rarr; draft &rarr; edit workflow, every stage lands in a review surface, never auto-publishes.</p></div>
+    <div class="card"><h4>Notes</h4><p>Auto-organize (just write, AI handles filing), ask-your-vault natural-language query.</p></div>
+    <div class="card"><h4>Journal</h4><p>Persistent memory across entries, real follow-up questions grounded in the writer's own history.</p></div>
+    <div class="card"><h4>PENS</h4><p>Custom in-house canvas (license-checked, own future phase), condition-gated nodes, three-mode AI workflow: Planning, Writing, Critique.</p></div>
+  </div>
+</section>
+
+<section id="principles">
+  <h2>3. Pain-point-driven design principles</h2>
+  <p class="lede">Organized as want vs. need, per Storyflow's four-job framework (Develop &middot; Draft &middot; Organize &middot; Publish), grounded in real market research, not assumption.</p>
+  <h3>Needs &mdash; table stakes, absence loses the customer</h3>
+  <div class="pill-row">
+    <span class="pill need">Data survives, always</span><span class="pill need">Reliable drafting, no data loss</span>
+    <span class="pill need">Some structure for multi-part work</span><span class="pill need">Usable export/publish format</span>
+    <span class="pill need">Ownership &amp; privacy, local-first</span><span class="pill need">One-time cost, not subscription</span>
+  </div>
+  <h3>Wants &mdash; real differentiators, absence tolerated</h3>
+  <div class="pill-row">
+    <span class="pill want">Active AI agentic assistance</span><span class="pill want">Polished, native-feeling UI</span>
+    <span class="pill want">Power-user depth (not the default)</span><span class="pill want">Cross-device sync (kept deliberately light)</span>
+  </div>
+  <div class="open-item"><strong>Note:</strong> Publish/export was identified as a real gap, no current plan for how a finished manuscript leaves the vault in a submittable format. Logged into the master plan as Phase 8.</div>
+</section>
+
+<section id="visual">
+  <h2>4. Locked visual foundations</h2>
+  <table>
+    <tr><th>Token</th><th>Value</th><th>Use</th></tr>
+    <tr><td>Deep teal</td><td><code>#1B4B43</code></td><td>Header, primary chrome</td></tr>
+    <tr><td>Forest</td><td><code>#2D5940</code></td><td>Secondary chrome, active states</td></tr>
+    <tr><td>Sage</td><td><code>#8AA888</code></td><td>Accent, muted highlight</td></tr>
+    <tr><td>Driftwood</td><td><code>#A68A6D</code></td><td>Secondary text, subtle labels</td></tr>
+    <tr><td>Parchment (writing zones)</td><td><code>#FBF8F1</code></td><td>Canvas / writing surface background &mdash; brightened from an earlier <code>#F7F3EA</code>, confirmed correction</td></tr>
+    <tr><td>Parchment deep (chrome)</td><td><code>#EFE8D8</code></td><td>Tab bar, footer &mdash; deliberately darker than the writing zone for contrast</td></tr>
+    <tr><td>Gold</td><td><code>#C9A227</code></td><td>The one bright metal accent &mdash; never a fill color, reserved for primary actions and highlight moments</td></tr>
+  </table>
+  <p><strong>Dark mode:</strong> reversed from an earlier hard "never" rule. Given commercial distribution, light stays default but dark becomes a real, available Settings option.</p>
+
+  <h3>Button depth treatment</h3>
+  <p>CSS-simulated depth (layered shadow, rise on hover, inset press on click) confirmed as the standard for every button in the app.</p>
+  <div class="two-up">
+    <div class="panel-frame">
+      <div class="p-body" style="display:flex;justify-content:center;padding:26px 0;">
+        <span style="font-size:12px;font-weight:500;color:var(--parchment);background:var(--forest);border-radius:8px;padding:12px 20px;">Keep AI helpers</span>
+      </div>
+      <div class="panel-caption">Before &mdash; flat</div>
+    </div>
+    <div class="panel-frame">
+      <div class="p-body" style="display:flex;justify-content:center;padding:22px 0;">
+        <span style="font-size:12px;font-weight:500;color:var(--parchment);background:linear-gradient(180deg,#356B58,#1F4A3D);border:1px solid #163A30;border-radius:8px;padding:12px 20px;box-shadow:0 1px 0 rgba(255,255,255,0.18) inset,0 3px 0 #123529,0 6px 10px rgba(0,0,0,0.22);">Keep AI helpers</span>
+      </div>
+      <div class="panel-caption">After &mdash; hover rise + press-inward, confirmed app-wide standard</div>
+    </div>
+  </div>
+
+  <div class="decision-log">
+    <h4>LiquidGlass / WebGL, resolved</h4>
+    <ul>
+      <li>A real WebGL glass-refraction library (<code>@ybouane/liquidglass</code>) was tested live via CDN for button hover/press effects.</li>
+      <li>Three attempts in the visualizer sandbox failed to render visibly despite the library loading and initializing correctly &mdash; diagnosed as a sandbox/iframe limitation, not a flaw in the library itself (it already runs correctly on myceliainteractive.com in a real browser).</li>
+      <li><strong>Decision:</strong> CSS depth stays the standard for all buttons, everywhere. LiquidGlass is reserved specifically for the gold bezel, to be verified for real inside an actual dev build later.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="draft">
+  <h2>5. Draft Screen</h2>
+  <p>The shared entry point across every tool. Two-tier header (brand/menu, then a Sublime-style tab strip), a fully writable canvas, an always-available right-click menu, and Esc-driven Zen mode. Esc <strong>closes</strong> Zen mode, it never opens it &mdash; entering needs its own visible, discoverable icon, with mouse-over hints toggleable in Settings.</p>
+  <div class="panel-frame">
+    <div class="p-header">
+      <span style="display:flex;align-items:center;gap:16px;"><span style="font-weight:500;">Storyworks</span><span style="color:#C9DDD3;font-size:10px;">File &nbsp;Edit &nbsp;View &nbsp;Window &nbsp;Help</span></span>
+      <span style="display:flex;gap:6px;"><span class="p-pill">AI on</span><span class="p-pill">Muse on</span></span>
+    </div>
+    <div class="p-tabs"><span class="p-tab-active">Untitled draft</span><span class="p-tab">chapter-three.md</span><span class="p-tab">morning pages</span><span style="margin-left:auto;color:var(--driftwood);padding:6px 4px;">+</span></div>
+    <div class="p-body" style="position:relative;min-height:110px;">
+      <p style="font-size:14px;line-height:1.9;color:var(--ink);max-width:420px;margin:0;">The tide came in slower than she remembered, curling around the pilings like it was thinking twice about something.</p>
+      <div style="position:absolute;right:0;top:0;background:#FFFFFF;border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:10px;color:var(--ink-muted);">
+        <div style="font-weight:500;color:var(--ink);">Right-click anywhere</div>
+        <div>Word count &middot; Font and size &middot; Shortcuts card</div>
+      </div>
+      <div style="font-size:10px;color:var(--ink-faint);margin-top:36px;">Esc from anywhere &rarr; Zen mode, text only</div>
+    </div>
+    <div class="panel-caption">Header, tab strip, writable canvas, right-click menu callout, Zen mode hint at bottom-left.</div>
+  </div>
+</section>
+
+<section id="tray">
+  <h2>6. Hidden tool tray</h2>
+  <p>Left edge (confirmed, offered as a real onboarding preference, changeable in Settings). A thin always-visible edge tab reveals the full tray on hover or click, following GitLab's documented pattern: a ~150ms delay before reveal, a buffer before closing, and a pin option to keep it open. <strong>Tools are added by click, not drag</strong> &mdash; corrected from an earlier drag-based version.</p>
+  <div class="two-up">
+    <div class="panel-frame">
+      <div class="p-body" style="min-height:90px;position:relative;padding-left:24px;">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:12px;background:var(--parchment-deep);border-right:1px solid var(--border);"></div>
+      </div>
+      <div class="panel-caption">Collapsed, edge tab visible</div>
+    </div>
+    <div class="panel-frame">
+      <div class="p-body" style="padding:10px 12px;">
+        <div style="font-size:9px;color:var(--driftwood);margin-bottom:6px;">TOOLS &middot; CLICK TO ADD</div>
+        <div style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--ink);">
+          <span>&#128221; Note</span><span>&#128100; Character</span><span>&#127916; Scene</span><span>&#128214; Novel</span>
+          <span style="color:var(--ink-faint);">Screenplay &middot; Journal &middot; Blog &middot; PENS</span>
+        </div>
+      </div>
+      <div class="panel-caption">Revealed &mdash; eight tools, click any to add it</div>
+    </div>
+  </div>
+  <p>Inside an open project, the same tray becomes context-aware: it shows that project's chapter or scene list instead of the tool-creation list. See the Novel module section below.</p>
+</section>
+
+<section id="onboarding">
+  <h2>7. Onboarding flow</h2>
+  <p>Three screens. Screen 1: vault folder picker via a real native picker, never a typed path; the AI on/off choice, with honest Ollama/STT status resolution instead of a permanently stuck "checking...".</p>
+
+  <h3>Step 2 &mdash; skins and tray edge</h3>
+  <div class="panel-frame">
+    <div class="p-body">
+      <div style="font-size:14px;font-weight:500;color:var(--teal);margin-bottom:2px;">Make it yours</div>
+      <div style="font-size:11px;color:var(--ink-muted);margin-bottom:12px;">Two quick preferences. Both live in Settings too.</div>
+      <div class="p-row"><span>Daily skins</span><span class="p-btn ghost">Off &nbsp;&nbsp;On</span></div>
+      <div class="p-row"><span>Tool tray edge</span><span class="p-btn ghost">Left &nbsp;&nbsp;Right</span></div>
+      <div style="margin-top:12px;"><span class="p-btn gold" style="display:block;text-align:center;">Continue</span></div>
+    </div>
+    <div class="panel-caption">Both preferences changeable later in Settings, this is a first-impression default, not a locked choice.</div>
+  </div>
+
+  <h3>Step 3 &mdash; quick tour and Cmd+K reveal</h3>
+  <div class="panel-frame">
+    <div class="p-body">
+      <div style="font-size:14px;font-weight:500;color:var(--teal);margin-bottom:10px;">Quick look around</div>
+      <div style="font-size:11px;color:var(--ink);line-height:1.8;margin-bottom:12px;">
+        <div><strong>1</strong> Header, brand, and your AI/Muse/STT status, always visible</div>
+        <div><strong>2</strong> Hover the left edge for your tools, click one to add it</div>
+        <div><strong>3</strong> The canvas, click anywhere and just start writing</div>
+      </div>
+      <div style="background:#12362F;border-radius:8px;padding:12px 14px;color:var(--parchment);">
+        <div style="font-size:11px;font-weight:500;margin-bottom:4px;">&#8984;K &nbsp;One more thing, whenever you're ready</div>
+        <div style="font-size:10.5px;color:#B8C9C2;">Jump to any project, search your writing, or trigger a tool. You don't have to use it today.</div>
+      </div>
+    </div>
+    <div class="panel-caption">A three-item numbered tour, then Cmd+K revealed as a distinct closing card, not a fourth tour item.</div>
+  </div>
+</section>
+
+<section id="novel">
+  <h2>8. Novel module</h2>
+  <p>Codex icon added to the header as its own gold-highlighted access point. Chapter tabs match the Draft Screen's tab system. The context-aware tray shows this project's chapter list, expandable to reveal nested, editable scene cards inside them &mdash; clicking a scene jumps the editor to that point in the continuous chapter text.</p>
+  <div class="panel-frame">
+    <div class="p-header"><span style="display:flex;align-items:center;gap:10px;"><span style="font-weight:500;">Storyworks</span><span style="color:var(--gold);">&#128214;</span></span><span class="p-pill">Muse on</span></div>
+    <div class="p-tabs"><span class="p-tab-active">Chapter 9</span><span class="p-tab">Chapter 8</span></div>
+    <div class="p-body" style="min-height:80px;">
+      <p style="font-size:14px;line-height:1.8;color:var(--ink);max-width:420px;margin:0;">Delilah reached for the amulet and found nothing but cold air where it should have hung. <span style="color:var(--ink-faint);">The words came slower now, the current pulling harder than she remembered</span></p>
+      <div style="font-size:9.5px;color:var(--driftwood);margin-top:10px;"><code>Tab</code> to accept &middot; any other key to dismiss</div>
+    </div>
+    <div class="panel-caption">Live Muse suggestion mid-sentence. Footer (not shown) reads "1,204 words &middot; 1,180 you &middot; 24 Muse."</div>
+  </div>
+
+  <h3>Chapter expanded, nested scene cards</h3>
+  <div class="panel-frame">
+    <div class="p-body" style="padding:14px 16px;">
+      <div style="font-size:9px;color:var(--driftwood);margin-bottom:8px;">CHAPTERS &middot; UNDERTOW</div>
+      <div style="background:var(--green-bg);border-radius:8px;padding:8px 10px;">
+        <div style="font-size:11px;font-weight:500;color:var(--teal);margin-bottom:6px;">&#9660; 9. Undertow</div>
+        <div style="display:flex;flex-direction:column;gap:4px;padding-left:10px;">
+          <div style="background:#FFFFFF;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:10.5px;">The amulet is gone <span style="color:var(--driftwood);display:block;font-size:9.5px;">Delilah &middot; the caves</span></div>
+          <div style="background:#FFFFFF;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:10.5px;">Marek's confession <span style="color:var(--driftwood);display:block;font-size:9.5px;">Marek, Delilah</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-caption">Same minimized-card convention as Codex. Selecting a scene jumps the main canvas to that point in the chapter.</div>
+  </div>
+</section>
+
+<section id="screenplay">
+  <h2>9. Screenplay module</h2>
+  <p>Same shell as Novel, but the writing surface is visually distinct: monospace, Fountain-style auto-formatting, scene headings in caps, character names centered above dialogue. The tray shows Scenes directly rather than nested under chapters, since screenplays don't have "chapters" as a unit.</p>
+  <div class="panel-frame">
+    <div class="p-tabs"><span class="p-tab-active">Scene 12</span><span class="p-tab">Scene 11</span></div>
+    <div class="p-body" style="font-family:ui-monospace,monospace;font-size:12px;line-height:1.8;">
+      <div style="font-weight:500;">INT. FISHING BOAT &mdash; DAWN</div>
+      <div style="margin:6px 0;">Fog sits low on the water. DELILAH grips the wheel, knuckles pale.</div>
+      <div style="text-align:center;font-weight:500;">MAREK</div>
+      <div style="max-width:220px;margin:0 auto;">You don't have to say anything.</div>
+    </div>
+    <div class="panel-caption">Right-click menu swaps to Describe / Show don't tell, Screenplay-specific AI tools.</div>
+  </div>
+</section>
+
+<section id="codex">
+  <h2>10. Codex, full system</h2>
+
+  <h3>10a. Reading an entry, progressions</h3>
+  <p>Entries change over time via <strong>progressions</strong>, bound to a specific manuscript point, in two modes: <em>addition</em> (layers new detail on) or <em>replacement</em> (marks old detail void). Future progressions stay visible to the human author but are walled off from the AI's context until the story reaches that point.</p>
+  <div class="panel-frame">
+    <div class="p-body" style="display:flex;gap:16px;">
+      <div style="flex:0 0 160px;">
+        <div style="font-size:12px;font-weight:500;">Delilah &middot; Character</div>
+        <div style="font-size:10.5px;color:var(--ink);margin:6px 0;">Guarded, precise, distrusts easily. Grew up on the eastern docks.</div>
+        <div style="font-size:9px;color:var(--driftwood);margin-bottom:4px;">PROGRESSIONS</div>
+        <div style="font-size:10px;color:var(--green-text);">+ Ch. 3 &middot; Addition</div>
+        <div style="font-size:10px;color:var(--amber-text);">&#8646; Ch. 9 &middot; Replacement</div>
+        <div style="font-size:10px;color:var(--ink-faint);">&#128274; Ch. 14 &middot; locked from AI</div>
+      </div>
+      <div style="flex:1;font-size:11px;">
+        <div style="color:var(--driftwood);margin-bottom:4px;">Manuscript &middot; chapter-nine.md</div>
+        <p style="margin:0;">Delilah reached for the amulet&hellip; She looked at Marek, and for a moment she almost trusted him enough to say so.</p>
+        <div style="margin-top:8px;background:#FFFFFF;border:1px solid var(--border);border-radius:6px;padding:6px 9px;display:inline-block;font-size:10px;">&#128279; Linked to Codex &middot; showing state as of Ch. 9</div>
+      </div>
+    </div>
+    <div class="panel-caption">A third progression grayed out and locked from AI view, that's the spoiler-safety mechanism made literal.</div>
+  </div>
+
+  <h3>10b. Creating an entry</h3>
+  <p>Reuses the same expand-in-place mechanic as chapter/scene nesting. Type selector, name, and a plain free-text field inviting "as much or as little as you want."</p>
+  <div class="panel-frame">
+    <div class="p-body">
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <span style="font-size:10px;padding:3px 8px;border-radius:14px;background:var(--teal);color:var(--parchment);">Character</span>
+        <span style="font-size:10px;padding:3px 8px;border-radius:14px;border:1px solid var(--border);color:var(--ink-muted);">Prop</span>
+        <span style="font-size:10px;padding:3px 8px;border-radius:14px;border:1px solid var(--border);color:var(--ink-muted);">Worldbuilding</span>
+        <span style="font-size:10px;padding:3px 8px;border-radius:14px;border:1px solid var(--border);color:var(--ink-muted);">Scene</span>
+      </div>
+      <div style="font-size:11px;color:var(--ink-faint);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:10px;">Name</div>
+      <div style="font-size:11px;color:var(--ink-faint);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:10px;">Write what you know so far, as much or as little as you want.</div>
+      <div style="display:flex;justify-content:flex-end;gap:6px;"><span class="p-btn ghost">Cancel</span><span class="p-btn ghost">&#10024; Generate from name</span><span class="p-btn primary">Save entry</span></div>
+    </div>
+    <div class="panel-caption">Generate is one option among several, never the loudest button on the form.</div>
+  </div>
+
+  <h3>10c. Type-specific fields</h3>
+  <table>
+    <tr><th>Type</th><th>Extra fields beyond Name + description</th></tr>
+    <tr><td>Character</td><td>Role, Relationship to</td></tr>
+    <tr><td>Prop</td><td>Owned or carried by</td></tr>
+    <tr><td>Worldbuilding</td><td>Category (location, culture, history, rule)</td></tr>
+    <tr><td>Scene</td><td>Location, Who is here</td></tr>
+  </table>
+
+  <h3>10d. Simple vs. Complex, global toggle</h3>
+  <p>Every facet of an entry can be its own small addressable card rather than one flat text block. Confirmed as one global Settings toggle, not per-entry. Prop and Scene get their own complex breakdowns too (Prop: Description, Origin, Significance, Current owner &middot; Scene: Setting detail, Participants, Purpose/stakes, Sensory notes).</p>
+  <div class="two-up">
+    <div class="panel-frame">
+      <div class="p-body" style="font-size:11px;">Guarded, precise, distrusts easily. Grew up on the eastern docks. Relationship with Marek, growing trust since Ch. 3.</div>
+      <div class="panel-caption">Simple &mdash; one flat field</div>
+    </div>
+    <div class="panel-frame">
+      <div class="p-body" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;">
+        <div style="background:#FFFFFF;border:1px solid var(--border);border-radius:6px;padding:6px 8px;"><strong>Traits</strong><div style="color:var(--driftwood);">Guarded, precise</div></div>
+        <div style="background:#FFFFFF;border:1px solid var(--border);border-radius:6px;padding:6px 8px;"><strong>Backstory</strong><div style="color:var(--driftwood);">Eastern docks</div></div>
+        <div style="background:#FFFFFF;border:1px solid var(--border);border-radius:6px;padding:6px 8px;"><strong>Appearance</strong><div style="color:var(--driftwood);">Not written yet</div></div>
+        <div style="background:#FFFFFF;border:1px solid var(--border);border-radius:6px;padding:6px 8px;"><strong>Relationships</strong><div style="color:var(--driftwood);">Marek, Ch. 3</div></div>
+      </div>
+      <div class="panel-caption">Complex &mdash; same data, four cards. Nothing lost switching either direction.</div>
+    </div>
+  </div>
+
+  <h3>10e. Suggested creation order</h3>
+  <p>A "prediction flow" nudges toward Character &rarr; Worldbuilding &rarr; Prop &rarr; Scene (based on Sudowrite's Story Bible sequencing) without ever locking it. Every step stays clickable at any time, any order.</p>
+  <div class="panel-frame">
+    <div class="p-body">
+      <div style="display:flex;gap:6px;margin-bottom:10px;font-size:10px;">
+        <span style="padding:4px 10px;border-radius:14px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);">&#10003; Character</span>
+        <span style="padding:4px 10px;border-radius:14px;border:1px dashed var(--driftwood);color:var(--teal);">Worldbuilding</span>
+        <span style="padding:4px 10px;border-radius:14px;border:1px solid var(--border);color:var(--ink-faint);">Prop</span>
+        <span style="padding:4px 10px;border-radius:14px;border:1px solid var(--border);color:var(--ink-faint);">Scene</span>
+      </div>
+      <div style="font-size:10.5px;color:var(--ink-muted);">Most writers start with a character. Click any card above whenever you want a different one.</div>
+    </div>
+    <div class="panel-caption">Dashed border = recommended, not required. Character done, Worldbuilding suggested next, Prop and Scene still directly reachable.</div>
+  </div>
+</section>
+
+<section id="storybuilder">
+  <h2>11. Build your story &amp; scratchpad</h2>
+  <div class="card">
+    <h4>Build your story, question flow</h4>
+    <p>A separate, optional, per-story onboarding wizard. Short questions (Title, Genre, Main character, Setting), fully rearrangeable via a clickable stepper. Leaving a field blank and pressing Enter triggers a graceful skip with a varied, rotating reassurance message, a deterministic "dummy AI" mechanic, no real inference needed. Exits via icon, Esc, or click-outside.</p>
+  </div>
+  <div class="card">
+    <h4>Scratchpad, the real first step</h4>
+    <p>Precedes Title/Genre/Character entirely. A full-card freewrite surface with a dummy mic icon (placeholder for future STT). Detected candidates pool into a left-side panel that doesn't exist until the first item is found. Broad keyword/noun detection stays a cheap, instant, always-on heuristic; reformulating chaotic wording into structured sentences is honestly a job for a light AI pass, not pure pattern matching. Full corrected layout and live mechanic shown in Part Two.</p>
+  </div>
+  <div class="card">
+    <h4>Crash recovery</h4>
+    <p>Confirmed principle: SQLite acts as a fast write-layer cache in front of slower <code>.md</code> saves, so a crash between two saves loses nothing. Banner design shown in Part Two.</p>
+  </div>
+</section>
+
+<section id="future">
+  <h2>12. Logged future phases</h2>
+  <div class="future-phase"><h4>AI Audio, Podcast &amp; Audiobook</h4><p>Local, offline-first agentic pipeline. Chapter-by-chapter TTS with a master stitching service. Separate cast models per character plus a narrator model. Podcast format: two hosts, room for guests. Needs its own audio-model research pass.</p></div>
+  <div class="future-phase"><h4>Skins system</h4><p>Daily-rotating background images with a fixed-opacity light overlay. Toggleable, decided during onboarding, adjustable in Settings with categories, import, and live brightness/contrast/opacity preview.</p></div>
+  <div class="future-phase"><h4>Paper-physics card interactions</h4><p>WebGL/Three.js pickup-and-drop card physics with tilt, and a crumple-and-toss animation on delete. Genuine technical spike required before design work.</p></div>
+  <div class="future-phase"><h4>In-app clipboard history</h4><p>System-wide Ctrl+C capture while the app is open, browsable history, local-only, easy purge. Privacy mechanic: the system flags content that looks sensitive and asks the user in the moment, "this looks personal, discard?", never a silent block-list.</p></div>
+  <div class="future-phase"><h4>Import/Export (Phase 8)</h4><p>Import of .txt, .md, .doc, .docx, .pdf. Natural pairing with the already-planned Export/Publish phase (EPUB/PDF/Fountain/.fdx).</p></div>
+  <div class="future-phase"><h4>Standalone iPad companion app</h4><p>Distinct from Sidecar mirroring. A genuine native iPadOS app, its own build, its own touch-first interface, its own vault sync, a real platform-scope expansion. Not touched yet. Full detail in Part Two.</p></div>
+</section>
+
+<section id="open">
+  <h2>13. Open items, not yet resolved</h2>
+  <div class="open-item"><strong>Default checked state on pool cards:</strong> currently defaults to checked (keep is the default action). Raised as worth reconsidering, not yet flipped.</div>
+  <div class="open-item"><strong>"Build your story" trigger:</strong> automatic on new project, or opt-in only? Not yet confirmed.</div>
+  <div class="open-item"><strong>Scratchpad-to-question connective tissue:</strong> a kept scratchpad item should pre-fill the matching later question. Not yet built.</div>
+  <div class="open-item"><strong>PENS data model gap:</strong> condition-gated branches imply a tracked variable system whose real home isn't decided yet. See Part Two.</div>
+  <div class="open-item"><strong>Still ahead:</strong> Outputs 5&ndash;7, the information architecture, technical architecture, and visual token sheet, none exist as standalone documents yet.</div>
+</section>
+
+</div>
+
+<footer>Storyworks &middot; Phase 1 Design Reference, Part One &middot; card-panel illustrations, no screenshot dependencies &middot; continues in Part Two</footer>
+
+</body>
+</html>

@@ -14,17 +14,17 @@ Standing law: [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md). It supersedes all pr
 | Phase | Status | Scope |
 |-------|--------|--------|
 | **0 Setup** | Done (0.1–0.2 only) | Clearance gate script + per-day devlog protocol; bare Next.js/FastAPI/`engine/` scaffold. Nothing user-facing. |
-| **1 Design** | Current | Jeremy + Claude only. Seven design artifacts (see master plan). No Cursor product work until those docs exist. |
-| **2–8 Production** | Not started | Data & Draft Screen → Novel/Screenplay/Codex → Notes/Journal/Blog → AI layer → PENS → Onboarding/Settings/Lite·Full → Export/Publish |
+| **1 Design** | COMPLETE (2026-08-09) | Seven design artifacts (see `PHASE_1.md`). Two OPEN gaps: Project switcher, typography — see HANDOFF. |
+| **2–8 Production** | Next: Phase 2 | Data & Draft Screen → Novel/Screenplay/Codex → Notes/Journal/Blog → AI layer → PENS → Onboarding/Settings/Lite·Full → Export/Publish |
 | **Deployment** | Not started | Tauri packaging, signing, pricing, distribution |
 
 **Do not** treat the prior Vite/Phase 0–1B tree, or the pre-master-plan “Phase 0 with vault/editor/Muse” structure, as current product law. Superseded history (old phase docs + per-step devlogs): [`docs/archive/2026-08-08-pre-master-plan.zip`](docs/archive/2026-08-08-pre-master-plan.zip).
 
-Vault, TipTap, Muse, onboarding, and STT code in the repo today are a **working reference implementation**, not COMPLETE under any phase. Phase 2 opens by checking each piece against Phase 1 design docs: keep what fits, rebuild what doesn’t.
+Vault, TipTap, Muse, onboarding, and STT code in the repo today are a **working reference implementation**, not COMPLETE under any production phase. Phase 2 opens by checking each piece against Phase 1 design docs: keep what fits, rebuild what doesn’t.
 
-Cold start: `AGENTS.md` → [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) → [`docs/HANDOFF.md`](docs/HANDOFF.md) → [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md) → current `docs/phases/PHASE_*.md`.
+Cold start: `AGENTS.md` → [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) → [`docs/HANDOFF.md`](docs/HANDOFF.md) → [`docs/phases/PHASE_1_INFORMATION_ARCHITECTURE.md`](docs/phases/PHASE_1_INFORMATION_ARCHITECTURE.md) → [`docs/phases/PHASE_1_TECHNICAL_ARCHITECTURE.md`](docs/phases/PHASE_1_TECHNICAL_ARCHITECTURE.md) → [`docs/phases/PHASE_1_VISUAL_TOKENS.md`](docs/phases/PHASE_1_VISUAL_TOKENS.md) → [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md) → current `docs/phases/PHASE_*.md`. Design wireframes/thesis live in `docs/design/storyworks-design-reference-part-1.html` and `part-2.html`.
 
-Older numbered specs under `docs/` (`00_VISION`, `06_UI_UX`, `10_FEATURE_MATRIX`, etc.) and `docs/design/` are pre-master-plan and subordinate until Phase 1 replaces them.
+Older numbered specs under `docs/` (`00_VISION`, `06_UI_UX`, `10_FEATURE_MATRIX`, etc.) are pre-master-plan and subordinate where Phase 1 design docs supersede them.
 
 ## Step quality gate (locked)
 
@@ -96,6 +96,10 @@ Clearance gate:
 | `README.md` | Human overview + quick start |
 | `INSTRUCTIONS.md` | Operator manual |
 | `docs/MASTER_PLAN.md` | Standing production plan (Setup → Deployment) |
+| `docs/phases/PHASE_1_INFORMATION_ARCHITECTURE.md` | Phase 1 IA (incl. Project switcher OPEN gap) |
+| `docs/phases/PHASE_1_TECHNICAL_ARCHITECTURE.md` | Phase 1 technical architecture |
+| `docs/phases/PHASE_1_VISUAL_TOKENS.md` | Phase 1 visual tokens (typography OPEN) |
+| `docs/design/storyworks-design-reference-part-*.html` | Thesis, features, principles, wireframes |
 | `docs/PHASE_STEP_PROTOCOL.md` | Step/phase quality gate law |
 | `docs/devlogs/` | Jeremy-voice **per-day** logs |
 | `docs/reference/authentic-voice-notes.md` | Devlog voice guide |
