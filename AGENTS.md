@@ -44,7 +44,7 @@ Details: [`docs/PHASE_STEP_PROTOCOL.md`](docs/PHASE_STEP_PROTOCOL.md).
 
 ## How to run
 
-**Agents never boot these.** Jeremy pastes the commands in his own terminals and does every browser check himself. Cursor may run `pytest` / `npm run build` / lint / typecheck only — not `uvicorn`, not `npm run dev`, not a browser.
+**Agents never boot these.** Jeremy pastes the commands in his own terminals and does every browser check himself. Cursor may run `pytest` / `npm run build` / lint / typecheck only — not `uvicorn`, not `npm run dev`, not a browser, and not curl/Python probes against a live API or a human’s active vault. Live proof = Jeremy’s pasted output.
 
 ```bash
 # API (repo root) — Jeremy runs this

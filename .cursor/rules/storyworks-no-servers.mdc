@@ -12,10 +12,11 @@ Forbidden examples:
 - `npm run dev`, `next dev`, `uvicorn … --reload`, or any other live app/API process
 - Killing or restarting those processes
 - Browser MCP / IDE browser / screenshot loops against the running app
+- **Direct programmatic calls against a live running server or process** to self-verify a claim — curl, a Python `TestClient`/probe script, fetch, or anything hitting real endpoints or a real vault path outside the formal pytest suite — whether or not the agent booted that server itself
 
 Allowed verification:
 
-- `pytest`, `npm run build`, `npm run lint`, typecheck
+- `pytest`, `npm run build`, `npm run lint`, typecheck (isolated fixtures / throwaway vaults only — never a human’s active vault)
 - Static reads, `rg`/grep, tracing code paths
 
-When a check needs a live server or UI: write the exact terminal commands for Jeremy (separate code boxes for API and web), say what to watch for, and wait for his pasted output. The human checklist exists so Cursor does not test the product in a loop instead of Jeremy.
+When a check needs a live server, UI, or any already-running process: write the exact terminal commands for Jeremy (separate code boxes for API and web), say what to watch for, and wait for his pasted output as the evidence. Do not “prove” a fix by probing live. The human checklist exists so Cursor does not test the product in a loop instead of Jeremy.

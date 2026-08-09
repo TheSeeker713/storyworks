@@ -6,9 +6,9 @@ alwaysApply: true
 # Current phase
 
 - Standing law: `@docs/MASTER_PLAN.md`. Steps: `@docs/phases/PHASE_2.md`.
-- **Phase 2 FULL STOP — Zen FAILURE recorded** (`docs/build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md`). Not COMPLETE. Do not start Phase 3 until Jeremy clears in his own chat words.
-- Zen UI revert proposed, not applied until Jeremy says go. Do not claim Zen fixed.
-- Agents never write live human vaults — throwaway/`tmp_path` only.
+- **Phase 2 FULL STOP — Zen revert applied; awaiting Jeremy live verify.** Failure record: `docs/build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md`. Do not start Phase 3 until Jeremy clears in his own chat words.
+- Zen lives only in DraftShell (no StudioApp split state). Do not claim Zen fixed until Jeremy says so.
+- No live server/process probes; no human-vault writes — throwaway/`tmp_path` only. See `storyworks-no-servers.mdc`.
 - Agents never invent Jeremy’s confirmation (file or chat).
 - Project switcher RESOLVED (Option 3). Typography OPEN.
 - Canvas = PENS only (Phase 6).

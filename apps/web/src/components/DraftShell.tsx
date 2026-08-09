@@ -19,7 +19,6 @@ type Props = {
   museAppend: string | null;
   onMuseAppendConsumed: () => void;
   onMuseAccept: (s: string) => void;
-  onZenChange?: (zen: boolean) => void;
 };
 
 const MENU = ["File", "Edit", "View", "Window", "Help"] as const;
@@ -36,20 +35,11 @@ export default function DraftShell({
   museAppend,
   onMuseAppendConsumed,
   onMuseAccept,
-  onZenChange,
 }: Props) {
   const [tabs, setTabs] = useState<Tab[]>([{ id: "manuscript", title: "Untitled draft" }]);
   const [activeId, setActiveId] = useState("manuscript");
   const [trayOpen, setTrayOpen] = useState(false);
-  const [zen, setZenState] = useState(false);
-
-  const setZen = useCallback(
-    (next: boolean) => {
-      setZenState(next);
-      onZenChange?.(next);
-    },
-    [onZenChange],
-  );
+  const [zen, setZen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<{ sha: string; date: string; message: string }[]>([]);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -143,40 +133,46 @@ export default function DraftShell({
     [draftText, active?.title, project.name],
   );
 
-  return (
-    <div
-      className={
-        zen
-          ? "fixed inset-0 z-[100] flex min-h-0 flex-col"
-          : "flex h-full min-h-0 flex-col"
-      }
-      style={{ background: "var(--sw-parchment)" }}
-      onClick={() => {
-        setCtx(null);
-        setMenuOpen(null);
-      }}
-    >
-      {zen && (
+  if (zen) {
+    return (
+      <div className="relative h-full">
         <button
           type="button"
-          className="absolute right-4 top-4 z-20 rounded-lg border bg-white/90 px-3 py-1.5 text-xs shadow-sm"
+          className="absolute right-4 top-4 z-10 rounded-lg border bg-white/90 px-3 py-1.5 text-xs"
           style={{ borderColor: "var(--sw-border)" }}
           title="Exit Zen (Esc)"
-          onClick={(e) => {
-            e.stopPropagation();
-            setZen(false);
-          }}
+          onClick={() => setZen(false)}
         >
           Exit Zen (Esc)
         </button>
-      )}
+        {shellError && (
+          <p className="absolute left-4 top-4 z-10 max-w-md rounded bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+            {shellError}
+          </p>
+        )}
+        <WritingEditor
+          key={`${project.slug}-${active.id}`}
+          projectSlug={project.slug}
+          projectName={project.name}
+          contentId={active.id}
+          contentTitle={active.title}
+          zen
+          onDraftText={onDraftText}
+          appendText={museAppend}
+          onAppendConsumed={onMuseAppendConsumed}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col" onClick={() => { setCtx(null); setMenuOpen(null); }}>
       {shellError && (
         <p className="bg-red-50 px-4 py-2 text-xs text-red-700" role="alert">
           {shellError}
         </p>
       )}
-      {/* Two-tier header — hidden in Zen (text-only full screen) */}
-      {!zen && (
+      {/* Two-tier header */}
       <div className="border-b" style={{ borderColor: "var(--sw-border)", background: "var(--sw-teal)", color: "var(--sw-parchment)" }}>
         <div className="flex flex-wrap items-center gap-3 px-3 py-1.5 text-xs">
           {MENU.map((m) => (
@@ -264,10 +260,8 @@ export default function DraftShell({
           </div>
         </div>
       </div>
-      )}
 
       {/* Tab strip */}
-      {!zen && (
       <div
         className="flex items-end gap-1 border-b px-2 pt-2"
         style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
@@ -294,11 +288,9 @@ export default function DraftShell({
           +
         </button>
       </div>
-      )}
 
       <div className="relative flex min-h-0 flex-1">
         {/* Left tray edge */}
-        {!zen && (
         <button
           type="button"
           className="absolute left-0 top-0 z-20 h-full w-3 border-r"
@@ -307,8 +299,7 @@ export default function DraftShell({
           onMouseEnter={() => setTrayOpen(true)}
           onClick={() => setTrayOpen((v) => !v)}
         />
-        )}
-        {!zen && trayOpen && (
+        {trayOpen && (
           <aside
             className="z-30 w-56 shrink-0 border-r p-3 text-sm shadow-md"
             style={{ borderColor: "var(--sw-border)", background: "white" }}
@@ -335,34 +326,26 @@ export default function DraftShell({
         )}
 
         <div className="relative min-h-0 min-w-0 flex-1">
-          {/* One editor instance — Zen must not remount or text reloads from disk. */}
           <WritingEditor
             key={`${project.slug}-${active.id}`}
             projectSlug={project.slug}
             projectName={project.name}
             contentId={active.id}
             contentTitle={active.title}
-            zen={zen}
             onDraftText={onDraftText}
             appendText={museAppend}
             onAppendConsumed={onMuseAppendConsumed}
-            onContextMenu={
-              zen
-                ? undefined
-                : (e) => {
-                    e.preventDefault();
-                    setCtx({ x: e.clientX, y: e.clientY });
-                  }
-            }
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setCtx({ x: e.clientX, y: e.clientY });
+            }}
           />
-          {!zen && (
-            <MuseLayer
-              enabled={museEnabled}
-              masterOn={masterOn}
-              getContext={getMuseContext}
-              onAccept={onMuseAccept}
-            />
-          )}
+          <MuseLayer
+            enabled={museEnabled}
+            masterOn={masterOn}
+            getContext={getMuseContext}
+            onAccept={onMuseAccept}
+          />
         </div>
       </div>
 

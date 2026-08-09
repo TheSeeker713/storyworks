@@ -12,8 +12,8 @@ From [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) — **Phase 2 = Data & Draft Screen
 
 1. **Master plan is law:** [`docs/MASTER_PLAN.md`](MASTER_PLAN.md).
 2. **Phase 0 Setup** done. **Phase 1 Design COMPLETE.**
-3. **Phase 2 FULL STOP — Zen FAILURE (not cleared).** Live: Esc trap / “always on top” after `024b408` fullscreen attempt; agent also wrote `dual 18` into the live vault (isolation violation). Record: [`docs/build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md`](build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md). Proposed: revert Zen UI to last non-trapping state (await Jeremy go). Do not mark COMPLETE / do not start Phase 3.
+3. **Phase 2 FULL STOP — Zen revert shipped, awaiting Jeremy live verify.** Trap root cause recorded in [`docs/build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md`](build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md). Zen ownership restored to DraftShell only (no StudioApp `zen` / no `fixed` overlay). Not COMPLETE until Jeremy says so. `dual 18` in his vault left untouched unless he asks.
 4. **Project switcher RESOLVED (Option 3):** Home list/grid + header switcher. **Typography still OPEN.**
-5. Standing: agents never write live human vaults; pytest/`tmp_path` only. In-chat verify lists; agents never invent Jeremy’s confirmation. No servers/browsers from agents.
+5. Standing: no live server probes; no human-vault writes from agents; pytest/`tmp_path` only. In-chat verify lists; agents never invent Jeremy’s confirmation.
 6. Protocol: [`docs/PHASE_STEP_PROTOCOL.md`](PHASE_STEP_PROTOCOL.md).
 7. Archive: [`docs/archive/2026-08-08-pre-master-plan.zip`](archive/2026-08-08-pre-master-plan.zip).

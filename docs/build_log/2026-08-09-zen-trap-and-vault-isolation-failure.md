@@ -55,9 +55,12 @@ Current `DraftShell` JSX has a single `<WritingEditor />` mount. The trap is **n
 | Full-screen Zen + nosync (`024b408`) | True Zen + text preserved | **Fail:** trap / Esc useless / not recognizable Zen; also agent-polluted manuscript |
 | Investigation (this record) | Root cause of trap + `dual 18` | Documented; **no code fix applied in that pass** |
 
-## Proposed next step (not done in this commit)
+## Follow-up (applied after Jeremy’s go)
 
-Revert **only** Zen / StudioApp overlay UI from `024b408` toward last non-trapping DraftShell-local Zen (imperfect / header still visible OK). Keep SQLite `cache.nosync` + retries. Do not ship a fourth Zen redesign until that revert is verified by Jeremy.
+- Reverted Zen UI to DraftShell-only ownership (restore `263df58`-era early-return Zen: Exit + Esc local; Studio header may remain visible — imperfect fullscreen OK).
+- Removed `StudioApp` `zen` boolean and `fixed inset-0` on `<main>`.
+- Closed the rule gap: `storyworks-no-servers.mdc` now forbids direct programmatic probes against any live server/process (curl, Python probes, etc.), not only booting servers.
+- `dual 18` in Jeremy’s manuscript: **not cleared** — left as-is unless he explicitly asks.
 
 ## Related commits
 
