@@ -40,6 +40,15 @@ Do not run `check-phase-clear.sh` against the archived old Phase 0 checklist for
 
 **Phase 1 Design status: COMPLETE** (2026-08-09).
 
-## Phase 2+
+## Phase 2 — Data & Draft Screen
 
-See `docs/MASTER_PLAN.md` and phase docs when authored. End of each production phase: human checklist FULL STOP + gate script. Phase 2 is unblocked; first real step is a separate conversation. Resolve the Project switcher gap early.
+- [x] 2.1–2.5 machine steps (vault hierarchy, Home + header switcher, Draft chrome, git history)
+- [x] `PHASE_2_HUMAN_CHECKLIST.md` published with blank sign-off
+- [ ] Jeremy fills Tester + Date (+ Result) himself
+- [ ] `./scripts/check-phase-clear.sh docs/phases/PHASE_2_HUMAN_CHECKLIST.md` exits 0
+
+**Status: AWAITING HUMAN CLEAR.** Project switcher Option 3 implemented. Typography still OPEN.
+
+## Phase 3+
+
+See `docs/MASTER_PLAN.md`. Do not start until Phase 2 clears.

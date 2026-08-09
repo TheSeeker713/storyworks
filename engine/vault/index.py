@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS content (
   project_slug TEXT NOT NULL,
   type TEXT NOT NULL,
   parent TEXT,
+  book_id TEXT,
+  folder_id TEXT,
   title TEXT,
   subject TEXT,
   archived INTEGER NOT NULL DEFAULT 0,
@@ -34,7 +36,15 @@ class VaultIndex:
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL;")
         self._conn.executescript(SCHEMA)
+        self._migrate()
         self._conn.commit()
+
+    def _migrate(self) -> None:
+        cols = {r[1] for r in self._conn.execute("PRAGMA table_info(content)").fetchall()}
+        if "book_id" not in cols:
+            self._conn.execute("ALTER TABLE content ADD COLUMN book_id TEXT")
+        if "folder_id" not in cols:
+            self._conn.execute("ALTER TABLE content ADD COLUMN folder_id TEXT")
 
     def close(self) -> None:
         self._conn.close()
@@ -42,12 +52,20 @@ class VaultIndex:
     def upsert(self, row: dict[str, Any]) -> None:
         self._conn.execute(
             """
-            INSERT INTO content (id, project_slug, type, parent, title, subject, archived, path, content_hash, mtime, updated_at)
-            VALUES (:id, :project_slug, :type, :parent, :title, :subject, :archived, :path, :content_hash, :mtime, :updated_at)
+            INSERT INTO content (
+              id, project_slug, type, parent, book_id, folder_id,
+              title, subject, archived, path, content_hash, mtime, updated_at
+            )
+            VALUES (
+              :id, :project_slug, :type, :parent, :book_id, :folder_id,
+              :title, :subject, :archived, :path, :content_hash, :mtime, :updated_at
+            )
             ON CONFLICT(id) DO UPDATE SET
               project_slug=excluded.project_slug,
               type=excluded.type,
               parent=excluded.parent,
+              book_id=excluded.book_id,
+              folder_id=excluded.folder_id,
               title=excluded.title,
               subject=excluded.subject,
               archived=excluded.archived,

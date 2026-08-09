@@ -1,13 +1,17 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "";
 
-/** Default for vault/project calls. Connectors always use an AbortSignal so UI never sticks on "checking…". */
 const DEFAULT_TIMEOUT_MS = 15_000;
-/** Server ollama_health uses httpx timeout 2s; keep client budget tight. */
 const OLLAMA_TIMEOUT_MS = 5_000;
-/** Server stt_status may subprocess-import mlx_whisper (timeout 30s). Client must wait longer than that. */
 const STT_TIMEOUT_MS = 35_000;
-/** Native folder dialog waits on the user; keep a long client budget. */
 const PICK_DIRECTORY_TIMEOUT_MS = 600_000;
+
+export type ProjectRow = {
+  slug: string;
+  name: string;
+  archived: boolean;
+  module?: string;
+  updated_at?: string;
+};
 
 async function req<T>(path: string, init?: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
   const ctrl = new AbortController();
@@ -29,7 +33,7 @@ async function req<T>(path: string, init?: RequestInit, timeoutMs = DEFAULT_TIME
         if (typeof parsed.detail === "string") detail = parsed.detail;
         else if (parsed.detail != null) detail = JSON.stringify(parsed.detail);
       } catch {
-        // plain text / HTML (e.g. Next proxy "Internal Server Error" when API is dead)
+        // plain text
       }
       throw new Error(detail);
     }
@@ -71,27 +75,33 @@ export const api = {
       body: JSON.stringify({ patch }),
     }),
   listProjects: (archived = false) =>
-    req<{ projects: { slug: string; name: string; archived: boolean }[] }>(
-      `/api/projects?archived=${archived ? "true" : "false"}`,
-    ),
+    req<{ projects: ProjectRow[] }>(`/api/projects?archived=${archived ? "true" : "false"}`),
   createProject: (name: string) =>
-    req<{ slug: string; name: string }>("/api/projects", {
+    req<ProjectRow>("/api/projects", {
       method: "POST",
       body: JSON.stringify({ name }),
     }),
   archiveProject: (slug: string) =>
-    req<{ slug: string; name: string; archived: boolean }>(`/api/projects/${slug}/archive`, {
-      method: "POST",
-    }),
+    req<ProjectRow>(`/api/projects/${slug}/archive`, { method: "POST" }),
   restoreProject: (slug: string) =>
-    req<{ slug: string; name: string; archived: boolean }>(`/api/projects/${slug}/restore`, {
-      method: "POST",
-    }),
+    req<ProjectRow>(`/api/projects/${slug}/restore`, { method: "POST" }),
   deleteProject: (slug: string, typedName: string) =>
     req<{ ok: boolean; slug: string }>(`/api/projects/${slug}/delete`, {
       method: "POST",
       body: JSON.stringify({ typed_name: typedName }),
     }),
+  listBooks: (slug: string) =>
+    req<{ books: { id: string; title: string }[] }>(`/api/projects/${slug}/books`),
+  listFolders: (slug: string, bookId: string) =>
+    req<{ folders: { id: string; title: string; book_id: string }[] }>(
+      `/api/projects/${slug}/books/${bookId}/folders`,
+    ),
+  listContent: (slug: string) =>
+    req<{ content: { id: string; title: string; type: string; book_id?: string; folder_id?: string }[] }>(
+      `/api/projects/${slug}/content`,
+    ),
+  history: (slug: string) =>
+    req<{ history: { sha: string; date: string; message: string }[] }>(`/api/projects/${slug}/history`),
   writeContent: (
     slug: string,
     body: {
@@ -100,6 +110,8 @@ export const api = {
       title?: string;
       subject?: string;
       body?: string;
+      book_id?: string;
+      folder_id?: string;
       canvas?: Record<string, unknown>;
       expected_hash?: string;
       dirty?: boolean;

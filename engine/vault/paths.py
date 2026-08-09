@@ -1,8 +1,11 @@
-"""Vault path helpers."""
+"""Vault path helpers — Project → Book → Folder → Content."""
 
 from __future__ import annotations
 
 from pathlib import Path
+
+DEFAULT_BOOK_ID = "main"
+DEFAULT_FOLDER_ID = "main"
 
 
 def storyworks_dir(vault: Path) -> Path:
@@ -29,12 +32,53 @@ def project_dir(vault: Path, project_slug: str) -> Path:
     return vault / "projects" / project_slug
 
 
-def content_dir(vault: Path, project_slug: str) -> Path:
+def books_dir(vault: Path, project_slug: str) -> Path:
+    return project_dir(vault, project_slug) / "books"
+
+
+def book_dir(vault: Path, project_slug: str, book_id: str) -> Path:
+    return books_dir(vault, project_slug) / book_id
+
+
+def book_meta_path(vault: Path, project_slug: str, book_id: str) -> Path:
+    return book_dir(vault, project_slug, book_id) / "book.md"
+
+
+def folders_dir(vault: Path, project_slug: str, book_id: str) -> Path:
+    return book_dir(vault, project_slug, book_id) / "folders"
+
+
+def folder_dir(vault: Path, project_slug: str, book_id: str, folder_id: str) -> Path:
+    return folders_dir(vault, project_slug, book_id) / folder_id
+
+
+def folder_meta_path(vault: Path, project_slug: str, book_id: str, folder_id: str) -> Path:
+    return folder_dir(vault, project_slug, book_id, folder_id) / "folder.md"
+
+
+def content_dir(
+    vault: Path,
+    project_slug: str,
+    book_id: str = DEFAULT_BOOK_ID,
+    folder_id: str = DEFAULT_FOLDER_ID,
+) -> Path:
+    return folder_dir(vault, project_slug, book_id, folder_id) / "content"
+
+
+def content_path(
+    vault: Path,
+    project_slug: str,
+    content_id: str,
+    *,
+    book_id: str = DEFAULT_BOOK_ID,
+    folder_id: str = DEFAULT_FOLDER_ID,
+) -> Path:
+    return content_dir(vault, project_slug, book_id, folder_id) / f"{content_id}.md"
+
+
+def legacy_content_dir(vault: Path, project_slug: str) -> Path:
+    """Pre-hierarchy flat content/ directory."""
     return project_dir(vault, project_slug) / "content"
-
-
-def content_path(vault: Path, project_slug: str, content_id: str) -> Path:
-    return content_dir(vault, project_slug) / f"{content_id}.md"
 
 
 def boards_dir(vault: Path) -> Path:

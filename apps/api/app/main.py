@@ -17,7 +17,7 @@ if str(ROOT) not in sys.path:
 from apps.api.app import state
 from engine.vault.backup import backup_vault_snapshot
 
-app = FastAPI(title="Storyworks API", version="0.3.0")
+app = FastAPI(title="Storyworks API", version="0.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,7 +38,7 @@ def health():
     return {
         "ok": True,
         "service": "storyworks-api",
-        "phase": "0.3",
+        "phase": "2",
         "stack": "v2",
         "vault_open": vault_open,
     }
@@ -231,9 +231,41 @@ class WriteContentIn(BaseModel):
     subject: str = ""
     body: str = ""
     parent: str = ""
+    book_id: str = "main"
+    folder_id: str = "main"
     canvas: Optional[dict[str, Any]] = None
     expected_hash: Optional[str] = None
     dirty: bool = False
+
+
+@app.get("/api/projects/{slug}/books")
+def books_list(slug: str):
+    try:
+        store = state.get_vault()
+        return {"books": store.list_books(slug)}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/projects/{slug}/books/{book_id}/folders")
+def folders_list(slug: str, book_id: str):
+    try:
+        store = state.get_vault()
+        return {"folders": store.list_folders(slug, book_id)}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/projects/{slug}/history")
+def project_history(slug: str, limit: int = 50):
+    try:
+        store = state.get_vault()
+        from engine.committer import list_history
+        from engine.vault.paths import project_dir
+
+        return {"history": list_history(project_dir(store.root, slug), limit=limit)}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.get("/api/projects/{slug}/content")
@@ -257,6 +289,8 @@ def content_write(slug: str, body: WriteContentIn):
             subject=body.subject,
             body=body.body,
             parent=body.parent,
+            book_id=body.book_id,
+            folder_id=body.folder_id,
             canvas=body.canvas,
             expected_hash=body.expected_hash,
             dirty=body.dirty,

@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
+:root {
+  --sw-teal: #1b4b43;
+  --sw-forest: #2d5940;
+  --sw-sage: #8aa888;
+  --sw-driftwood: #a68a6d;
+  --sw-parchment: #fbf8f1;
+  --sw-parchment-deep: #efe8d8;
+  --sw-gold: #c9a227;
+  --sw-ink: #2a2a26;
+  --sw-ink-muted: #6b6656;
+  --sw-ink-faint: #a6a192;
+  --sw-border: #ddd5c4;
+  /* Typography OPEN — system stack is temporary placeholder only */
+  --sw-font: -apple-system, "SF Pro Text", "Segoe UI", sans-serif;
+}
+
 html,
 body {
   height: 100%;
   margin: 0;
+  font-family: var(--sw-font);
 }
 
 body {
-  background: #f7f5f0;
-  color: #1c1917;
+  background: var(--sw-parchment);
+  color: var(--sw-ink);
 }
 
 .ProseMirror p {
@@ -17,4 +34,31 @@ body {
 
 .ProseMirror p:first-child {
   margin-top: 0;
+}
+
+.sw-btn {
+  background: linear-gradient(180deg, #356b58, #1f4a3d);
+  border: 1px solid #163a30;
+  border-radius: 8px;
+  color: #fbf8f1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.18);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sw-btn:hover {
+  transform: translateY(-1px);
+}
+
+.sw-btn:active {
+  transform: translateY(1px);
+}
+
+.sw-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
 }

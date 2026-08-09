@@ -32,3 +32,7 @@ tmp/**
 # Bulky unconverted background dumps (converted webp + manifest are tracked)
 assets/backgrounds/raw/**
 !assets/backgrounds/raw/.gitkeep
+
+# Local design dumps (not product law)
+assets/skins/
+assets/ui ux design screenshots/

@@ -70,21 +70,25 @@ inside the hierarchy above.
   assistant needs real, permitted write access to the settings layer,
   not just the ability to describe what a setting does.
 
-## Navigation, the real gap
+## Navigation — Project switcher (RESOLVED 2026-08-09)
 
-**There is no resolved top-level "switch between Projects" screen.**
-Early in this design process, the plan was a Milanote-style spatial
-canvas where the Home view doubled as the project list. That canvas was
-descoped entirely after the tldraw licensing investigation (see
-technical architecture doc), and the project-list-as-canvas idea was
-never replaced with a concrete alternative. Every wireframe since then
-assumes you're already inside a project.
+**Option 3: list/grid Home + header switcher.** Both, not either.
 
-**Do not invent this without asking.** Reasonable candidates worth
-raising with Jeremy before building: a simple list/grid view (title,
-type, last-modified, matching the "list/index view for triage at scale"
-idea from early planning), a dropdown in the header, or something else
-entirely. This is a real open item, not a minor detail.
+Early design used a Milanote-style spatial canvas as Home/project list;
+that canvas was descoped after the tldraw licensing investigation. Pure
+spatial triage also breaks down past a few dozen items (research against
+comparable tools). Resolution:
+
+- **List/grid Home** — triage at scale: title, module/type, last-modified
+  per row; open → Draft Screen (or the project’s module surface when it
+  already has content); archive / restore / typed-name delete live here.
+  This is where the existing project lifecycle has its permanent home.
+- **Header switcher** — compact, always available once a vault is open:
+  quick jump between recently-open or favorited projects without leaving
+  the current screen. Same principle as Cmd+K: a shortcut to something
+  already reachable on Home, never the only path.
+
+Phase 2 implements this pair. Typography remains OPEN (visual token sheet).
 
 ## Module-specific structural notes
 

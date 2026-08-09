@@ -1,19 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, type ProjectRow } from "@/lib/api";
 import { runConnectorBootChecks, type SttUiState } from "@/lib/connectors";
 import BootScreen from "@/components/BootScreen";
-import MuseLayer from "@/components/MuseLayer";
+import DraftShell from "@/components/DraftShell";
 import Onboarding from "@/components/Onboarding";
-import ProjectList, { type ProjectRow } from "@/components/ProjectList";
-import WritingEditor from "@/components/WritingEditor";
+import ProjectList from "@/components/ProjectList";
 
 const VAULT_KEY = "storyworks.vaultPath";
 const PROJECT_KEY = "storyworks.projectSlug";
+const RECENT_KEY = "storyworks.recentProjects";
 const STT_KEY = "storyworks.sttEnabled";
 const MUSE_KEY = "storyworks.museEnabled";
 const ONBOARD_KEY = "storyworks.onboarded";
+
+function pushRecent(slug: string) {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    const prev: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+    const next = [slug, ...prev.filter((s) => s !== slug)].slice(0, 20);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch {
+    // ignore
+  }
+}
 
 export default function StudioApp() {
   const [booting, setBooting] = useState(true);
@@ -164,12 +175,14 @@ export default function StudioApp() {
     setError(null);
     const p = await api.createProject(newName.trim() || "Untitled");
     localStorage.setItem(PROJECT_KEY, p.slug);
+    pushRecent(p.slug);
     setProjectSlug(p.slug);
     await refreshProjects();
   }
 
   function openProject(slug: string) {
     localStorage.setItem(PROJECT_KEY, slug);
+    pushRecent(slug);
     setProjectSlug(slug);
   }
 
@@ -245,24 +258,15 @@ export default function StudioApp() {
   const selectedProject =
     projects.find((p) => p.slug === projectSlug) || archivedProjects.find((p) => p.slug === projectSlug);
 
-  const getMuseContext = useCallback(
-    () => ({
-      text: draftText,
-      title: selectedProject?.name || "manuscript",
-      projectName: selectedProject?.name || projectSlug || "",
-    }),
-    [draftText, projectSlug, selectedProject?.name],
-  );
-
   const headerBtn =
-    "rounded-sm border px-3 py-1 text-sm transition-colors cursor-pointer hover:border-teal-800 disabled:cursor-not-allowed disabled:opacity-40";
+    "rounded-lg border px-3 py-1 text-sm transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40";
 
   if (booting) {
     return <BootScreen ollamaSummary={ollamaSummary} sttSummary={sttSummary} />;
   }
 
   return (
-    <div className="flex h-screen flex-col bg-stone-50 text-stone-900">
+    <div className="flex h-screen flex-col" style={{ background: "var(--sw-parchment)", color: "var(--sw-ink)" }}>
       {showOnboarding && (
         <Onboarding
           vaultPath={inputPath}
@@ -280,14 +284,22 @@ export default function StudioApp() {
           onTourFinished={finishOnboardingTour}
         />
       )}
-      <header className="flex flex-wrap items-center gap-2 border-b border-teal-900/15 bg-gradient-to-r from-teal-50 to-emerald-50 px-4 py-3">
-        <h1 className="text-xl font-semibold tracking-tight text-teal-950">Storyworks</h1>
+      <header
+        className="flex flex-wrap items-center gap-2 border-b px-4 py-2"
+        style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
+      >
+        <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--sw-teal)" }}>
+          Storyworks
+        </h1>
         <button
           type="button"
           onClick={() => void toggleMaster()}
-          className={`${headerBtn} ${
-            masterOn ? "border-teal-800 bg-teal-900 text-white hover:bg-teal-800" : "border-stone-400 bg-white text-stone-700 hover:bg-teal-50"
-          }`}
+          className={headerBtn}
+          style={{
+            borderColor: masterOn ? "var(--sw-teal)" : "var(--sw-border)",
+            background: masterOn ? "var(--sw-teal)" : "white",
+            color: masterOn ? "white" : "var(--sw-ink)",
+          }}
           title="Master AI kill switch"
         >
           {masterOn ? "AI on" : "AI off"}
@@ -296,42 +308,34 @@ export default function StudioApp() {
           type="button"
           disabled={!masterOn}
           onClick={toggleMuse}
-          className={`${headerBtn} ${
-            museEnabled && masterOn
-              ? "border-teal-800 bg-teal-900 text-white hover:bg-teal-800"
-              : "border-stone-400 bg-white text-stone-800 hover:bg-teal-50"
-          }`}
+          className={headerBtn}
+          style={{ borderColor: "var(--sw-border)", background: "white" }}
           title="Muse idle suggestions"
         >
           {museEnabled && masterOn ? "Muse on" : "Muse off"}
         </button>
         <button
           type="button"
-          title={
-            sttState === "working"
-              ? "Toggle local speech-to-text"
-              : "Local STT is not available on this machine"
-          }
+          title={sttState === "working" ? "Toggle local speech-to-text" : "Local STT is not available"}
           disabled={!masterOn || sttState !== "working"}
           onClick={toggleStt}
-          className={`${headerBtn} ${
-            sttEnabled && masterOn && sttState === "working"
-              ? "border-teal-800 bg-teal-900 text-white hover:bg-teal-800"
-              : "border-stone-400 bg-white text-stone-800 hover:bg-teal-50"
-          }`}
+          className={headerBtn}
+          style={{ borderColor: "var(--sw-border)", background: "white" }}
         >
           {sttLabel}
         </button>
         <div className="flex flex-1 flex-wrap items-center gap-2 text-sm">
           <p
-            className="min-w-[12rem] flex-1 truncate rounded-sm border border-stone-300 bg-white px-2 py-1 font-mono text-xs text-stone-700"
+            className="min-w-[12rem] flex-1 truncate rounded-lg border bg-white px-2 py-1 font-mono text-xs"
+            style={{ borderColor: "var(--sw-border)", color: "var(--sw-ink-muted)" }}
             title={inputPath || "No vault folder"}
           >
             {inputPath || "No vault folder"}
           </p>
           <button
             type="button"
-            className={`${headerBtn} border-stone-400 bg-white text-stone-800 hover:bg-teal-50`}
+            className={headerBtn}
+            style={{ borderColor: "var(--sw-border)", background: "white" }}
             disabled={pickingFolder}
             onClick={() => void pickVaultFolder()}
           >
@@ -339,47 +343,54 @@ export default function StudioApp() {
           </button>
           <button
             type="button"
-            className={`${headerBtn} border-teal-800/30 bg-teal-900 text-white hover:bg-teal-800`}
+            className="sw-btn"
             disabled={!inputPath.trim()}
             onClick={() => void openVault(inputPath.trim()).catch((e: Error) => setError(e.message))}
           >
             Open vault
           </button>
-          {vaultPath && projectSlug && (
+          {vaultPath && (
             <button
               type="button"
-              className={`${headerBtn} border-stone-400 bg-white hover:bg-teal-50`}
-              onClick={() => setProjectSlug(null)}
+              className={headerBtn}
+              style={{ borderColor: "var(--sw-border)", background: "white" }}
+              onClick={() => {
+                setProjectSlug(null);
+                localStorage.removeItem(PROJECT_KEY);
+              }}
+              title="List/grid Home — triage at scale"
             >
-              All projects
+              Home
             </button>
           )}
         </div>
-        <p className="text-xs text-stone-500">{status}</p>
+        <p className="text-xs" style={{ color: "var(--sw-ink-faint)" }}>
+          {status}
+        </p>
       </header>
       {error && <p className="bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>}
       <main className="relative min-h-0 flex-1">
         {!vaultPath ? (
-          <div className="flex h-full items-center justify-center p-8 text-stone-600">
+          <div className="flex h-full items-center justify-center p-8" style={{ color: "var(--sw-ink-muted)" }}>
             Choose a vault folder to get started.
           </div>
         ) : projectSlug && selectedProject && !selectedProject.archived ? (
-          <>
-            <WritingEditor
-              key={projectSlug}
-              projectSlug={projectSlug}
-              projectName={selectedProject.name}
-              onDraftText={setDraftText}
-              appendText={museAppend}
-              onAppendConsumed={() => setMuseAppend(null)}
-            />
-            <MuseLayer
-              enabled={museEnabled}
-              masterOn={masterOn}
-              getContext={getMuseContext}
-              onAccept={(s) => setMuseAppend(s)}
-            />
-          </>
+          <DraftShell
+            project={selectedProject}
+            projects={projects}
+            museEnabled={museEnabled}
+            masterOn={masterOn}
+            onHome={() => {
+              setProjectSlug(null);
+              localStorage.removeItem(PROJECT_KEY);
+            }}
+            onSwitchProject={openProject}
+            onDraftText={setDraftText}
+            draftText={draftText}
+            museAppend={museAppend}
+            onMuseAppendConsumed={() => setMuseAppend(null)}
+            onMuseAccept={(s) => setMuseAppend(s)}
+          />
         ) : (
           <ProjectList
             projects={projects}

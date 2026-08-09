@@ -14,8 +14,9 @@ Standing law: [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md). It supersedes all pr
 | Phase | Status | Scope |
 |-------|--------|--------|
 | **0 Setup** | Done (0.1–0.2 only) | Clearance gate script + per-day devlog protocol; bare Next.js/FastAPI/`engine/` scaffold. Nothing user-facing. |
-| **1 Design** | COMPLETE (2026-08-09) | Seven design artifacts (see `PHASE_1.md`). Two OPEN gaps: Project switcher, typography — see HANDOFF. |
-| **2–8 Production** | Unblocked — Phase 2 next (separate session) | Data & Draft Screen → Novel/Screenplay/Codex → Notes/Journal/Blog → AI layer → PENS → Onboarding/Settings/Lite·Full → Export/Publish |
+| **1 Design** | COMPLETE (2026-08-09) | Seven design artifacts. Project switcher resolved (Option 3). Typography still OPEN — see HANDOFF. |
+| **2 Data & Draft** | FULL STOP — awaiting human clear | Machine steps done; see `PHASE_2_HUMAN_CHECKLIST.md`. Do not start Phase 3 until Jeremy signs. |
+| **3–8 / Deployment** | Not started | Novel/Screenplay → Notes/Journal/Blog → AI → PENS → Onboarding/Lite·Full → Export → Packaging |
 | **Deployment** | Not started | Tauri packaging, signing, pricing, distribution |
 
 **Do not** treat the prior Vite/Phase 0–1B tree, or the pre-master-plan “Phase 0 with vault/editor/Muse” structure, as current product law. Superseded history (old phase docs + per-step devlogs): [`docs/archive/2026-08-08-pre-master-plan.zip`](docs/archive/2026-08-08-pre-master-plan.zip).
