@@ -554,6 +554,7 @@ class VaultStore:
         book_id: str = DEFAULT_BOOK_ID,
         folder_id: str = DEFAULT_FOLDER_ID,
         canvas: Optional[dict[str, Any]] = None,
+        paragraph_timestamps: Optional[list[str]] = None,
         expected_hash: Optional[str] = None,
         dirty: bool = False,
     ) -> dict[str, Any]:
@@ -606,6 +607,7 @@ class VaultStore:
             prev_scenes: list[Any] = []
             prev_tags: list[Any] = []
             prev_provenance: dict[str, Any] = {}
+            prev_paragraph_timestamps: list[str] = []
             if path.exists():
                 try:
                     pmeta, _ = parse_markdown(path.read_text(encoding="utf-8"))
@@ -613,6 +615,9 @@ class VaultStore:
                     prev_tags = list(pmeta.get("tags") or [])
                     if isinstance(pmeta.get("provenance"), dict):
                         prev_provenance = dict(pmeta["provenance"])
+                    prev_paragraph_timestamps = [
+                        str(value) for value in list(pmeta.get("paragraph_timestamps") or [])
+                    ]
                 except OSError:
                     pass
             meta = {
@@ -626,6 +631,11 @@ class VaultStore:
                 "tags": prev_tags,
                 "scenes": prev_scenes,
                 "provenance": prev_provenance,
+                "paragraph_timestamps": (
+                    [str(value) for value in paragraph_timestamps]
+                    if paragraph_timestamps is not None
+                    else prev_paragraph_timestamps
+                ),
                 "archived": False,
                 "canvas": canvas or {},
                 "updated_at": _utc_now(),

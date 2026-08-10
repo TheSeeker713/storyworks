@@ -197,6 +197,7 @@ export const api = {
       dirty?: boolean;
       tags?: string[];
       scenes?: ContentScene[];
+      paragraph_timestamps?: string[];
       auto_tag?: boolean;
     },
   ) =>
@@ -213,7 +214,12 @@ export const api = {
       body: JSON.stringify(body),
     }),
   readContent: (slug: string, id: string) =>
-    req<{ id: string; body: string; content_hash: string; meta: { title?: string; scenes?: ContentScene[] } }>(
+    req<{
+      id: string;
+      body: string;
+      content_hash: string;
+      meta: { title?: string; scenes?: ContentScene[]; paragraph_timestamps?: string[] };
+    }>(
       `/api/projects/${slug}/content/${id}`,
     ),
   renameContent: (slug: string, id: string, name: string) =>

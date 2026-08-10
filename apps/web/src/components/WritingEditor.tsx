@@ -3,6 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Paragraph from "@tiptap/extension-paragraph";
 import { api } from "@/lib/api";
 
 export type WritingEditorHandle = {
@@ -34,16 +35,47 @@ type Props = {
 const AUTOSAVE_MS = 600;
 const CHECKPOINT_IDLE_MS = 30_000;
 
-function textToDoc(text: string) {
+const TimestampedParagraph = Paragraph.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      createdAt: {
+        default: null,
+        keepOnSplit: false,
+        parseHTML: (element) => element.getAttribute("data-created-at"),
+        renderHTML: (attributes) => {
+          if (!attributes.createdAt) return {};
+          const createdAt = String(attributes.createdAt);
+          const parsed = new Date(createdAt);
+          return {
+            "data-created-at": createdAt,
+            "data-created-label": Number.isNaN(parsed.valueOf())
+              ? createdAt
+              : parsed.toLocaleString(),
+          };
+        },
+      },
+    };
+  },
+});
+
+function isTimestampedType(type?: string) {
+  return type === "note" || type === "journal_entry";
+}
+
+function textToDoc(text: string, timestamps: string[] = []) {
   const lines = text.length > 0 ? text.split("\n") : [""];
   return {
     type: "doc" as const,
-    content: lines.map((line) => ({
+    content: lines.map((line, index) => ({
       type: "paragraph" as const,
+      attrs: timestamps[index] ? { createdAt: timestamps[index] } : undefined,
       content: line ? [{ type: "text" as const, text: line }] : [],
     })),
   };
 }
+
+type SavePayload = { body: string; paragraphTimestamps: string[] };
 
 const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEditor(
   {
@@ -75,7 +107,7 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
   const checkpointTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const readyRef = useRef(false);
   const inFlightRef = useRef(false);
-  const queuedBodyRef = useRef<string | null>(null);
+  const queuedBodyRef = useRef<SavePayload | null>(null);
   const projectSlugRef = useRef(projectSlug);
   const contentIdRef = useRef(contentId);
   const contentTitleRef = useRef(contentTitle);
@@ -113,26 +145,31 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
     void api.checkpoint(projectSlugRef.current, reason).catch(() => {});
   }
 
-  async function persistBody(body: string) {
+  async function persistBody(payload: SavePayload) {
     if (inFlightRef.current) {
-      queuedBodyRef.current = body;
+      queuedBodyRef.current = payload;
       return;
     }
     inFlightRef.current = true;
     setSaveState("saving");
     try {
-      let next: string | null = body;
+      let next: SavePayload | null = payload;
       while (next !== null) {
         const toWrite = next;
         next = null;
         queuedBodyRef.current = null;
         try {
-          const bodyOut = transformSaveRef.current ? await transformSaveRef.current(toWrite) : toWrite;
+          const bodyOut = transformSaveRef.current
+            ? await transformSaveRef.current(toWrite.body)
+            : toWrite.body;
           const result = await api.writeContent(projectSlugRef.current, {
             id: contentIdRef.current,
             type: contentTypeRef.current || "manuscript",
             title: contentTitleRef.current || projectNameRef.current || "Manuscript",
             body: bodyOut,
+            paragraph_timestamps: isTimestampedType(contentTypeRef.current)
+              ? toWrite.paragraphTimestamps
+              : undefined,
             book_id: bookIdRef.current || "main",
             folder_id: folderIdRef.current || "main",
             expected_hash: hashRef.current || undefined,
@@ -173,7 +210,10 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
     `prose prose-stone max-w-none min-h-[22rem] px-1 py-2 focus:outline-none ${fontSizeClass} leading-relaxed text-[var(--sw-ink)]`;
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit.configure({ paragraph: false }),
+      TimestampedParagraph,
+    ],
     content: textToDoc(""),
     immediatelyRender: false,
     autofocus: true,
@@ -183,13 +223,40 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
       },
     },
     onUpdate: ({ editor: ed }) => {
+      if (isTimestampedType(contentTypeRef.current)) {
+        const now = new Date().toISOString();
+        let transaction = ed.state.tr;
+        let addedTimestamp = false;
+        ed.state.doc.descendants((node, pos) => {
+          if (node.type.name === "paragraph" && !node.attrs.createdAt) {
+            transaction = transaction.setNodeMarkup(pos, undefined, {
+              ...node.attrs,
+              createdAt: now,
+            });
+            addedTimestamp = true;
+          }
+        });
+        if (addedTimestamp) {
+          ed.view.dispatch(transaction);
+          return;
+        }
+      }
       const text = ed.getText({ blockSeparator: "\n" });
       onDraftText?.(text);
       if (!readyRef.current) return;
       setSaveState("saving");
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(() => {
-        void persistBody(ed.getText({ blockSeparator: "\n" }));
+        const paragraphTimestamps: string[] = [];
+        ed.state.doc.descendants((node) => {
+          if (node.type.name === "paragraph") {
+            paragraphTimestamps.push(String(node.attrs.createdAt || ""));
+          }
+        });
+        void persistBody({
+          body: ed.getText({ blockSeparator: "\n" }),
+          paragraphTimestamps,
+        });
       }, AUTOSAVE_MS);
     },
   });
@@ -257,13 +324,15 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
         hashRef.current = existing.content_hash || "";
         let body = existing.body || "";
         if (transformLoadRef.current) body = await transformLoadRef.current(body);
-        editor.commands.setContent(textToDoc(body));
+        editor.commands.setContent(
+          textToDoc(body, existing.meta.paragraph_timestamps || []),
+        );
         onDraftText?.(body);
       } catch {
         const created = await api.writeContent(projectSlug, {
           id: contentId,
           type: contentType || "manuscript",
-          title: contentTitle || projectName || "Untitled draft",
+          title: contentTitle || projectName || "Draft",
           body: "",
           book_id: bookId || "main",
           folder_id: folderId || "main",

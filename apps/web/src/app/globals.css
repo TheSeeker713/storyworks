@@ -42,6 +42,16 @@ body {
   margin-top: 0;
 }
 
+.ProseMirror p[data-created-at]::before {
+  content: attr(data-created-label);
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--sw-ink-faint);
+  font-family: var(--sw-font);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
 .sw-btn {
   background: linear-gradient(180deg, #356b58, #1f4a3d);
   border: 1px solid #163a30;

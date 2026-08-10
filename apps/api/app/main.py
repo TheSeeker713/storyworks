@@ -300,6 +300,7 @@ class WriteContentIn(BaseModel):
     dirty: bool = False
     tags: Optional[list[str]] = None
     scenes: Optional[list[dict[str, Any]]] = None
+    paragraph_timestamps: Optional[list[str]] = None
     auto_tag: bool = False
 
 
@@ -369,6 +370,7 @@ def content_write(slug: str, body: WriteContentIn):
             book_id=body.book_id,
             folder_id=body.folder_id,
             canvas=body.canvas,
+            paragraph_timestamps=body.paragraph_timestamps,
             expected_hash=body.expected_hash,
             dirty=body.dirty,
         )
