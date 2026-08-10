@@ -375,14 +375,32 @@ def content_write(slug: str, body: WriteContentIn):
             result = {"ok": True, **{k: result[k] for k in result if k != "ok"}}
         if body.auto_tag and result.get("ok"):
             from engine.vault.codex import ensure_stub
+            from engine.vault.note_detection import detect_note_codex_links
             from engine.vault.paths import project_dir
-            import re
 
-            names = set(re.findall(r"#([A-Za-z][\w-]{1,40})", body.body or ""))
             stubs = []
-            for n in names:
-                stubs.append(ensure_stub(project_dir(store.root, slug), n))
+            links = detect_note_codex_links(body.body or "")
+            for link in links:
+                stub = ensure_stub(
+                    project_dir(store.root, slug),
+                    str(link["name"]),
+                    type_=str(link["type"]),
+                )
+                stubs.append(stub)
+                link["entry_id"] = stub["id"]
+                link["type"] = stub["type"]
+
+            data = store.read_content(slug, result["id"])
+            meta = data["meta"]
+            meta["codex_links"] = links
+            from engine.vault.frontmatter import dump_markdown
+            from engine.vault.store import atomic_write
+
+            path = store.resolve_content_path(slug, result["id"])
+            atomic_write(path, dump_markdown(meta, data["body"]))
+            store._index_file(slug, path)
             result["auto_tags"] = stubs
+            result["codex_links"] = links
         return result
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
