@@ -97,9 +97,13 @@ class VaultStore:
                         "ai_master_enabled": True,
                         "muse_enabled": True,
                         "stt_enabled": False,
+                        "stt_model": "mlx-community/whisper-tiny",
                         "write_model": "huihui_ai/qwen3-abliterated:14b",
                         "agent_model": "qwen2.5-coder:7b",
                         "codex_complex": False,
+                        "product_tier": "full",
+                        "byom_enabled": False,
+                        "byom_endpoint": "",
                         "openclaw": {"research": False, "git": False, "agentic": False},
                     },
                     indent=2,
@@ -531,11 +535,14 @@ class VaultStore:
 
             prev_scenes: list[Any] = []
             prev_tags: list[Any] = []
+            prev_provenance: dict[str, Any] = {}
             if path.exists():
                 try:
                     pmeta, _ = parse_markdown(path.read_text(encoding="utf-8"))
                     prev_scenes = list(pmeta.get("scenes") or [])
                     prev_tags = list(pmeta.get("tags") or [])
+                    if isinstance(pmeta.get("provenance"), dict):
+                        prev_provenance = dict(pmeta["provenance"])
                 except OSError:
                     pass
             meta = {
@@ -548,6 +555,7 @@ class VaultStore:
                 "subject": subject,
                 "tags": prev_tags,
                 "scenes": prev_scenes,
+                "provenance": prev_provenance,
                 "archived": False,
                 "canvas": canvas or {},
                 "updated_at": _utc_now(),
@@ -598,6 +606,74 @@ class VaultStore:
             "book_id": str(meta.get("book_id") or DEFAULT_BOOK_ID),
             "folder_id": str(meta.get("folder_id") or DEFAULT_FOLDER_ID),
         }
+
+    def bump_provenance(
+        self,
+        project_slug: str,
+        content_id: str,
+        *,
+        muse_words: int = 0,
+        ai_words: int = 0,
+    ) -> dict[str, Any]:
+        """Increment Muse/AI accepted-word counters without rewriting body text."""
+        from engine.ai.provenance import normalize_provenance, provenance_summary
+
+        with self._write_lock:
+            data = self.read_content(project_slug, content_id)
+            meta = dict(data["meta"])
+            prov = normalize_provenance(meta.get("provenance"))
+            prov["muse_words"] += max(0, int(muse_words))
+            prov["ai_words"] += max(0, int(ai_words))
+            meta["provenance"] = prov
+            meta["updated_at"] = _utc_now()
+            path = self.resolve_content_path(project_slug, content_id)
+            atomic_write(path, dump_markdown(meta, data["body"]))
+            self._index_file(project_slug, path)
+            summary = provenance_summary(str(data["body"] or ""), prov)
+            return {"ok": True, "id": content_id, "provenance": prov, "summary": summary}
+
+    def approve_sandbox_into_content(
+        self,
+        project_slug: str,
+        draft_id: str,
+        *,
+        mode: str = "append",
+    ) -> dict[str, Any]:
+        """Merge a pending/set_aside sandbox draft into the target content body."""
+        from engine.ai.provenance import count_words
+        from engine.ai.sandbox import get_sandbox_draft, set_sandbox_status
+
+        draft = get_sandbox_draft(self.root, project_slug, draft_id)
+        if draft.get("status") == "approved":
+            raise PermissionError("draft already approved")
+        content_id = str(draft["content_id"])
+        text = str(draft.get("body") or "").strip()
+        if not text:
+            raise ValueError("empty sandbox draft")
+
+        with self._write_lock:
+            data = self.read_content(project_slug, content_id)
+            body = str(data["body"] or "")
+            if mode == "replace":
+                new_body = text + ("\n" if not text.endswith("\n") else "")
+            else:
+                sep = "" if not body or body.endswith("\n") else "\n"
+                new_body = body + sep + text + ("\n" if not text.endswith("\n") else "")
+            result = self.write_content(
+                project_slug,
+                content_id=content_id,
+                type_=str(data["meta"].get("type") or "note"),
+                title=str(data["meta"].get("title") or ""),
+                subject=str(data["meta"].get("subject") or ""),
+                body=new_body,
+                book_id=str(data.get("book_id") or DEFAULT_BOOK_ID),
+                folder_id=str(data.get("folder_id") or DEFAULT_FOLDER_ID),
+            )
+            if not result.get("ok"):
+                return result
+            self.bump_provenance(project_slug, content_id, ai_words=count_words(text))
+            item = set_sandbox_status(self.root, project_slug, draft_id, "approved")
+            return {"ok": True, "draft": item, "content": self.read_content(project_slug, content_id)}
 
     def set_content_archived(self, project_slug: str, content_id: str, archived: bool) -> dict[str, Any]:
         data = self.read_content(project_slug, content_id)

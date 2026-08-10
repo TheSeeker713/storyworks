@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -38,9 +38,10 @@ def health():
     return {
         "ok": True,
         "service": "storyworks-api",
-        "phase": "4",
+        "phase": "8",
         "stack": "v2",
         "vault_open": vault_open,
+        "deployment": "scaffold",
     }
 
 
@@ -69,11 +70,53 @@ class TranscribeIn(BaseModel):
     path: str = Field(min_length=1)
 
 
+def _require_stt_enabled() -> dict[str, Any]:
+    try:
+        settings = state.get_vault().settings()
+    except RuntimeError:
+        settings = {"ai_master_enabled": True, "stt_enabled": True}
+    if not settings.get("ai_master_enabled", True):
+        raise HTTPException(400, "AI master switch is off")
+    if not settings.get("stt_enabled", False):
+        raise HTTPException(400, "STT is off")
+    return settings
+
+
 @app.post("/api/stt/transcribe")
 def stt_transcribe(body: TranscribeIn):
     from engine.connectors.stt import transcribe_file
 
-    result = transcribe_file(body.path)
+    settings = _require_stt_enabled()
+    model = str(settings.get("stt_model") or "") or None
+    result = transcribe_file(body.path, model=model)
+    if not result.get("ok"):
+        raise HTTPException(400, result.get("error") or "stt failed")
+    return result
+
+
+@app.post("/api/stt/transcribe-upload")
+async def stt_transcribe_upload(file: UploadFile = File(...)):
+    """Accept recorded audio bytes (Dictate UI). Writes a throwaway temp file only."""
+    import tempfile
+
+    from engine.connectors.stt import transcribe_file
+
+    settings = _require_stt_enabled()
+    model = str(settings.get("stt_model") or "") or None
+    suffix = Path(file.filename or "audio.webm").suffix or ".webm"
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "empty audio upload")
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(raw)
+        tmp_path = Path(tmp.name)
+    try:
+        result = transcribe_file(tmp_path, model=model)
+    finally:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
     if not result.get("ok"):
         raise HTTPException(400, result.get("error") or "stt failed")
     return result
@@ -95,6 +138,8 @@ def muse_suggest(body: MuseIn):
 
     if not settings.get("ai_master_enabled", True):
         return {"ok": False, "error": "AI master switch is off", "disabled": True}
+    if str(settings.get("product_tier") or "full") == "lite":
+        return {"ok": False, "error": "Lite tier — AI helpers off", "disabled": True}
     if not settings.get("muse_enabled", True):
         return {"ok": False, "error": "Muse is off", "disabled": True}
 
@@ -659,6 +704,201 @@ def journal_open(_slug: str, _book_id: str, body: JournalCipherIn):
 def content_scenes(slug: str, content_id: str):
     try:
         return {"scenes": state.get_vault().get_content_scenes(slug, content_id)}
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+# --- Phase 5: provenance, sandbox, agent tools ---
+
+
+class ProvenanceBumpIn(BaseModel):
+    muse_words: int = 0
+    ai_words: int = 0
+
+
+@app.post("/api/projects/{slug}/content/{content_id}/provenance")
+def provenance_bump(slug: str, content_id: str, body: ProvenanceBumpIn):
+    try:
+        return state.get_vault().bump_provenance(
+            slug, content_id, muse_words=body.muse_words, ai_words=body.ai_words
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/projects/{slug}/content/{content_id}/provenance")
+def provenance_get(slug: str, content_id: str):
+    from engine.ai.provenance import provenance_summary
+
+    try:
+        data = state.get_vault().read_content(slug, content_id)
+        summary = provenance_summary(str(data.get("body") or ""), data["meta"].get("provenance"))
+        return {"ok": True, "summary": summary, "provenance": data["meta"].get("provenance") or {}}
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+class SandboxCreateIn(BaseModel):
+    content_id: str
+    kind: str = "agent"
+    body: str
+    title: str = ""
+
+
+@app.get("/api/projects/{slug}/ai/sandbox")
+def sandbox_list(slug: str, content_id: Optional[str] = None):
+    from engine.ai.sandbox import list_sandbox
+
+    try:
+        store = state.get_vault()
+        return {"items": list_sandbox(store.root, slug, content_id=content_id)}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/projects/{slug}/ai/sandbox")
+def sandbox_create(slug: str, body: SandboxCreateIn):
+    from engine.ai.sandbox import create_sandbox_draft
+
+    try:
+        store = state.get_vault()
+        settings = store.settings()
+        if not settings.get("ai_master_enabled", True):
+            raise HTTPException(400, "AI master switch is off")
+        item = create_sandbox_draft(
+            store.root,
+            slug,
+            content_id=body.content_id,
+            kind=body.kind,
+            body=body.body,
+            title=body.title,
+        )
+        return {"ok": True, "item": item}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+class SandboxActionIn(BaseModel):
+    action: str  # approve | set_aside | dismiss
+    mode: str = "append"
+
+
+@app.post("/api/projects/{slug}/ai/sandbox/{draft_id}")
+def sandbox_action(slug: str, draft_id: str, body: SandboxActionIn):
+    from engine.ai.sandbox import set_sandbox_status
+
+    try:
+        store = state.get_vault()
+        if body.action == "approve":
+            return store.approve_sandbox_into_content(slug, draft_id, mode=body.mode)
+        if body.action == "set_aside":
+            return {"ok": True, "item": set_sandbox_status(store.root, slug, draft_id, "set_aside")}
+        if body.action == "dismiss":
+            # Never silent discard — dismissed stays listed as dismissed.
+            return {"ok": True, "item": set_sandbox_status(store.root, slug, draft_id, "dismissed")}
+        raise HTTPException(400, f"unknown action: {body.action}")
+    except (FileNotFoundError, PermissionError, ValueError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+class AgentToolIn(BaseModel):
+    tool: str
+    text: str = ""
+    query: str = ""
+    stage: str = "draft"
+    content_id: str = ""
+    project_slug: str = ""
+
+
+@app.post("/api/ai/agent")
+def ai_agent(body: AgentToolIn):
+    """Run an agentic tool; results go to sandbox when content_id is provided."""
+    from engine.ai import agent as agent_mod
+    from engine.ai.sandbox import create_sandbox_draft
+
+    try:
+        store = state.get_vault()
+        settings = store.settings()
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    if body.tool == "describe":
+        result = agent_mod.describe_selection(body.text, settings=settings)
+    elif body.tool == "show_dont_tell":
+        result = agent_mod.show_dont_tell(body.text, settings=settings)
+    elif body.tool == "blog_review":
+        result = agent_mod.blog_review(body.stage, body.text, settings=settings)
+    elif body.tool == "ask_vault":
+        hits = store.search_vault(body.query or body.text, limit=12)
+        result = agent_mod.ask_vault(body.query or body.text, hits, settings=settings)
+        result["hits"] = hits
+    else:
+        raise HTTPException(400, f"unknown tool: {body.tool}")
+
+    if not result.get("ok"):
+        return result
+
+    slug = body.project_slug
+    content_id = body.content_id
+    if slug and content_id and result.get("text"):
+        item = create_sandbox_draft(
+            store.root,
+            slug,
+            content_id=content_id,
+            kind=body.tool,
+            body=str(result["text"]),
+            title=body.tool.replace("_", " "),
+        )
+        result["sandbox"] = item
+    return result
+
+
+class SettingsAgentIn(BaseModel):
+    request: str
+    apply: bool = True
+
+
+@app.post("/api/ai/settings")
+def ai_settings_agent(body: SettingsAgentIn):
+    from engine.ai.agent import settings_via_agent
+
+    try:
+        store = state.get_vault()
+        current = store.settings()
+        result = settings_via_agent(body.request, current, settings=current)
+        if result.get("ok") and body.apply and result.get("patch"):
+            merged = store.save_settings(result["patch"])
+            result["applied"] = True
+            result["settings"] = merged
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/projects/{slug}/export")
+def project_export(slug: str, format: str = "markdown"):
+    """Phase 8 — local export. Binary formats return base64 content."""
+    from engine.export.formats import export_project, write_export_sidecar
+    from engine.vault.paths import project_dir
+
+    try:
+        store = state.get_vault()
+        pdir = project_dir(store.root, slug)
+        if not pdir.is_dir():
+            raise FileNotFoundError(slug)
+        result = export_project(pdir, format)
+        write_export_sidecar(pdir, result)
+        return result
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     except FileNotFoundError as exc:
         raise HTTPException(404, str(exc)) from exc
     except RuntimeError as exc:
