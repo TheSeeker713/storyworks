@@ -12,6 +12,12 @@
   --sw-ink-muted: #6b6656;
   --sw-ink-faint: #a6a192;
   --sw-border: #ddd5c4;
+  --sw-success-bg: #eaf3de;
+  --sw-success-text: #3b6d11;
+  --sw-success-border: #97c459;
+  --sw-warning-bg: #faeeda;
+  --sw-warning-text: #854f0b;
+  --sw-warning-border: #ef9f27;
   /* Typography OPEN — system stack is temporary placeholder only */
   --sw-font: -apple-system, "SF Pro Text", "Segoe UI", sans-serif;
 }
@@ -53,30 +59,180 @@ body {
 }
 
 .sw-btn {
-  background: linear-gradient(180deg, #356b58, #1f4a3d);
-  border: 1px solid #163a30;
+  background: linear-gradient(180deg, #356B58, #1F4A3D);
+  border: 1px solid #163A30;
   border-radius: 8px;
-  color: #fbf8f1;
+  color: var(--sw-parchment);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 1px 2px rgba(0, 0, 0, 0.18);
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 3px 0 #123529,
+    0 6px 10px rgba(0,0,0,0.22);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
   padding: 0.35rem 0.75rem;
   font-size: 0.875rem;
   cursor: pointer;
 }
 
 .sw-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.25) inset,
+    0 5px 0 #123529,
+    0 10px 16px rgba(0,0,0,0.28);
 }
 
 .sw-btn:active {
-  transform: translateY(1px);
+  transform: translateY(2px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35) inset;
 }
 
-.sw-btn:disabled {
+.sw-btn-ghost {
+  background: linear-gradient(180deg, #FFFFFF, #F3EEE1);
+  border: 1px solid var(--sw-border);
+  border-radius: 8px;
+  color: var(--sw-ink-muted);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.7) inset,
+    0 3px 0 #C8BEAA,
+    0 6px 10px rgba(0,0,0,0.14);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sw-btn-ghost:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.85) inset,
+    0 5px 0 #C8BEAA,
+    0 10px 16px rgba(0,0,0,0.18);
+}
+
+.sw-btn-ghost:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.24) inset;
+}
+
+.sw-btn-gold {
+  background: linear-gradient(180deg, #D9AE2E, #B8891A);
+  border: 1px solid #8A6511;
+  border-radius: 8px;
+  color: #412402;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.3) inset,
+    0 3px 0 #76520C,
+    0 6px 10px rgba(0,0,0,0.22);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sw-btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.38) inset,
+    0 5px 0 #76520C,
+    0 10px 16px rgba(0,0,0,0.28);
+}
+
+.sw-btn-gold:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35) inset;
+}
+
+.sw-btn:disabled,
+.sw-btn-ghost:disabled,
+.sw-btn-gold:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
+}
+
+.sw-card {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--sw-border);
+  border-radius: 8px;
+  background: #FFFFFF;
+}
+
+.sw-card[data-selected="true"] {
+  border-color: var(--sw-gold);
+}
+
+.sw-card-title {
+  display: block;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sw-card-subject {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--sw-driftwood);
+  font-size: 10px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.sw-panel {
+  overflow: hidden;
+  border: 1px solid var(--sw-border);
+  border-radius: 10px;
+  background: #FFFFFF;
+}
+
+.sw-gold-bezel-root {
+  position: relative;
+  width: 126px;
+  height: 34px;
+  flex: 0 0 126px;
+}
+
+.sw-gold-bezel-backdrop,
+.sw-gold-bezel {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+}
+
+.sw-gold-bezel-backdrop {
+  background:
+    repeating-linear-gradient(
+      112deg,
+      #7E5B12 0,
+      #C9A227 14px,
+      #F2D978 25px,
+      #A87916 39px
+    );
+}
+
+.sw-gold-bezel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  border: 1px solid #E6C95A;
+  background: rgba(201, 162, 39, 0.58);
+  color: #2A210A;
+}
+
+.sw-gold-bezel-label {
+  position: relative;
+  z-index: 2;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.38);
+}
+
+.sw-gold-bezel-root[data-webgl-state="ready"] .sw-gold-bezel {
+  background: rgba(201, 162, 39, 0.14);
 }
 
 .sw-command-row {

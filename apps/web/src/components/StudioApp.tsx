@@ -14,6 +14,7 @@ import Onboarding from "@/components/Onboarding";
 import ProjectList from "@/components/ProjectList";
 import SettingsPanel from "@/components/SettingsPanel";
 import CmdKPalette from "@/components/CmdKPalette";
+import GoldBezel from "@/components/GoldBezel";
 
 const VAULT_KEY = "storyworks.vaultPath";
 const PROJECT_KEY = "storyworks.projectSlug";
@@ -427,9 +428,7 @@ export default function StudioApp() {
         className="flex flex-wrap items-center gap-2 border-b px-4 py-2"
         style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
       >
-        <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--sw-teal)" }}>
-          Storyworks
-        </h1>
+        <GoldBezel />
         <button
           type="button"
           onClick={() => void toggleMaster()}

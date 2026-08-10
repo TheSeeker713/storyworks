@@ -292,15 +292,13 @@ export default function CodexPanel({
                   <li key={`${e.type}-${e.id}`}>
                     <button
                       type="button"
-                      className="w-full rounded-lg px-2 py-1.5 text-left text-sm hover:bg-[var(--sw-parchment-deep)]"
-                      style={{
-                        background: selected?.id === e.id ? "var(--sw-parchment-deep)" : undefined,
-                      }}
+                      className="sw-card w-full px-2 py-1.5 text-left text-sm hover:bg-[var(--sw-parchment-deep)]"
+                      data-selected={selected?.id === e.id}
                       onClick={() => void openEntry(e)}
                     >
-                      <span className="block truncate font-medium">{e.title}</span>
-                      <span className="block text-[10px] capitalize" style={{ color: "var(--sw-ink-faint)" }}>
-                        {e.type}
+                      <span className="sw-card-title">{e.title}</span>
+                      <span className="sw-card-subject">
+                        {e.subject || e.type}
                       </span>
                     </button>
                   </li>

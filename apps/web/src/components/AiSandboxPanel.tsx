@@ -56,8 +56,7 @@ export default function AiSandboxPanel({ projectSlug, contentId, onApproved }: P
       {items.map((item) => (
         <div
           key={item.id}
-          className="rounded-lg border bg-white/95 p-3 shadow-sm"
-          style={{ borderColor: "var(--sw-border)" }}
+          className="sw-card bg-white/95 p-3"
         >
           <p className="text-[10px] uppercase tracking-wide" style={{ color: "var(--sw-driftwood)" }}>
             AI · {item.kind} · {item.status}
@@ -76,8 +75,7 @@ export default function AiSandboxPanel({ projectSlug, contentId, onApproved }: P
             </button>
             <button
               type="button"
-              className="rounded border px-2 py-1 text-[11px]"
-              style={{ borderColor: "var(--sw-border)" }}
+              className="sw-btn-ghost text-[11px] !px-2 !py-1"
               disabled={busy === item.id}
               onClick={() => void act(item.id, "set_aside")}
             >

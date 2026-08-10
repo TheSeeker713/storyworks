@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ProjectModule, type ProjectRow } from "@/lib/api";
 import WritingEditor from "@/components/WritingEditor";
 import MuseLayer from "@/components/MuseLayer";
@@ -69,6 +69,9 @@ export default function DraftShell({
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeId, setActiveId] = useState("");
   const [trayOpen, setTrayOpen] = useState(false);
+  const [trayPinned, setTrayPinned] = useState(false);
+  const trayOpenTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trayCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [zen, setZen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<{ sha: string; date: string; message: string }[]>([]);
@@ -88,6 +91,26 @@ export default function DraftShell({
   const useModuleWorkspace = isWorkspaceModule(module);
   const isScreenplay = module === "screenplay";
   const isDraft = module === "draft" || !module;
+
+  function scheduleTrayOpen() {
+    if (trayCloseTimer.current) clearTimeout(trayCloseTimer.current);
+    if (trayOpenTimer.current) clearTimeout(trayOpenTimer.current);
+    trayOpenTimer.current = setTimeout(() => setTrayOpen(true), 150);
+  }
+
+  function scheduleTrayClose() {
+    if (trayPinned) return;
+    if (trayOpenTimer.current) clearTimeout(trayOpenTimer.current);
+    if (trayCloseTimer.current) clearTimeout(trayCloseTimer.current);
+    trayCloseTimer.current = setTimeout(() => setTrayOpen(false), 260);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (trayOpenTimer.current) clearTimeout(trayOpenTimer.current);
+      if (trayCloseTimer.current) clearTimeout(trayCloseTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (commandCodexTarget?.project_slug === project.slug) setCodexOpen(true);
@@ -466,15 +489,24 @@ export default function DraftShell({
               className="absolute left-0 top-0 z-20 h-full w-3 border-r"
               style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
               title="Reveal tray"
-              onMouseEnter={() => setTrayOpen(true)}
+              onMouseEnter={scheduleTrayOpen}
+              onMouseLeave={scheduleTrayClose}
               onClick={() => setTrayOpen((v) => !v)}
             />
             {trayOpen && (
               <aside
                 className="z-30 w-56 shrink-0 border-r p-3 text-sm shadow-md"
                 style={{ borderColor: "var(--sw-border)", background: "white" }}
-                onMouseLeave={() => setTrayOpen(false)}
+                onMouseEnter={scheduleTrayOpen}
+                onMouseLeave={scheduleTrayClose}
               >
+                <button
+                  type="button"
+                  className="sw-btn-ghost mb-2 w-full text-xs"
+                  onClick={() => setTrayPinned((value) => !value)}
+                >
+                  {trayPinned ? "Unpin tray" : "Pin tray"}
+                </button>
                 <p className="text-xs uppercase tracking-wide" style={{ color: "var(--sw-driftwood)" }}>
                   Structure
                 </p>
