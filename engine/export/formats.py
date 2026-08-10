@@ -72,23 +72,94 @@ def _as_fountain(parts: list[tuple[str, str]], title: str) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+_SCENE_HEADING = re.compile(
+    r"^(?:\.(?=\S)|(?:INT|EXT|EST|I/E|INT/EXT|EXT/INT)\.?(?:/EXT\.?)?\s)",
+    re.IGNORECASE,
+)
+_CHARACTER = re.compile(r"^[A-Z0-9][A-Z0-9 .'\-()#]+$")
+_TRANSITION = re.compile(r"^(?:FADE (?:IN|OUT)|CUT TO|DISSOLVE TO|SMASH CUT TO|MATCH CUT TO):?$")
+
+
+def _fountain_elements(title: str, body: str) -> list[tuple[str, str]]:
+    """Parse the Fountain subset needed for structurally correct FDX output."""
+    elements: list[tuple[str, str]] = []
+    previous = ""
+    dialogue_open = False
+    lines = body.splitlines()
+
+    if title.strip() and _SCENE_HEADING.match(title.strip()) and (
+        not lines or not _SCENE_HEADING.match(lines[0].strip())
+    ):
+        elements.append(("Scene Heading", title.strip().lstrip(".")))
+
+    for raw in lines:
+        line = raw.rstrip()
+        stripped = line.strip()
+        if not stripped:
+            dialogue_open = False
+            previous = ""
+            continue
+
+        if stripped.startswith("!") and len(stripped) > 1:
+            kind, text = "Action", stripped[1:].lstrip()
+        elif stripped.startswith(".") and len(stripped) > 1:
+            kind, text = "Scene Heading", stripped[1:].lstrip()
+            dialogue_open = False
+        elif _SCENE_HEADING.match(stripped):
+            kind, text = "Scene Heading", stripped
+            dialogue_open = False
+        elif stripped.startswith(">") and stripped.endswith("<") and len(stripped) > 2:
+            kind, text = "General", stripped[1:-1].strip()
+            dialogue_open = False
+        elif stripped.startswith(">") or _TRANSITION.fullmatch(stripped.upper()):
+            kind, text = "Transition", stripped.strip(">").strip()
+            dialogue_open = False
+        elif stripped.startswith("@") and len(stripped) > 1:
+            kind, text = "Character", stripped[1:].strip()
+            dialogue_open = True
+        elif (
+            len(stripped) <= 48
+            and stripped == stripped.upper()
+            and _CHARACTER.fullmatch(stripped)
+            and not stripped.endswith(".")
+        ):
+            kind, text = "Character", stripped
+            dialogue_open = True
+        elif stripped.startswith("(") and stripped.endswith(")") and (
+            dialogue_open or previous in {"Character", "Parenthetical", "Dialogue"}
+        ):
+            kind, text = "Parenthetical", stripped
+            dialogue_open = True
+        elif dialogue_open and previous in {"Character", "Parenthetical", "Dialogue"}:
+            kind, text = "Dialogue", stripped
+            dialogue_open = True
+        elif stripped.startswith("~") and len(stripped) > 1:
+            kind, text = "Lyrics", stripped[1:].lstrip()
+            dialogue_open = False
+        else:
+            kind, text = "Action", stripped.lstrip("!")
+            dialogue_open = False
+
+        elements.append((kind, text))
+        previous = kind
+    return elements
+
+
 def _as_fdx(parts: list[tuple[str, str]], title: str) -> str:
-    paras: list[str] = []
-    for t, body in parts:
-        paras.append(
-            f'    <Paragraph Type="Scene Heading"><Text>{escape(t.upper())}</Text></Paragraph>'
-        )
-        for line in body.splitlines():
-            if not line.strip():
-                continue
-            paras.append(
-                f'    <Paragraph Type="Action"><Text>{escape(line)}</Text></Paragraph>'
-            )
+    paras = [
+        f'    <Paragraph Type="{kind}"><Text>{escape(text)}</Text></Paragraph>'
+        for part_title, body in parts
+        for kind, text in _fountain_elements(part_title, body)
+    ]
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n'
         '<FinalDraft DocumentType="Script" Template="No" Version="1">\n'
-        f"  <Content>\n"
-        f'    <Paragraph Type="Action"><Text>{escape(title)}</Text></Paragraph>\n'
+        "  <TitlePage>\n"
+        "    <Content>\n"
+        f'      <Paragraph Type="Title"><Text>{escape(title)}</Text></Paragraph>\n'
+        "    </Content>\n"
+        "  </TitlePage>\n"
+        "  <Content>\n"
         + "\n".join(paras)
         + "\n  </Content>\n</FinalDraft>\n"
     )
@@ -161,51 +232,90 @@ def _as_epub(parts: list[tuple[str, str]], title: str) -> bytes:
 
 
 def _as_pdf(parts: list[tuple[str, str]], title: str) -> bytes:
-    """Minimal single-page-stream PDF (text only). Good enough for draft print/export."""
-    text_lines = [title, ""]
-    for t, body in parts:
-        text_lines.append(t)
-        text_lines.extend(body.splitlines())
-        text_lines.append("")
-    # Escape PDF string literals loosely
-    content_ops = ["BT", "/F1 11 Tf", "50 750 Td", "14 TL"]
-    for i, line in enumerate(text_lines[:200]):
-        safe = line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-        safe = re.sub(r"[^\x20-\x7E]", "?", safe)[:120]
-        if i == 0:
-            content_ops.append(f"({safe}) Tj")
-        else:
-            content_ops.append(f"T* ({safe}) Tj")
-    content_ops.append("ET")
-    stream = "\n".join(content_ops).encode("latin-1", errors="replace")
-    objs: list[bytes] = []
-    objs.append(b"<< /Type /Catalog /Pages 2 0 R >>")
-    objs.append(b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
-    objs.append(
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-        b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>"
+    """Paginated Unicode PDF using a macOS system TrueType font."""
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import LETTER
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.platypus import (
+        PageBreak,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
     )
-    objs.append(b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream")
-    objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+
+    font_candidates = (
+        Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
+        Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+        Path("/System/Library/Fonts/SFNS.ttf"),
+    )
+    font_path = next((path for path in font_candidates if path.is_file()), None)
+    if font_path is None:
+        raise RuntimeError("No supported macOS Unicode font found for PDF export")
+
+    font_name = "StoryworksUnicode"
+    if font_name not in pdfmetrics.getRegisteredFontNames():
+        pdfmetrics.registerFont(TTFont(font_name, str(font_path)))
 
     out = io.BytesIO()
-    out.write(b"%PDF-1.4\n")
-    offsets = [0]
-    for i, obj in enumerate(objs, start=1):
-        offsets.append(out.tell())
-        out.write(f"{i} 0 obj\n".encode("ascii"))
-        out.write(obj)
-        out.write(b"\nendobj\n")
-    xref = out.tell()
-    out.write(f"xref\n0 {len(objs) + 1}\n".encode("ascii"))
-    out.write(b"0000000000 65535 f \n")
-    for off in offsets[1:]:
-        out.write(f"{off:010d} 00000 n \n".encode("ascii"))
-    out.write(
-        f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode(
-            "ascii"
-        )
+    document = SimpleDocTemplate(
+        out,
+        pagesize=LETTER,
+        rightMargin=0.8 * inch,
+        leftMargin=0.8 * inch,
+        topMargin=0.75 * inch,
+        bottomMargin=0.75 * inch,
+        title=title,
+        author="Storyworks",
     )
+    base = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "StoryworksTitle",
+        parent=base["Title"],
+        fontName=font_name,
+        fontSize=20,
+        leading=25,
+        alignment=TA_CENTER,
+        spaceAfter=24,
+    )
+    heading_style = ParagraphStyle(
+        "StoryworksHeading",
+        parent=base["Heading1"],
+        fontName=font_name,
+        fontSize=15,
+        leading=19,
+        spaceBefore=8,
+        spaceAfter=10,
+    )
+    body_style = ParagraphStyle(
+        "StoryworksBody",
+        parent=base["BodyText"],
+        fontName=font_name,
+        fontSize=11,
+        leading=16,
+        spaceAfter=6,
+    )
+
+    story: list[Any] = [Paragraph(escape(title), title_style)]
+    for index, (part_title, body) in enumerate(parts):
+        if index:
+            story.append(PageBreak())
+        story.append(Paragraph(escape(part_title), heading_style))
+        for line in body.splitlines():
+            if line.strip():
+                story.append(Paragraph(escape(line), body_style))
+            else:
+                story.append(Spacer(1, 6))
+
+    def draw_page_number(canvas: Any, doc: Any) -> None:
+        canvas.saveState()
+        canvas.setFont(font_name, 9)
+        canvas.drawRightString(LETTER[0] - 0.8 * inch, 0.42 * inch, str(doc.page))
+        canvas.restoreState()
+
+    document.build(story, onFirstPage=draw_page_number, onLaterPages=draw_page_number)
     return out.getvalue()
 
 
