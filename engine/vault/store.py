@@ -99,6 +99,7 @@ class VaultStore:
                         "stt_enabled": False,
                         "write_model": "huihui_ai/qwen3-abliterated:14b",
                         "agent_model": "qwen2.5-coder:7b",
+                        "codex_complex": False,
                         "openclaw": {"research": False, "git": False, "agentic": False},
                     },
                     indent=2,
@@ -197,6 +198,17 @@ class VaultStore:
         return total
 
     def create_project(self, name: str, *, module: str = "draft") -> dict[str, Any]:
+        module = (module or "draft").lower().strip()
+        allowed = {
+            "draft",
+            "novel",
+            "screenplay",
+            "notes",
+            "journal",
+            "blog",
+        }
+        if module not in allowed:
+            raise ValueError(f"unknown module: {module}")
         slug = slugify(name)
         base = project_dir(self.root, slug)
         if base.exists():
@@ -214,20 +226,14 @@ class VaultStore:
             "updated_at": now,
             "created_at": now,
         }
+        if module == "blog":
+            meta["blog_stage"] = "research"
+            meta["set_aside"] = []
         atomic_write(base / "project.md", dump_markdown(meta, f"# {name}\n"))
         self.ensure_default_hierarchy(slug)
         board = {"id": f"board-{slug}", "project_slug": slug, "empty": True}
         atomic_write(boards_dir(self.root) / f"board-{slug}.json", json.dumps(board, indent=2) + "\n")
-        # Seed empty manuscript immediately so Draft Screen has a durable path before first keystroke.
-        self.write_content(
-            slug,
-            content_id="manuscript",
-            type_="manuscript",
-            title="Untitled draft",
-            body="",
-            book_id=DEFAULT_BOOK_ID,
-            folder_id=DEFAULT_FOLDER_ID,
-        )
+        self._seed_module_content(slug, module=module, title=name)
         try:
             from engine.committer import init_project_git
 
@@ -241,6 +247,84 @@ class VaultStore:
             "module": module,
             "updated_at": now,
         }
+
+    def _seed_module_content(self, slug: str, *, module: str, title: str) -> None:
+        if module == "novel":
+            body = "<!--scene:opening-->\n\n"
+            self.write_content(
+                slug,
+                content_id="chapter-1",
+                type_="chapter",
+                title="Chapter 1",
+                body=body,
+                book_id=DEFAULT_BOOK_ID,
+                folder_id=DEFAULT_FOLDER_ID,
+            )
+            self.set_content_scenes(
+                slug,
+                "chapter-1",
+                [{"id": "opening", "title": "Opening", "ordinal": 0}],
+            )
+        elif module == "screenplay":
+            body = "INT. ROOM - DAY\n\nCHARACTER\nDialogue goes here.\n"
+            self.write_content(
+                slug,
+                content_id="scene-1",
+                type_="screenplay_scene",
+                title="Scene 1",
+                body=body,
+                book_id=DEFAULT_BOOK_ID,
+                folder_id=DEFAULT_FOLDER_ID,
+            )
+        elif module == "notes":
+            self.write_content(
+                slug,
+                content_id="note-1",
+                type_="note",
+                title="Untitled note",
+                body="",
+                book_id=DEFAULT_BOOK_ID,
+                folder_id=DEFAULT_FOLDER_ID,
+            )
+        elif module == "journal":
+            from datetime import date
+
+            today = date.today().strftime("%m/%d/%Y")
+            self.write_content(
+                slug,
+                content_id="entry-1",
+                type_="journal_entry",
+                title=today,
+                body="",
+                book_id=DEFAULT_BOOK_ID,
+                folder_id=DEFAULT_FOLDER_ID,
+            )
+        elif module == "blog":
+            for stage, tid in (
+                ("research", "blog-research"),
+                ("outline", "blog-outline"),
+                ("draft", "blog-draft"),
+                ("edit", "blog-edit"),
+            ):
+                self.write_content(
+                    slug,
+                    content_id=tid,
+                    type_=f"blog_{stage}",
+                    title=stage.title(),
+                    body="",
+                    book_id=DEFAULT_BOOK_ID,
+                    folder_id=DEFAULT_FOLDER_ID,
+                )
+        else:
+            self.write_content(
+                slug,
+                content_id="manuscript",
+                type_="manuscript",
+                title="Untitled draft",
+                body="",
+                book_id=DEFAULT_BOOK_ID,
+                folder_id=DEFAULT_FOLDER_ID,
+            )
 
     def list_projects(self, *, include_archived: bool = False) -> list[dict[str, Any]]:
         projects_root = self.root / "projects"
@@ -328,6 +412,7 @@ class VaultStore:
                 {
                     "id": b.name,
                     "title": meta.get("title") or b.name,
+                    "privacy": str(meta.get("privacy") or "public"),
                     "updated_at": str(meta.get("updated_at") or ""),
                 }
             )
@@ -444,6 +529,15 @@ class VaultStore:
                             "id": content_id,
                         }
 
+            prev_scenes: list[Any] = []
+            prev_tags: list[Any] = []
+            if path.exists():
+                try:
+                    pmeta, _ = parse_markdown(path.read_text(encoding="utf-8"))
+                    prev_scenes = list(pmeta.get("scenes") or [])
+                    prev_tags = list(pmeta.get("tags") or [])
+                except OSError:
+                    pass
             meta = {
                 "id": content_id,
                 "type": type_,
@@ -452,7 +546,8 @@ class VaultStore:
                 "folder_id": folder_id,
                 "title": title,
                 "subject": subject,
-                "tags": [],
+                "tags": prev_tags,
+                "scenes": prev_scenes,
                 "archived": False,
                 "canvas": canvas or {},
                 "updated_at": _utc_now(),
@@ -623,3 +718,190 @@ class VaultStore:
                 "updated_at": str(meta.get("updated_at") or ""),
             }
         )
+
+    def set_content_scenes(
+        self, project_slug: str, content_id: str, scenes: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        data = self.read_content(project_slug, content_id)
+        meta = data["meta"]
+        meta["scenes"] = scenes
+        meta["updated_at"] = _utc_now()
+        path = self.resolve_content_path(project_slug, content_id)
+        atomic_write(path, dump_markdown(meta, data["body"]))
+        self._index_file(project_slug, path)
+        return self.read_content(project_slug, content_id)
+
+    def get_content_scenes(self, project_slug: str, content_id: str) -> list[dict[str, Any]]:
+        data = self.read_content(project_slug, content_id)
+        scenes = data["meta"].get("scenes") or []
+        return list(scenes) if isinstance(scenes, list) else []
+
+    def create_journal_book(
+        self,
+        project_slug: str,
+        title: str,
+        *,
+        privacy: str = "public",
+        password: Optional[str] = None,
+    ) -> dict[str, Any]:
+        privacy = privacy.lower().strip()
+        if privacy not in ("public", "private"):
+            raise ValueError("privacy must be public or private")
+        book_id = slugify(title) or uuid.uuid4().hex[:8]
+        bdir = book_dir(self.root, project_slug, book_id)
+        if bdir.exists():
+            book_id = f"{book_id}-{uuid.uuid4().hex[:4]}"
+            bdir = book_dir(self.root, project_slug, book_id)
+        fdir = folder_dir(self.root, project_slug, book_id, DEFAULT_FOLDER_ID)
+        fdir.mkdir(parents=True, exist_ok=True)
+        (fdir / "content").mkdir(exist_ok=True)
+        now = _utc_now()
+        meta: dict[str, Any] = {
+            "id": book_id,
+            "type": "book",
+            "title": title,
+            "privacy": privacy,
+            "updated_at": now,
+            "created_at": now,
+        }
+        recovery_key = None
+        if privacy == "private":
+            if not password:
+                raise ValueError("password required for private journal book")
+            from engine.vault.journal_crypto import book_crypto_public_meta, new_private_book_secrets
+
+            secrets = new_private_book_secrets(password)
+            recovery_key = secrets["recovery_key"]
+            meta.update(book_crypto_public_meta(secrets))
+            from engine.vault.journal_crypto import keychain_service, keychain_store
+
+            keychain_store(keychain_service(project_slug, book_id), password)
+        atomic_write(book_meta_path(self.root, project_slug, book_id), dump_markdown(meta, f"# {title}\n"))
+        atomic_write(
+            folder_meta_path(self.root, project_slug, book_id, DEFAULT_FOLDER_ID),
+            dump_markdown(
+                {
+                    "id": DEFAULT_FOLDER_ID,
+                    "type": "folder",
+                    "title": "Entries",
+                    "book_id": book_id,
+                    "updated_at": now,
+                },
+                "# Entries\n",
+            ),
+        )
+        out = {"id": book_id, "title": title, "privacy": privacy, "updated_at": now}
+        if recovery_key:
+            out["recovery_key"] = recovery_key
+            out["recovery_warning"] = (
+                "Store this recovery key offline. If you lose both password and key, the book is unrecoverable."
+            )
+        return out
+
+    def unlock_journal_book(
+        self,
+        project_slug: str,
+        book_id: str,
+        *,
+        password: Optional[str] = None,
+        recovery_key: Optional[str] = None,
+    ) -> dict[str, Any]:
+        bmp = book_meta_path(self.root, project_slug, book_id)
+        if not bmp.exists():
+            raise FileNotFoundError(book_id)
+        meta, _ = parse_markdown(bmp.read_text(encoding="utf-8"))
+        if str(meta.get("privacy") or "public") != "private":
+            return {"ok": True, "privacy": "public", "book_id": book_id}
+        from engine.vault.journal_crypto import (
+            keychain_load,
+            keychain_service,
+            keychain_store,
+            unlock_dek,
+        )
+
+        pw = password
+        if not pw and not recovery_key:
+            pw = keychain_load(keychain_service(project_slug, book_id))
+        dek = unlock_dek(
+            password=pw,
+            recovery_key=recovery_key,
+            salt_b64=str(meta["crypto_salt"]),
+            wrapped_pw=str(meta["wrapped_dek_password"]),
+            wrapped_rk=str(meta["wrapped_dek_recovery"]),
+        )
+        if pw:
+            keychain_store(keychain_service(project_slug, book_id), pw)
+        # Session token for this process only (hex of dek) — API returns opaque handle.
+        token = dek.decode("ascii")
+        return {"ok": True, "privacy": "private", "book_id": book_id, "session_dek": token}
+
+    def search_vault(self, query: str, *, limit: int = 40) -> list[dict[str, Any]]:
+        """Lexical Ask-your-vault search (Phase 4); NL agent is Phase 5."""
+        q = query.strip().lower()
+        if not q:
+            return []
+        hits: list[dict[str, Any]] = []
+        projects = self.root / "projects"
+        if not projects.is_dir():
+            return []
+        for proj in projects.iterdir():
+            if not proj.is_dir() or not (proj / "project.md").exists():
+                continue
+            for row in self.index.list_project(proj.name, include_archived=False):
+                title = str(row.get("title") or "")
+                subject = str(row.get("subject") or "")
+                blob = f"{title} {subject}".lower()
+                path = self.root / str(row.get("path") or "")
+                body_snip = ""
+                if path.is_file():
+                    try:
+                        _, body = parse_markdown(path.read_text(encoding="utf-8"))
+                        body_snip = body[:240]
+                        blob += " " + body.lower()
+                    except OSError:
+                        pass
+                if q in blob:
+                    hits.append(
+                        {
+                            "project_slug": proj.name,
+                            "id": row["id"],
+                            "title": title,
+                            "type": row.get("type"),
+                            "snippet": body_snip,
+                        }
+                    )
+                if len(hits) >= limit:
+                    return hits
+        return hits
+
+    def patch_project_meta(self, project_slug: str, patch: dict[str, Any]) -> dict[str, Any]:
+        md = project_dir(self.root, project_slug) / "project.md"
+        if not md.exists():
+            raise FileNotFoundError(project_slug)
+        meta, body = parse_markdown(md.read_text(encoding="utf-8"))
+        for k, v in patch.items():
+            meta[k] = v
+        meta["updated_at"] = _utc_now()
+        atomic_write(md, dump_markdown(meta, body))
+        return {
+            "slug": project_slug,
+            "name": meta.get("title") or project_slug,
+            "module": str(meta.get("module") or "draft"),
+            "blog_stage": meta.get("blog_stage"),
+            "set_aside": meta.get("set_aside") or [],
+            "updated_at": meta["updated_at"],
+        }
+
+    def get_project_meta(self, project_slug: str) -> dict[str, Any]:
+        md = project_dir(self.root, project_slug) / "project.md"
+        if not md.exists():
+            raise FileNotFoundError(project_slug)
+        meta, _ = parse_markdown(md.read_text(encoding="utf-8"))
+        return {
+            "slug": project_slug,
+            "name": meta.get("title") or project_slug,
+            "module": str(meta.get("module") or "draft"),
+            "blog_stage": meta.get("blog_stage"),
+            "set_aside": list(meta.get("set_aside") or []),
+            "updated_at": meta.get("updated_at"),
+        }

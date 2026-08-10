@@ -38,7 +38,7 @@ def health():
     return {
         "ok": True,
         "service": "storyworks-api",
-        "phase": "2",
+        "phase": "4",
         "stack": "v2",
         "vault_open": vault_open,
     }
@@ -165,6 +165,7 @@ def vault_settings(body: SettingsIn):
 
 class CreateProjectIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
+    module: str = "draft"
 
 
 @app.get("/api/projects")
@@ -180,9 +181,11 @@ def projects_list(archived: bool = False):
 def projects_create(body: CreateProjectIn):
     try:
         store = state.get_vault()
+        return store.create_project(body.name, module=body.module)
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
-    return store.create_project(body.name)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.post("/api/projects/{slug}/archive")
@@ -236,6 +239,9 @@ class WriteContentIn(BaseModel):
     canvas: Optional[dict[str, Any]] = None
     expected_hash: Optional[str] = None
     dirty: bool = False
+    tags: Optional[list[str]] = None
+    scenes: Optional[list[dict[str, Any]]] = None
+    auto_tag: bool = False
 
 
 @app.get("/api/projects/{slug}/books")
@@ -293,7 +299,7 @@ def content_list(slug: str, archived: bool = False):
 def content_write(slug: str, body: WriteContentIn):
     try:
         store = state.get_vault()
-        return store.write_content(
+        result = store.write_content(
             slug,
             content_id=body.id,
             type_=body.type,
@@ -307,6 +313,32 @@ def content_write(slug: str, body: WriteContentIn):
             expected_hash=body.expected_hash,
             dirty=body.dirty,
         )
+        if result.get("ok") and (body.tags is not None or body.scenes is not None):
+            data = store.read_content(slug, result["id"])
+            meta = data["meta"]
+            if body.tags is not None:
+                meta["tags"] = body.tags
+            if body.scenes is not None:
+                meta["scenes"] = body.scenes
+            from engine.vault.frontmatter import dump_markdown
+            from engine.vault.store import atomic_write
+
+            path = store.resolve_content_path(slug, result["id"])
+            atomic_write(path, dump_markdown(meta, data["body"]))
+            store._index_file(slug, path)
+            result = store.read_content(slug, result["id"])
+            result = {"ok": True, **{k: result[k] for k in result if k != "ok"}}
+        if body.auto_tag and result.get("ok"):
+            from engine.vault.codex import ensure_stub
+            from engine.vault.paths import project_dir
+            import re
+
+            names = set(re.findall(r"#([A-Za-z][\w-]{1,40})", body.body or ""))
+            stubs = []
+            for n in names:
+                stubs.append(ensure_stub(project_dir(store.root, slug), n))
+            result["auto_tags"] = stubs
+        return result
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
     except Exception as exc:
@@ -390,3 +422,244 @@ def board_put(board_id: str, body: BoardIn):
         raise HTTPException(400, str(exc)) from exc
     except OSError as exc:
         raise HTTPException(500, f"board write failed: {exc}") from exc
+
+
+# --- Phase 3–4: Codex, search, journal privacy, blog meta ---
+
+
+class CodexCreateIn(BaseModel):
+    type: str
+    name: str
+    description: str = ""
+    fields: Optional[dict[str, Any]] = None
+    facets: Optional[dict[str, str]] = None
+
+
+class CodexUpdateIn(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    fields: Optional[dict[str, Any]] = None
+    facets: Optional[dict[str, str]] = None
+
+
+class ProgressionIn(BaseModel):
+    mode: str
+    manuscript_point: str
+    text: str
+    ordinal: Optional[float] = None
+
+
+class JournalBookIn(BaseModel):
+    title: str
+    privacy: str = "public"
+    password: Optional[str] = None
+
+
+class JournalUnlockIn(BaseModel):
+    password: Optional[str] = None
+    recovery_key: Optional[str] = None
+
+
+class ProjectMetaPatchIn(BaseModel):
+    patch: dict[str, Any]
+
+
+@app.get("/api/projects/{slug}/meta")
+def project_meta_get(slug: str):
+    try:
+        return state.get_vault().get_project_meta(slug)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.patch("/api/projects/{slug}/meta")
+def project_meta_patch(slug: str, body: ProjectMetaPatchIn):
+    try:
+        return state.get_vault().patch_project_meta(slug, body.patch)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/search")
+def vault_search(q: str = "", limit: int = 40):
+    try:
+        return {"hits": state.get_vault().search_vault(q, limit=limit)}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/projects/{slug}/codex")
+def codex_list(slug: str, type: Optional[str] = None):
+    try:
+        from engine.vault import codex as cx
+        from engine.vault.paths import project_dir
+
+        store = state.get_vault()
+        return {"entries": cx.list_entries(project_dir(store.root, slug), type_=type), "suggested_order": list(cx.SUGGESTED_ORDER)}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/projects/{slug}/codex")
+def codex_create(slug: str, body: CodexCreateIn):
+    try:
+        from engine.vault import codex as cx
+        from engine.vault.paths import project_dir
+
+        store = state.get_vault()
+        return cx.create_entry(
+            project_dir(store.root, slug),
+            type_=body.type,
+            name=body.name,
+            description=body.description,
+            fields=body.fields,
+            facets=body.facets,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/projects/{slug}/codex/{type_}/{entry_id}")
+def codex_get(slug: str, type_: str, entry_id: str):
+    try:
+        from engine.vault import codex as cx
+        from engine.vault.paths import project_dir
+
+        return cx.read_entry(project_dir(state.get_vault().root, slug), type_, entry_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.patch("/api/projects/{slug}/codex/{type_}/{entry_id}")
+def codex_patch(slug: str, type_: str, entry_id: str, body: CodexUpdateIn):
+    try:
+        from engine.vault import codex as cx
+        from engine.vault.paths import project_dir
+
+        return cx.update_entry(
+            project_dir(state.get_vault().root, slug),
+            type_,
+            entry_id,
+            name=body.name,
+            description=body.description,
+            fields=body.fields,
+            facets=body.facets,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/projects/{slug}/codex/{type_}/{entry_id}/progressions")
+def codex_add_progression(slug: str, type_: str, entry_id: str, body: ProgressionIn):
+    try:
+        from engine.vault import codex as cx
+        from engine.vault.paths import project_dir
+
+        return cx.add_progression(
+            project_dir(state.get_vault().root, slug),
+            type_,
+            entry_id,
+            mode=body.mode,
+            manuscript_point=body.manuscript_point,
+            text=body.text,
+            ordinal=body.ordinal,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/projects/{slug}/codex/{type_}/{entry_id}/ai-progressions")
+def codex_ai_progressions(slug: str, type_: str, entry_id: str, story_ordinal: float = 0):
+    try:
+        from engine.vault import codex as cx
+        from engine.vault.paths import project_dir
+
+        return {
+            "progressions": cx.progressions_for_ai(
+                project_dir(state.get_vault().root, slug),
+                type_,
+                entry_id,
+                story_ordinal=story_ordinal,
+            )
+        }
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/projects/{slug}/journal/books")
+def journal_book_create(slug: str, body: JournalBookIn):
+    try:
+        return state.get_vault().create_journal_book(
+            slug, body.title, privacy=body.privacy, password=body.password
+        )
+    except (ValueError, PermissionError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.post("/api/projects/{slug}/journal/books/{book_id}/unlock")
+def journal_book_unlock(slug: str, book_id: str, body: JournalUnlockIn):
+    try:
+        return state.get_vault().unlock_journal_book(
+            slug, book_id, password=body.password, recovery_key=body.recovery_key
+        )
+    except (FileNotFoundError, PermissionError, ValueError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+class JournalCipherIn(BaseModel):
+    session_dek: str
+    text: str = ""
+    ciphertext: str = ""
+
+
+@app.post("/api/projects/{slug}/journal/books/{book_id}/seal")
+def journal_seal(_slug: str, _book_id: str, body: JournalCipherIn):
+    from engine.vault.journal_crypto import encrypt_text
+
+    try:
+        dek = body.session_dek.encode("ascii")
+        return {"ciphertext": "swenc:" + encrypt_text(dek, body.text)}
+    except Exception as exc:
+        raise HTTPException(400, f"seal failed: {exc}") from exc
+
+
+@app.post("/api/projects/{slug}/journal/books/{book_id}/open")
+def journal_open(_slug: str, _book_id: str, body: JournalCipherIn):
+    from engine.vault.journal_crypto import decrypt_text
+
+    try:
+        raw = body.ciphertext or ""
+        if not raw.startswith("swenc:"):
+            return {"text": raw}
+        dek = body.session_dek.encode("ascii")
+        return {"text": decrypt_text(dek, raw[len("swenc:") :])}
+    except Exception as exc:
+        raise HTTPException(400, f"open failed: {exc}") from exc
+
+
+@app.get("/api/projects/{slug}/content/{content_id}/scenes")
+def content_scenes(slug: str, content_id: str):
+    try:
+        return {"scenes": state.get_vault().get_content_scenes(slug, content_id)}
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
