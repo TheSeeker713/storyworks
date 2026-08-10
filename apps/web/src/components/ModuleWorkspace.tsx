@@ -90,6 +90,8 @@ export default function ModuleWorkspace({
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
   const [unlockBookId, setUnlockBookId] = useState<string | null>(null);
   const [unlockPassword, setUnlockPassword] = useState("");
+  const [unlockRecoveryKey, setUnlockRecoveryKey] = useState("");
+  const [unlockMode, setUnlockMode] = useState<"keychain" | "password" | "recovery">("keychain");
   const [sessionDekByBook, setSessionDekByBook] = useState<Record<string, string>>({});
   const [mapOpen, setMapOpen] = useState(false);
   const [prov, setProv] = useState<ProvenanceSummary | null>(null);
@@ -263,12 +265,20 @@ export default function ModuleWorkspace({
   async function unlockBook() {
     if (!unlockBookId) return;
     try {
-      const unlocked = await api.unlockJournalBook(project.slug, unlockBookId, { password: unlockPassword });
+      const credentials =
+        unlockMode === "password"
+          ? { password: unlockPassword }
+          : unlockMode === "recovery"
+            ? { recovery_key: unlockRecoveryKey.trim() }
+            : {};
+      const unlocked = await api.unlockJournalBook(project.slug, unlockBookId, credentials);
       if (unlocked.session_dek) {
         setSessionDekByBook((m) => ({ ...m, [unlockBookId]: unlocked.session_dek! }));
       }
       setUnlockBookId(null);
       setUnlockPassword("");
+      setUnlockRecoveryKey("");
+      setUnlockMode("keychain");
       setActiveBookId(unlockBookId);
       setError(null);
     } catch (e) {
@@ -981,21 +991,20 @@ export default function ModuleWorkspace({
                   />
                 </label>
                 <label className="mt-3 flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={bookPrivate} onChange={(e) => setBookPrivate(e.target.checked)} />
-                  Private (encrypted)
+                  <input type="checkbox" checked={false} disabled />
+                  Private (encrypted) — temporarily unavailable
                 </label>
-                {bookPrivate && (
-                  <label className="mt-2 block text-xs" style={{ color: "var(--sw-ink-muted)" }}>
-                    Password
-                    <input
-                      type="password"
-                      className="mt-1 w-full rounded border px-2 py-1.5 text-sm"
-                      style={{ borderColor: "var(--sw-border)" }}
-                      value={bookPassword}
-                      onChange={(e) => setBookPassword(e.target.value)}
-                    />
-                  </label>
-                )}
+                <p
+                  className="mt-2 rounded-lg border px-3 py-2 text-xs"
+                  style={{
+                    borderColor: "var(--sw-warning-border, #EF9F27)",
+                    background: "var(--sw-warning-bg, #FAEEDA)",
+                    color: "var(--sw-warning-text, #854F0B)",
+                  }}
+                >
+                  New Private Books are disabled until Touch ID and the complete recovery flow can be
+                  verified end to end. Public Books remain local in your chosen vault.
+                </p>
                 <div className="mt-4 flex justify-end gap-2">
                   <button
                     type="button"
@@ -1025,20 +1034,63 @@ export default function ModuleWorkspace({
             <h3 className="font-medium" style={{ color: "var(--sw-teal)" }}>
               Unlock book
             </h3>
-            <input
-              type="password"
-              className="mt-3 w-full rounded border px-2 py-1.5 text-sm"
-              style={{ borderColor: "var(--sw-border)" }}
-              placeholder="Password"
-              value={unlockPassword}
-              onChange={(e) => setUnlockPassword(e.target.value)}
-              autoFocus
-            />
+            <p className="mt-1 text-xs" style={{ color: "var(--sw-ink-muted)" }}>
+              Existing Private Books can still be recovered. Creating new Private Books is temporarily disabled.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-1">
+              {(["keychain", "password", "recovery"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={mode === unlockMode ? "sw-btn text-xs" : "sw-btn-ghost text-xs"}
+                  onClick={() => setUnlockMode(mode)}
+                >
+                  {mode === "keychain" ? "Keychain" : mode === "password" ? "Password" : "Recovery key"}
+                </button>
+              ))}
+            </div>
+            {unlockMode === "keychain" && (
+              <p
+                className="mt-3 rounded-lg border px-3 py-2 text-xs"
+                style={{ borderColor: "var(--sw-border)", color: "var(--sw-ink-muted)" }}
+              >
+                Uses the password already stored in macOS Keychain. Touch ID is not available yet.
+              </p>
+            )}
+            {unlockMode === "password" && (
+              <input
+                type="password"
+                className="mt-3 w-full rounded border px-2 py-1.5 text-sm"
+                style={{ borderColor: "var(--sw-border)" }}
+                placeholder="Password"
+                value={unlockPassword}
+                onChange={(e) => setUnlockPassword(e.target.value)}
+                autoFocus
+              />
+            )}
+            {unlockMode === "recovery" && (
+              <textarea
+                className="mt-3 min-h-20 w-full rounded border px-2 py-1.5 font-mono text-sm"
+                style={{ borderColor: "var(--sw-border)" }}
+                placeholder="eight-word recovery key"
+                value={unlockRecoveryKey}
+                onChange={(e) => setUnlockRecoveryKey(e.target.value)}
+                autoFocus
+              />
+            )}
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" className="rounded-lg border px-3 py-1.5 text-sm" style={{ borderColor: "var(--sw-border)" }} onClick={() => setUnlockBookId(null)}>
                 Cancel
               </button>
-              <button type="button" className="sw-btn" onClick={() => void unlockBook()}>
+              <button
+                type="button"
+                className="sw-btn"
+                disabled={
+                  (unlockMode === "password" && !unlockPassword) ||
+                  (unlockMode === "recovery" && !unlockRecoveryKey.trim())
+                }
+                onClick={() => void unlockBook()}
+              >
                 Unlock
               </button>
             </div>

@@ -647,6 +647,11 @@ def codex_ai_progressions(slug: str, type_: str, entry_id: str, story_ordinal: f
 
 @app.post("/api/projects/{slug}/journal/books")
 def journal_book_create(slug: str, body: JournalBookIn):
+    if body.privacy.strip().lower() == "private":
+        raise HTTPException(
+            503,
+            "New Private Books are temporarily unavailable until Touch ID and the full recovery flow are verified.",
+        )
     try:
         return state.get_vault().create_journal_book(
             slug, body.title, privacy=body.privacy, password=body.password
