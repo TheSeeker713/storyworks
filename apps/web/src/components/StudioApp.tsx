@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, type ProjectRow } from "@/lib/api";
+import { api, type ProjectModule, type ProjectRow } from "@/lib/api";
 import { runConnectorBootChecks, type SttUiState } from "@/lib/connectors";
 import BootScreen from "@/components/BootScreen";
 import DraftShell from "@/components/DraftShell";
@@ -208,11 +208,23 @@ export default function StudioApp() {
       .catch((e: Error) => setError(e.message));
   }
 
-  async function createUntitledProject() {
+  async function createUntitledProject(module: ProjectModule = "draft") {
     setError(null);
-    const p = await api.createProject("Untitled");
+    const names: Record<ProjectModule, string> = {
+      draft: "Untitled",
+      novel: "Untitled novel",
+      screenplay: "Untitled screenplay",
+      notes: "Untitled notes",
+      journal: "Untitled journal",
+      blog: "Untitled blog",
+    };
+    const p = await api.createProject(names[module] || "Untitled", module);
     await refreshProjects();
     goDraft(p.slug);
+  }
+
+  async function createModuleFromDraft(module: ProjectModule) {
+    await createUntitledProject(module);
   }
 
   function openProject(slug: string) {
@@ -423,13 +435,14 @@ export default function StudioApp() {
             museAppend={museAppend}
             onMuseAppendConsumed={() => setMuseAppend(null)}
             onMuseAccept={(s) => setMuseAppend(s)}
+            onCreateModule={(mod) => void createModuleFromDraft(mod).catch((e: Error) => setError(e.message))}
           />
         ) : (
           <ProjectList
             projects={projects}
             archivedProjects={archivedProjects}
             selectedSlug={projectSlug}
-            onCreate={() => void createUntitledProject().catch((e: Error) => setError(e.message))}
+            onCreate={(mod) => void createUntitledProject(mod).catch((e: Error) => setError(e.message))}
             onOpen={openProject}
             onArchive={(slug) => void archiveProject(slug).catch((e: Error) => setError(e.message))}
             onRestore={(slug) => void restoreProject(slug).catch((e: Error) => setError(e.message))}

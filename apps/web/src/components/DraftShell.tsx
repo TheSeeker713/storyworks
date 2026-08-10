@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, type ProjectRow } from "@/lib/api";
+import { api, type ProjectModule, type ProjectRow } from "@/lib/api";
 import WritingEditor from "@/components/WritingEditor";
 import MuseLayer from "@/components/MuseLayer";
+import CodexPanel from "@/components/CodexPanel";
+import DrawingPopup from "@/components/DrawingPopup";
+import ModuleWorkspace, { isWorkspaceModule } from "@/components/ModuleWorkspace";
 
 type Tab = { id: string; title: string };
 
@@ -19,9 +22,18 @@ type Props = {
   museAppend: string | null;
   onMuseAppendConsumed: () => void;
   onMuseAccept: (s: string) => void;
+  onCreateModule?: (module: ProjectModule) => void;
 };
 
 const MENU = ["File", "Edit", "View", "Window", "Help"] as const;
+
+const MODULE_TOOLS: { module: ProjectModule; label: string }[] = [
+  { module: "novel", label: "Novel" },
+  { module: "screenplay", label: "Screenplay" },
+  { module: "notes", label: "Notes" },
+  { module: "journal", label: "Journal" },
+  { module: "blog", label: "Blog" },
+];
 
 export default function DraftShell({
   project,
@@ -35,6 +47,7 @@ export default function DraftShell({
   museAppend,
   onMuseAppendConsumed,
   onMuseAccept,
+  onCreateModule,
 }: Props) {
   const [tabs, setTabs] = useState<Tab[]>([{ id: "manuscript", title: "Untitled draft" }]);
   const [activeId, setActiveId] = useState("manuscript");
@@ -47,6 +60,14 @@ export default function DraftShell({
   const [books, setBooks] = useState<{ id: string; title: string }[]>([]);
   const [structure, setStructure] = useState<string>("");
   const [shellError, setShellError] = useState<string | null>(null);
+  const [codexOpen, setCodexOpen] = useState(false);
+  const [drawingOpen, setDrawingOpen] = useState(false);
+  const [screenplayStatus, setScreenplayStatus] = useState<string | null>(null);
+
+  const module = project.module || "draft";
+  const useModuleWorkspace = isWorkspaceModule(module);
+  const isScreenplay = module === "screenplay";
+  const isDraft = module === "draft" || !module;
 
   const loadStructure = useCallback(async () => {
     try {
@@ -70,7 +91,7 @@ export default function DraftShell({
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        if (zen) {
+        if (zen && isDraft) {
           e.preventDefault();
           setZen(false);
         }
@@ -80,12 +101,11 @@ export default function DraftShell({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [zen]);
+  }, [zen, isDraft]);
 
   async function openHistory() {
     setHistoryOpen(true);
     try {
-      // Flush a coarse checkpoint before listing so History includes recent disk saves.
       await api.checkpoint(project.slug, "history").catch(() => undefined);
       const h = await api.history(project.slug);
       setHistory(h.history);
@@ -135,7 +155,7 @@ export default function DraftShell({
     [draftText, active?.title, project.name],
   );
 
-  if (zen) {
+  if (zen && isDraft) {
     return (
       <div className="relative h-full">
         <button
@@ -203,24 +223,48 @@ export default function DraftShell({
                       <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => void openHistory()}>
                         Version history…
                       </button>
-                      <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => void newTab()}>
-                        New tab
-                      </button>
+                      {isDraft && (
+                        <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => void newTab()}>
+                          New tab
+                        </button>
+                      )}
                     </>
                   )}
                   {m === "View" && (
-                    <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => setZen(true)}>
-                      Enter Zen mode
-                    </button>
+                    <>
+                      {isDraft && (
+                        <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => setZen(true)}>
+                          Enter Zen mode
+                        </button>
+                      )}
+                      <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => setDrawingOpen(true)}>
+                        Drawing tools…
+                      </button>
+                      <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => setCodexOpen(true)}>
+                        Codex…
+                      </button>
+                    </>
                   )}
                   {m !== "File" && m !== "View" && (
-                    <p className="px-3 py-1.5 text-[var(--sw-ink-faint)]">Phase 2 shell</p>
+                    <p className="px-3 py-1.5 text-[var(--sw-ink-faint)]">Phase 3–4 shell</p>
                   )}
                 </div>
               )}
             </div>
           ))}
           <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded px-2 py-1 font-medium hover:bg-white/10"
+              style={{ color: "var(--sw-gold)" }}
+              title="Open Codex"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCodexOpen(true);
+              }}
+            >
+              Codex
+            </button>
             <label className="flex items-center gap-1 text-[11px] text-[var(--sw-sage)]">
               Project
               <select
@@ -243,14 +287,16 @@ export default function DraftShell({
                 ))}
               </select>
             </label>
-            <button
-              type="button"
-              className="rounded px-2 py-1 text-[var(--sw-gold)] hover:bg-white/10"
-              title="Enter Zen mode"
-              onClick={() => setZen(true)}
-            >
-              Zen
-            </button>
+            {isDraft && (
+              <button
+                type="button"
+                className="rounded px-2 py-1 text-[var(--sw-gold)] hover:bg-white/10"
+                title="Enter Zen mode"
+                onClick={() => setZen(true)}
+              >
+                Zen
+              </button>
+            )}
             <button
               type="button"
               className="rounded px-2 py-1 hover:bg-white/10"
@@ -263,93 +309,130 @@ export default function DraftShell({
         </div>
       </div>
 
-      {/* Tab strip */}
-      <div
-        className="flex items-end gap-1 border-b px-2 pt-2"
-        style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
-      >
-        {tabs.map((t) => (
-          <div
-            key={t.id}
-            className="flex items-center gap-1 rounded-t-lg border border-b-0 px-3 py-1.5 text-xs"
-            style={{
-              borderColor: "var(--sw-border)",
-              background: t.id === activeId ? "var(--sw-parchment)" : "transparent",
-              color: "var(--sw-ink)",
-            }}
-          >
-            <button type="button" onClick={() => setActiveId(t.id)}>
-              {t.title}
-            </button>
-            <button type="button" className="opacity-50 hover:opacity-100" title="Close tab" onClick={() => closeTab(t.id)}>
-              ×
-            </button>
-          </div>
-        ))}
-        <button type="button" className="px-2 py-1 text-xs" style={{ color: "var(--sw-ink-muted)" }} onClick={() => void newTab()}>
-          +
-        </button>
-      </div>
-
-      <div className="relative flex min-h-0 flex-1">
-        {/* Left tray edge */}
-        <button
-          type="button"
-          className="absolute left-0 top-0 z-20 h-full w-3 border-r"
-          style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
-          title="Reveal tray"
-          onMouseEnter={() => setTrayOpen(true)}
-          onClick={() => setTrayOpen((v) => !v)}
-        />
-        {trayOpen && (
-          <aside
-            className="z-30 w-56 shrink-0 border-r p-3 text-sm shadow-md"
-            style={{ borderColor: "var(--sw-border)", background: "white" }}
-            onMouseLeave={() => setTrayOpen(false)}
-          >
-            <p className="text-xs uppercase tracking-wide" style={{ color: "var(--sw-driftwood)" }}>
-              Structure
-            </p>
-            <p className="mt-2 text-xs" style={{ color: "var(--sw-ink-muted)" }}>
-              {structure}
-            </p>
-            <ul className="mt-3 space-y-1 text-xs">
-              {books.map((b) => (
-                <li key={b.id}>Book: {b.title}</li>
-              ))}
-            </ul>
-            <p className="mt-4 text-xs" style={{ color: "var(--sw-ink-faint)" }}>
-              Novel chapter cards land in Phase 3. PENS: coming soon.
-            </p>
-            <button type="button" className="mt-2 text-xs underline" style={{ color: "var(--sw-teal)" }} disabled title="Coming soon">
-              PENS (coming soon)
-            </button>
-          </aside>
-        )}
-
-        <div className="relative min-h-0 min-w-0 flex-1">
-          <WritingEditor
-            key={`${project.slug}-${active.id}`}
-            projectSlug={project.slug}
-            projectName={project.name}
-            contentId={active.id}
-            contentTitle={active.title}
+      {useModuleWorkspace ? (
+        <div className="min-h-0 flex-1">
+          <ModuleWorkspace
+            project={project}
             onDraftText={onDraftText}
-            appendText={museAppend}
-            onAppendConsumed={onMuseAppendConsumed}
+            onOpenCodex={() => setCodexOpen(true)}
+            screenplayStatus={screenplayStatus}
             onContextMenu={(e) => {
               e.preventDefault();
               setCtx({ x: e.clientX, y: e.clientY });
             }}
           />
-          <MuseLayer
-            enabled={museEnabled}
-            masterOn={masterOn}
-            getContext={getMuseContext}
-            onAccept={onMuseAccept}
-          />
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Tab strip */}
+          <div
+            className="flex items-end gap-1 border-b px-2 pt-2"
+            style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
+          >
+            {tabs.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center gap-1 rounded-t-lg border border-b-0 px-3 py-1.5 text-xs"
+                style={{
+                  borderColor: "var(--sw-border)",
+                  background: t.id === activeId ? "var(--sw-parchment)" : "transparent",
+                  color: "var(--sw-ink)",
+                }}
+              >
+                <button type="button" onClick={() => setActiveId(t.id)}>
+                  {t.title}
+                </button>
+                <button type="button" className="opacity-50 hover:opacity-100" title="Close tab" onClick={() => closeTab(t.id)}>
+                  ×
+                </button>
+              </div>
+            ))}
+            <button type="button" className="px-2 py-1 text-xs" style={{ color: "var(--sw-ink-muted)" }} onClick={() => void newTab()}>
+              +
+            </button>
+          </div>
+
+          <div className="relative flex min-h-0 flex-1">
+            {/* Left tray edge */}
+            <button
+              type="button"
+              className="absolute left-0 top-0 z-20 h-full w-3 border-r"
+              style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
+              title="Reveal tray"
+              onMouseEnter={() => setTrayOpen(true)}
+              onClick={() => setTrayOpen((v) => !v)}
+            />
+            {trayOpen && (
+              <aside
+                className="z-30 w-56 shrink-0 border-r p-3 text-sm shadow-md"
+                style={{ borderColor: "var(--sw-border)", background: "white" }}
+                onMouseLeave={() => setTrayOpen(false)}
+              >
+                <p className="text-xs uppercase tracking-wide" style={{ color: "var(--sw-driftwood)" }}>
+                  Structure
+                </p>
+                <p className="mt-2 text-xs" style={{ color: "var(--sw-ink-muted)" }}>
+                  {structure}
+                </p>
+                <ul className="mt-3 space-y-1 text-xs">
+                  {books.map((b) => (
+                    <li key={b.id}>Book: {b.title}</li>
+                  ))}
+                </ul>
+                {isDraft && onCreateModule && (
+                  <>
+                    <p className="mt-4 text-xs uppercase tracking-wide" style={{ color: "var(--sw-driftwood)" }}>
+                      Create module
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {MODULE_TOOLS.map((t) => (
+                        <li key={t.module}>
+                          <button
+                            type="button"
+                            className="w-full rounded px-2 py-1 text-left text-xs hover:bg-[var(--sw-parchment-deep)]"
+                            onClick={() => onCreateModule(t.module)}
+                          >
+                            {t.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <p className="mt-4 text-xs" style={{ color: "var(--sw-ink-faint)" }}>
+                  PENS: coming soon.
+                </p>
+                <button type="button" className="mt-2 text-xs underline" style={{ color: "var(--sw-teal)" }} disabled title="Coming soon">
+                  PENS (coming soon)
+                </button>
+              </aside>
+            )}
+
+            <div className="relative min-h-0 min-w-0 flex-1">
+              <WritingEditor
+                key={`${project.slug}-${active.id}`}
+                projectSlug={project.slug}
+                projectName={project.name}
+                contentId={active.id}
+                contentTitle={active.title}
+                onDraftText={onDraftText}
+                appendText={museAppend}
+                onAppendConsumed={onMuseAppendConsumed}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setCtx({ x: e.clientX, y: e.clientY });
+                }}
+              />
+              <MuseLayer
+                enabled={museEnabled}
+                masterOn={masterOn}
+                getContext={getMuseContext}
+                onAccept={onMuseAccept}
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       {ctx && (
         <div
@@ -366,9 +449,35 @@ export default function DraftShell({
           <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => { document.execCommand("paste"); setCtx(null); }}>
             Paste
           </button>
-          <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => { closeTab(active.id); setCtx(null); }}>
-            Close tab
-          </button>
+          {isScreenplay && (
+            <>
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]"
+                onClick={() => {
+                  setScreenplayStatus("Describe — stub (Phase 5 AI)");
+                  setCtx(null);
+                }}
+              >
+                Describe
+              </button>
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]"
+                onClick={() => {
+                  setScreenplayStatus("Show don't tell — stub (Phase 5 AI)");
+                  setCtx(null);
+                }}
+              >
+                Show don&apos;t tell
+              </button>
+            </>
+          )}
+          {isDraft && (
+            <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => { closeTab(active.id); setCtx(null); }}>
+              Close tab
+            </button>
+          )}
         </div>
       )}
 
@@ -412,6 +521,9 @@ export default function DraftShell({
           </div>
         </div>
       )}
+
+      <CodexPanel open={codexOpen} projectSlug={project.slug} onClose={() => setCodexOpen(false)} />
+      <DrawingPopup open={drawingOpen} onClose={() => setDrawingOpen(false)} />
     </div>
   );
 }

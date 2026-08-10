@@ -1,20 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { api } from "@/lib/api";
+
+export type WritingEditorHandle = {
+  scrollToScene: (sceneId: string) => void;
+};
 
 type Props = {
   projectSlug: string;
   projectName: string;
   contentId: string;
   contentTitle?: string;
+  contentType?: string;
+  autoTag?: boolean;
+  bookId?: string;
+  folderId?: string;
   zen?: boolean;
+  className?: string;
+  bodyClassName?: string;
+  fontSizeClass?: string;
   onDraftText?: (text: string) => void;
   appendText?: string | null;
   onAppendConsumed?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
+  /** Optional body transforms (e.g. Journal private-book seal/open). */
+  transformLoad?: (body: string) => Promise<string>;
+  transformSave?: (body: string) => Promise<string>;
 };
 
 const AUTOSAVE_MS = 600;
@@ -31,17 +45,29 @@ function textToDoc(text: string) {
   };
 }
 
-export default function WritingEditor({
-  projectSlug,
-  projectName,
-  contentId,
-  contentTitle,
-  zen = false,
-  onDraftText,
-  appendText,
-  onAppendConsumed,
-  onContextMenu,
-}: Props) {
+const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEditor(
+  {
+    projectSlug,
+    projectName,
+    contentId,
+    contentTitle,
+    contentType = "manuscript",
+    autoTag = false,
+    bookId = "main",
+    folderId = "main",
+    zen = false,
+    className,
+    bodyClassName,
+    fontSizeClass = "text-[16px]",
+    onDraftText,
+    appendText,
+    onAppendConsumed,
+    onContextMenu,
+    transformLoad,
+    transformSave,
+  },
+  ref,
+) {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const hashRef = useRef<string>("");
@@ -54,11 +80,23 @@ export default function WritingEditor({
   const contentIdRef = useRef(contentId);
   const contentTitleRef = useRef(contentTitle);
   const projectNameRef = useRef(projectName);
+  const contentTypeRef = useRef(contentType);
+  const autoTagRef = useRef(autoTag);
+  const bookIdRef = useRef(bookId);
+  const folderIdRef = useRef(folderId);
+  const transformLoadRef = useRef(transformLoad);
+  const transformSaveRef = useRef(transformSave);
 
   projectSlugRef.current = projectSlug;
   contentIdRef.current = contentId;
   contentTitleRef.current = contentTitle;
   projectNameRef.current = projectName;
+  contentTypeRef.current = contentType;
+  autoTagRef.current = autoTag;
+  bookIdRef.current = bookId;
+  folderIdRef.current = folderId;
+  transformLoadRef.current = transformLoad;
+  transformSaveRef.current = transformSave;
 
   function scheduleCheckpoint(reason: string) {
     if (checkpointTimer.current) clearTimeout(checkpointTimer.current);
@@ -89,15 +127,17 @@ export default function WritingEditor({
         next = null;
         queuedBodyRef.current = null;
         try {
+          const bodyOut = transformSaveRef.current ? await transformSaveRef.current(toWrite) : toWrite;
           const result = await api.writeContent(projectSlugRef.current, {
             id: contentIdRef.current,
-            type: "manuscript",
+            type: contentTypeRef.current || "manuscript",
             title: contentTitleRef.current || projectNameRef.current || "Manuscript",
-            body: toWrite,
-            book_id: "main",
-            folder_id: "main",
+            body: bodyOut,
+            book_id: bookIdRef.current || "main",
+            folder_id: folderIdRef.current || "main",
             expected_hash: hashRef.current || undefined,
             dirty: true,
+            auto_tag: autoTagRef.current || undefined,
           });
           if (result.conflict) {
             setError("File changed on disk — reload the project to continue.");
@@ -128,6 +168,10 @@ export default function WritingEditor({
     }
   }
 
+  const editorClass =
+    className ||
+    `prose prose-stone max-w-none min-h-[22rem] px-1 py-2 focus:outline-none ${fontSizeClass} leading-relaxed text-[var(--sw-ink)]`;
+
   const editor = useEditor({
     extensions: [StarterKit],
     content: textToDoc(""),
@@ -135,8 +179,7 @@ export default function WritingEditor({
     autofocus: true,
     editorProps: {
       attributes: {
-        class:
-          "prose prose-stone max-w-none min-h-[22rem] px-1 py-2 focus:outline-none text-[16px] leading-relaxed text-[var(--sw-ink)]",
+        class: editorClass,
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -151,12 +194,56 @@ export default function WritingEditor({
     },
   });
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      scrollToScene(sceneId: string) {
+        if (!editor) return;
+        const marker = `<!--scene:${sceneId}-->`;
+        const root = editor.view.dom;
+        const nodes = root.querySelectorAll("p");
+        for (const node of Array.from(nodes)) {
+          if ((node.textContent || "").includes(marker)) {
+            node.setAttribute("data-scene-id", sceneId);
+            node.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+          }
+        }
+        // Fallback: search ProseMirror doc positions
+        let foundPos: number | null = null;
+        editor.state.doc.descendants((node, pos) => {
+          if (foundPos != null) return false;
+          if (node.isText && node.text?.includes(marker)) {
+            foundPos = pos;
+            return false;
+          }
+          return true;
+        });
+        if (foundPos != null) {
+          const coords = editor.view.coordsAtPos(foundPos);
+          const scroller = root.closest(".overflow-y-auto");
+          if (scroller instanceof HTMLElement) {
+            const top = coords.top - scroller.getBoundingClientRect().top + scroller.scrollTop - 40;
+            scroller.scrollTo({ top, behavior: "smooth" });
+          }
+        }
+      },
+    }),
+    [editor],
+  );
+
   useEffect(() => {
     if (!editor || !appendText) return;
     editor.commands.focus("end");
     editor.commands.insertContent(appendText);
     onAppendConsumed?.();
   }, [appendText, editor, onAppendConsumed]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const el = editor.view.dom;
+    el.className = editorClass;
+  }, [editor, editorClass]);
 
   useEffect(() => {
     readyRef.current = false;
@@ -168,16 +255,19 @@ export default function WritingEditor({
       try {
         const existing = await api.readContent(projectSlug, contentId);
         hashRef.current = existing.content_hash || "";
-        editor.commands.setContent(textToDoc(existing.body || ""));
-        onDraftText?.(existing.body || "");
+        let body = existing.body || "";
+        if (transformLoadRef.current) body = await transformLoadRef.current(body);
+        editor.commands.setContent(textToDoc(body));
+        onDraftText?.(body);
       } catch {
         const created = await api.writeContent(projectSlug, {
           id: contentId,
-          type: "manuscript",
+          type: contentType || "manuscript",
           title: contentTitle || projectName || "Untitled draft",
           body: "",
-          book_id: "main",
-          folder_id: "main",
+          book_id: bookId || "main",
+          folder_id: folderId || "main",
+          auto_tag: autoTag || undefined,
         });
         hashRef.current = created.content_hash || "";
         editor.commands.setContent(textToDoc(""));
@@ -194,7 +284,7 @@ export default function WritingEditor({
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [editor, projectSlug, projectName, contentId, contentTitle, onDraftText]);
+  }, [editor, projectSlug, projectName, contentId, contentTitle, contentType, autoTag, bookId, folderId, onDraftText]);
 
   useEffect(() => {
     function onVis() {
@@ -237,9 +327,13 @@ export default function WritingEditor({
         </div>
       )}
       {error && <p className="bg-red-50 px-4 py-2 text-xs text-red-700">{error}</p>}
-      <div className={`min-h-0 flex-1 overflow-y-auto ${zen ? "px-10 py-10" : "px-6 py-4"}`}>
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto ${zen ? "px-10 py-10" : "px-6 py-4"} ${bodyClassName || ""}`}
+      >
         <EditorContent editor={editor} />
       </div>
     </div>
   );
-}
+});
+
+export default WritingEditor;

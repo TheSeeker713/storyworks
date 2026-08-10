@@ -1,15 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import type { ProjectRow } from "@/lib/api";
+import type { ProjectModule, ProjectRow } from "@/lib/api";
 
 export type { ProjectRow };
+
+const NEW_MODULES: { module: ProjectModule; label: string }[] = [
+  { module: "draft", label: "Draft" },
+  { module: "novel", label: "Novel" },
+  { module: "screenplay", label: "Screenplay" },
+  { module: "notes", label: "Notes" },
+  { module: "journal", label: "Journal" },
+  { module: "blog", label: "Blog" },
+];
 
 type Props = {
   projects: ProjectRow[];
   archivedProjects: ProjectRow[];
   selectedSlug: string | null;
-  onCreate: () => void;
+  onCreate: (module: ProjectModule) => void;
   onOpen: (slug: string) => void;
   onArchive: (slug: string) => void;
   onRestore: (slug: string) => void;
@@ -37,6 +46,7 @@ export default function ProjectList({
 }: Props) {
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [typedName, setTypedName] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const deleteTarget = archivedProjects.find((p) => p.slug === deleteSlug) || null;
 
   return (
@@ -51,9 +61,36 @@ export default function ProjectList({
             the front door.
           </p>
         </div>
-        <button type="button" className="sw-btn" onClick={onCreate} title="Create untitled project and open Draft">
-          New project
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            className="sw-btn"
+            onClick={() => setMenuOpen((v) => !v)}
+            title="Create a project in a chosen module"
+          >
+            New project ▾
+          </button>
+          {menuOpen && (
+            <div
+              className="absolute right-0 z-20 mt-1 min-w-[10rem] rounded-lg border bg-white py-1 shadow-lg"
+              style={{ borderColor: "var(--sw-border)" }}
+            >
+              {NEW_MODULES.map((m) => (
+                <button
+                  key={m.module}
+                  type="button"
+                  className="block w-full px-3 py-1.5 text-left text-sm hover:bg-[var(--sw-parchment-deep)]"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onCreate(m.module);
+                  }}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <section>

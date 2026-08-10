@@ -5,12 +5,71 @@ const OLLAMA_TIMEOUT_MS = 5_000;
 const STT_TIMEOUT_MS = 35_000;
 const PICK_DIRECTORY_TIMEOUT_MS = 600_000;
 
+export type ProjectModule = "draft" | "novel" | "screenplay" | "notes" | "journal" | "blog";
+
 export type ProjectRow = {
   slug: string;
   name: string;
   archived: boolean;
   module?: string;
   updated_at?: string;
+};
+
+export type CodexEntrySummary = {
+  id: string;
+  type: string;
+  title: string;
+  subject?: string;
+  updated_at?: string;
+};
+
+export type CodexProgression = {
+  id: string;
+  mode: string;
+  manuscript_point: string;
+  ordinal: number;
+  text: string;
+  created_at?: string;
+};
+
+export type CodexEntry = CodexEntrySummary & {
+  fields: Record<string, unknown>;
+  facets: Record<string, string>;
+  progressions: CodexProgression[];
+  body?: string;
+  created_at?: string;
+};
+
+export type SearchHit = {
+  project_slug: string;
+  id: string;
+  title: string;
+  type?: string;
+  snippet?: string;
+};
+
+export type ProjectMeta = {
+  slug: string;
+  name: string;
+  module: string;
+  blog_stage?: string | null;
+  set_aside?: unknown[];
+  updated_at?: string;
+};
+
+export type JournalBook = {
+  id: string;
+  title: string;
+  privacy?: string;
+  updated_at?: string;
+  recovery_key?: string;
+  recovery_warning?: string;
+};
+
+export type ContentScene = {
+  id: string;
+  title: string;
+  ordinal?: number;
 };
 
 async function req<T>(path: string, init?: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
@@ -76,10 +135,10 @@ export const api = {
     }),
   listProjects: (archived = false) =>
     req<{ projects: ProjectRow[] }>(`/api/projects?archived=${archived ? "true" : "false"}`),
-  createProject: (name: string) =>
+  createProject: (name: string, module: ProjectModule | string = "draft") =>
     req<ProjectRow>("/api/projects", {
       method: "POST",
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, module }),
     }),
   archiveProject: (slug: string) =>
     req<ProjectRow>(`/api/projects/${slug}/archive`, { method: "POST" }),
@@ -91,7 +150,7 @@ export const api = {
       body: JSON.stringify({ typed_name: typedName }),
     }),
   listBooks: (slug: string) =>
-    req<{ books: { id: string; title: string }[] }>(`/api/projects/${slug}/books`),
+    req<{ books: JournalBook[] }>(`/api/projects/${slug}/books`),
   listFolders: (slug: string, bookId: string) =>
     req<{ folders: { id: string; title: string; book_id: string }[] }>(
       `/api/projects/${slug}/books/${bookId}/folders`,
@@ -120,6 +179,9 @@ export const api = {
       canvas?: Record<string, unknown>;
       expected_hash?: string;
       dirty?: boolean;
+      tags?: string[];
+      scenes?: ContentScene[];
+      auto_tag?: boolean;
     },
   ) =>
     req<{
@@ -129,13 +191,108 @@ export const api = {
       conflict?: boolean;
       body?: string;
       meta?: { title?: string };
+      auto_tags?: unknown;
     }>(`/api/projects/${slug}/content`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
   readContent: (slug: string, id: string) =>
-    req<{ id: string; body: string; content_hash: string; meta: { title?: string } }>(
+    req<{ id: string; body: string; content_hash: string; meta: { title?: string; scenes?: ContentScene[] } }>(
       `/api/projects/${slug}/content/${id}`,
+    ),
+  getContentScenes: (slug: string, contentId: string) =>
+    req<{ scenes: ContentScene[] }>(`/api/projects/${slug}/content/${contentId}/scenes`),
+  getProjectMeta: (slug: string) => req<ProjectMeta>(`/api/projects/${slug}/meta`),
+  patchProjectMeta: (slug: string, patch: Record<string, unknown>) =>
+    req<ProjectMeta>(`/api/projects/${slug}/meta`, {
+      method: "PATCH",
+      body: JSON.stringify({ patch }),
+    }),
+  search: (q: string, limit = 40) =>
+    req<{ hits: SearchHit[] }>(`/api/search?q=${encodeURIComponent(q)}&limit=${limit}`),
+  listCodex: (slug: string, type?: string) =>
+    req<{ entries: CodexEntrySummary[]; suggested_order: string[] }>(
+      `/api/projects/${slug}/codex${type ? `?type=${encodeURIComponent(type)}` : ""}`,
+    ),
+  createCodex: (
+    slug: string,
+    body: {
+      type: string;
+      name: string;
+      description?: string;
+      fields?: Record<string, unknown>;
+      facets?: Record<string, string>;
+    },
+  ) =>
+    req<CodexEntry>(`/api/projects/${slug}/codex`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getCodex: (slug: string, type: string, id: string) =>
+    req<CodexEntry>(`/api/projects/${slug}/codex/${encodeURIComponent(type)}/${encodeURIComponent(id)}`),
+  patchCodex: (
+    slug: string,
+    type: string,
+    id: string,
+    body: {
+      name?: string;
+      description?: string;
+      fields?: Record<string, unknown>;
+      facets?: Record<string, string>;
+    },
+  ) =>
+    req<CodexEntry>(`/api/projects/${slug}/codex/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  addCodexProgression: (
+    slug: string,
+    type: string,
+    id: string,
+    body: {
+      mode: "addition" | "replacement" | string;
+      manuscript_point: string;
+      text: string;
+      ordinal?: number;
+    },
+  ) =>
+    req<CodexEntry>(
+      `/api/projects/${slug}/codex/${encodeURIComponent(type)}/${encodeURIComponent(id)}/progressions`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  aiCodexProgressions: (slug: string, type: string, id: string, storyOrdinal = 0) =>
+    req<{ progressions: CodexProgression[] }>(
+      `/api/projects/${slug}/codex/${encodeURIComponent(type)}/${encodeURIComponent(id)}/ai-progressions?story_ordinal=${storyOrdinal}`,
+    ),
+  createJournalBook: (slug: string, body: { title: string; privacy?: string; password?: string }) =>
+    req<JournalBook>(`/api/projects/${slug}/journal/books`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  unlockJournalBook: (
+    slug: string,
+    bookId: string,
+    body: { password?: string; recovery_key?: string },
+  ) =>
+    req<{ ok: boolean; privacy: string; book_id: string; session_dek?: string }>(
+      `/api/projects/${slug}/journal/books/${encodeURIComponent(bookId)}/unlock`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  sealJournalText: (slug: string, bookId: string, sessionDek: string, text: string) =>
+    req<{ ciphertext: string }>(
+      `/api/projects/${slug}/journal/books/${encodeURIComponent(bookId)}/seal`,
+      { method: "POST", body: JSON.stringify({ session_dek: sessionDek, text }) },
+    ),
+  openJournalText: (slug: string, bookId: string, sessionDek: string, ciphertext: string) =>
+    req<{ text: string }>(
+      `/api/projects/${slug}/journal/books/${encodeURIComponent(bookId)}/open`,
+      { method: "POST", body: JSON.stringify({ session_dek: sessionDek, ciphertext }) },
     ),
   getBoard: (boardId: string) => req<Record<string, unknown>>(`/api/boards/${boardId}`),
   putBoard: (boardId: string, document: Record<string, unknown>) =>
