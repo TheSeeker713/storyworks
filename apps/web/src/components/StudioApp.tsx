@@ -281,7 +281,7 @@ export default function StudioApp() {
       .catch((e: Error) => setError(e.message));
   }
 
-  async function createUntitledProject(module: ProjectModule = "draft") {
+  async function createDatedProject(module: ProjectModule = "draft") {
     setError(null);
     const p = await api.createProject("", module);
     await refreshProjects();
@@ -289,7 +289,7 @@ export default function StudioApp() {
   }
 
   async function createModuleFromDraft(module: ProjectModule) {
-    await createUntitledProject(module);
+    await createDatedProject(module);
   }
 
   function openProject(slug: string) {
@@ -312,7 +312,7 @@ export default function StudioApp() {
       return;
     }
     if (module) {
-      void createUntitledProject(module).catch((e: Error) => setError(e.message));
+      void createDatedProject(module).catch((e: Error) => setError(e.message));
     }
   }
 
@@ -574,7 +574,7 @@ export default function StudioApp() {
             projects={projects}
             archivedProjects={archivedProjects}
             selectedSlug={projectSlug}
-            onCreate={(mod) => void createUntitledProject(mod).catch((e: Error) => setError(e.message))}
+            onCreate={(mod) => void createDatedProject(mod).catch((e: Error) => setError(e.message))}
             onOpen={openProject}
             onArchive={(slug) => void archiveProject(slug).catch((e: Error) => setError(e.message))}
             onRestore={(slug) => void restoreProject(slug).catch((e: Error) => setError(e.message))}
