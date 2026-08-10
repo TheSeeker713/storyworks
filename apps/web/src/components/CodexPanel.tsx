@@ -46,6 +46,7 @@ export default function CodexPanel({
   const [progText, setProgText] = useState("");
   const [progOrdinal, setProgOrdinal] = useState("");
   const [facetDraft, setFacetDraft] = useState<Record<string, string>>({});
+  const [renameName, setRenameName] = useState("");
 
   const loadList = useCallback(async () => {
     const type = typeFilter === "all" ? undefined : typeFilter;
@@ -75,6 +76,7 @@ export default function CodexPanel({
       .then((full) => {
         setSelected(full);
         setFacetDraft({ ...(full.facets || {}) });
+        setRenameName(full.title);
         setCreating(false);
         setTypeFilter("all");
         setError(null);
@@ -99,6 +101,7 @@ export default function CodexPanel({
       const full = await api.getCodex(projectSlug, row.type, row.id);
       setSelected(full);
       setFacetDraft({ ...(full.facets || {}) });
+      setRenameName(full.title);
       setCreating(false);
       setError(null);
     } catch (e) {
@@ -120,6 +123,7 @@ export default function CodexPanel({
       await loadList();
       setSelected(entry);
       setFacetDraft({ ...(entry.facets || {}) });
+      setRenameName(entry.title);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -134,6 +138,21 @@ export default function CodexPanel({
         description: selected.body,
       });
       setSelected(updated);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function renameSelected() {
+    if (!selected || !renameName.trim()) return;
+    try {
+      const updated = await api.patchCodex(projectSlug, selected.type, selected.id, {
+        name: renameName.trim(),
+      });
+      setSelected(updated);
+      setRenameName(updated.title);
+      await loadList();
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -344,9 +363,23 @@ export default function CodexPanel({
                   <p className="text-[10px] uppercase tracking-wide capitalize" style={{ color: "var(--sw-driftwood)" }}>
                     {selected.type}
                   </p>
-                  <h4 className="text-lg font-medium" style={{ color: "var(--sw-teal)" }}>
-                    {selected.title}
-                  </h4>
+                  <div className="mt-1 flex items-center gap-2">
+                    <input
+                      className="min-w-0 flex-1 rounded-lg border px-2 py-1 text-lg font-medium"
+                      style={{ borderColor: "var(--sw-border)", color: "var(--sw-teal)" }}
+                      value={renameName}
+                      onChange={(e) => setRenameName(e.target.value)}
+                      aria-label="Codex entry name"
+                    />
+                    <button
+                      type="button"
+                      className="sw-btn-ghost"
+                      disabled={!renameName.trim() || renameName.trim() === selected.title}
+                      onClick={() => void renameSelected()}
+                    >
+                      Rename
+                    </button>
+                  </div>
                   <p className="mt-2 whitespace-pre-wrap text-sm" style={{ color: "var(--sw-ink)" }}>
                     {selected.body || selected.subject || "—"}
                   </p>

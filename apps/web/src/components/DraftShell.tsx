@@ -37,6 +37,19 @@ const MODULE_TOOLS: { module: ProjectModule; label: string }[] = [
   { module: "blog", label: "Blog" },
 ];
 
+function datedName(prefix: string) {
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+    String(now.getSeconds()).padStart(2, "0"),
+  ].join("-");
+  return { id: `${prefix.toLowerCase()}-${stamp}`, title: `${prefix} ${stamp}` };
+}
+
 export default function DraftShell({
   project,
   projects,
@@ -53,8 +66,8 @@ export default function DraftShell({
   commandCodexTarget,
   onCommandCodexConsumed,
 }: Props) {
-  const [tabs, setTabs] = useState<Tab[]>([{ id: "manuscript", title: "Untitled draft" }]);
-  const [activeId, setActiveId] = useState("manuscript");
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  const [activeId, setActiveId] = useState("");
   const [trayOpen, setTrayOpen] = useState(false);
   const [zen, setZen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -68,6 +81,8 @@ export default function DraftShell({
   const [drawingOpen, setDrawingOpen] = useState(false);
   const [screenplayStatus, setScreenplayStatus] = useState<string | null>(null);
   const [pensOpen, setPensOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameTitle, setRenameTitle] = useState("");
 
   const module = project.module || "draft";
   const useModuleWorkspace = isWorkspaceModule(module);
@@ -77,6 +92,20 @@ export default function DraftShell({
   useEffect(() => {
     if (commandCodexTarget?.project_slug === project.slug) setCodexOpen(true);
   }, [commandCodexTarget, project.slug]);
+
+  useEffect(() => {
+    if (!isDraft) return;
+    void api
+      .listContent(project.slug)
+      .then((result) => {
+        const next = result.content.map((row) => ({ id: row.id, title: row.title || row.id }));
+        setTabs(next);
+        setActiveId((current) =>
+          next.some((tab) => tab.id === current) ? current : next[0]?.id || "",
+        );
+      })
+      .catch((e: Error) => setShellError(e.message));
+  }, [project.slug, isDraft]);
 
   const loadStructure = useCallback(async () => {
     try {
@@ -124,8 +153,7 @@ export default function DraftShell({
   }
 
   async function newTab() {
-    const id = `doc-${Date.now().toString(36)}`;
-    const title = `Untitled ${tabs.length}`;
+    const { id, title } = datedName("Draft");
     try {
       await api.writeContent(project.slug, {
         id,
@@ -146,10 +174,26 @@ export default function DraftShell({
   function closeTab(id: string) {
     setTabs((t) => {
       const next = t.filter((x) => x.id !== id);
-      if (next.length === 0) return [{ id: "manuscript", title: "Untitled draft" }];
+      if (next.length === 0) return t;
       if (activeId === id) setActiveId(next[0].id);
       return next;
     });
+  }
+
+  async function renameActive() {
+    if (!active || !renameTitle.trim()) return;
+    try {
+      await api.renameContent(project.slug, active.id, renameTitle.trim());
+      setTabs((current) =>
+        current.map((tab) =>
+          tab.id === active.id ? { ...tab, title: renameTitle.trim() } : tab,
+        ),
+      );
+      setRenameOpen(false);
+      setShellError(null);
+    } catch (e) {
+      setShellError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   const active = tabs.find((t) => t.id === activeId) || tabs[0];
@@ -181,17 +225,19 @@ export default function DraftShell({
             {shellError}
           </p>
         )}
-        <WritingEditor
-          key={`${project.slug}-${active.id}`}
-          projectSlug={project.slug}
-          projectName={project.name}
-          contentId={active.id}
-          contentTitle={active.title}
-          zen
-          onDraftText={onDraftText}
-          appendText={museAppend}
-          onAppendConsumed={onMuseAppendConsumed}
-        />
+        {active && (
+          <WritingEditor
+            key={`${project.slug}-${active.id}`}
+            projectSlug={project.slug}
+            projectName={project.name}
+            contentId={active.id}
+            contentTitle={active.title}
+            zen
+            onDraftText={onDraftText}
+            appendText={museAppend}
+            onAppendConsumed={onMuseAppendConsumed}
+          />
+        )}
       </div>
     );
   }
@@ -232,6 +278,19 @@ export default function DraftShell({
                       <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => void openHistory()}>
                         Version history…
                       </button>
+                      {isDraft && active && (
+                        <button
+                          type="button"
+                          className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]"
+                          onClick={() => {
+                            setRenameTitle(active.title);
+                            setRenameOpen(true);
+                            setMenuOpen(null);
+                          }}
+                        >
+                          Rename document…
+                        </button>
+                      )}
                       {(["markdown", "fountain", "fdx", "epub", "pdf"] as const).map((fmt) => (
                         <button
                           key={fmt}
@@ -459,20 +518,26 @@ export default function DraftShell({
             )}
 
             <div className="relative min-h-0 min-w-0 flex-1">
-              <WritingEditor
-                key={`${project.slug}-${active.id}`}
-                projectSlug={project.slug}
-                projectName={project.name}
-                contentId={active.id}
-                contentTitle={active.title}
-                onDraftText={onDraftText}
-                appendText={museAppend}
-                onAppendConsumed={onMuseAppendConsumed}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setCtx({ x: e.clientX, y: e.clientY });
-                }}
-              />
+              {active ? (
+                <WritingEditor
+                  key={`${project.slug}-${active.id}`}
+                  projectSlug={project.slug}
+                  projectName={project.name}
+                  contentId={active.id}
+                  contentTitle={active.title}
+                  onDraftText={onDraftText}
+                  appendText={museAppend}
+                  onAppendConsumed={onMuseAppendConsumed}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setCtx({ x: e.clientX, y: e.clientY });
+                  }}
+                />
+              ) : (
+                <p className="p-6 text-sm" style={{ color: "var(--sw-ink-faint)" }}>
+                  Loading document…
+                </p>
+              )}
               <MuseLayer
                 enabled={museEnabled}
                 masterOn={masterOn}
@@ -565,7 +630,7 @@ export default function DraftShell({
               </button>
             </>
           )}
-          {isDraft && (
+          {isDraft && active && (
             <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => { closeTab(active.id); setCtx(null); }}>
               Close tab
             </button>
@@ -610,6 +675,38 @@ export default function DraftShell({
                 ))}
               </ul>
             )}
+          </div>
+        </div>
+      )}
+
+      {renameOpen && active && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/25 p-6"
+          onClick={() => setRenameOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border bg-white p-5 shadow-xl"
+            style={{ borderColor: "var(--sw-border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-medium" style={{ color: "var(--sw-teal)" }}>Rename document</h3>
+            <input
+              className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
+              style={{ borderColor: "var(--sw-border)" }}
+              value={renameTitle}
+              onChange={(e) => setRenameTitle(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setRenameOpen(false);
+                if (e.key === "Enter") void renameActive();
+              }}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="sw-btn-ghost" onClick={() => setRenameOpen(false)}>Cancel</button>
+              <button type="button" className="sw-btn" disabled={!renameTitle.trim()} onClick={() => void renameActive()}>
+                Rename
+              </button>
+            </div>
           </div>
         </div>
       )}

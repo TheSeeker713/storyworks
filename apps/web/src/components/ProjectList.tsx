@@ -23,6 +23,7 @@ type Props = {
   onArchive: (slug: string) => void;
   onRestore: (slug: string) => void;
   onDelete: (slug: string, typedName: string) => void;
+  onRename: (slug: string, name: string) => void;
 };
 
 function formatWhen(iso?: string) {
@@ -43,11 +44,18 @@ export default function ProjectList({
   onArchive,
   onRestore,
   onDelete,
+  onRename,
 }: Props) {
   const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
   const [typedName, setTypedName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [renameSlug, setRenameSlug] = useState<string | null>(null);
+  const [renameName, setRenameName] = useState("");
   const deleteTarget = archivedProjects.find((p) => p.slug === deleteSlug) || null;
+  const renameTarget =
+    projects.find((p) => p.slug === renameSlug) ||
+    archivedProjects.find((p) => p.slug === renameSlug) ||
+    null;
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto p-6" style={{ background: "var(--sw-parchment)" }}>
@@ -151,6 +159,16 @@ export default function ProjectList({
                         >
                           Archive
                         </button>
+                        <button
+                          type="button"
+                          className="sw-btn-ghost"
+                          onClick={() => {
+                            setRenameSlug(p.slug);
+                            setRenameName(p.name);
+                          }}
+                        >
+                          Rename…
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -183,6 +201,16 @@ export default function ProjectList({
                     ({p.module || "draft"})
                   </span>
                 </span>
+                <button
+                  type="button"
+                  className="sw-btn-ghost"
+                  onClick={() => {
+                    setRenameSlug(p.slug);
+                    setRenameName(p.name);
+                  }}
+                >
+                  Rename…
+                </button>
                 <button
                   type="button"
                   className="rounded-lg border bg-white px-3 py-1.5 text-sm"
@@ -246,6 +274,49 @@ export default function ProjectList({
                 }}
               >
                 Delete permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {renameTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/20 p-6 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md rounded-xl border bg-white p-5 shadow-lg"
+            style={{ borderColor: "var(--sw-border)" }}
+          >
+            <h3 className="text-lg font-semibold">Rename project</h3>
+            <input
+              className="mt-4 w-full rounded-lg border px-3 py-2 text-sm"
+              style={{ borderColor: "var(--sw-border)" }}
+              value={renameName}
+              onChange={(e) => setRenameName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setRenameSlug(null);
+                if (e.key === "Enter" && renameName.trim()) {
+                  onRename(renameTarget.slug, renameName.trim());
+                  setRenameSlug(null);
+                }
+              }}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="sw-btn-ghost" onClick={() => setRenameSlug(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="sw-btn"
+                disabled={!renameName.trim()}
+                onClick={() => {
+                  onRename(renameTarget.slug, renameName.trim());
+                  setRenameSlug(null);
+                }}
+              >
+                Rename
               </button>
             </div>
           </div>

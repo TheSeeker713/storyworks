@@ -47,6 +47,23 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _creation_stamp() -> str:
+    """Human-readable local creation time, safe in IDs and filenames."""
+    return datetime.now().astimezone().strftime("%Y-%m-%d-%H%M%S")
+
+
+def _default_project_title(module: str, stamp: str) -> str:
+    labels = {
+        "draft": "Draft",
+        "novel": "Novel",
+        "screenplay": "Screenplay",
+        "notes": "Notes",
+        "journal": "Journal",
+        "blog": "Blog",
+    }
+    return f"{labels.get(module, 'Project')} {stamp}"
+
+
 def _hash_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -213,6 +230,9 @@ class VaultStore:
         }
         if module not in allowed:
             raise ValueError(f"unknown module: {module}")
+        stamp = _creation_stamp()
+        dated_defaults = not name.strip()
+        name = name.strip() or _default_project_title(module, stamp)
         slug = slugify(name)
         base = project_dir(self.root, slug)
         if base.exists():
@@ -237,7 +257,13 @@ class VaultStore:
         self.ensure_default_hierarchy(slug)
         board = {"id": f"board-{slug}", "project_slug": slug, "empty": True}
         atomic_write(boards_dir(self.root) / f"board-{slug}.json", json.dumps(board, indent=2) + "\n")
-        self._seed_module_content(slug, module=module, title=name)
+        self._seed_module_content(
+            slug,
+            module=module,
+            title=name,
+            stamp=stamp,
+            dated_defaults=dated_defaults,
+        )
         try:
             from engine.committer import init_project_git
 
@@ -252,7 +278,15 @@ class VaultStore:
             "updated_at": now,
         }
 
-    def _seed_module_content(self, slug: str, *, module: str, title: str) -> None:
+    def _seed_module_content(
+        self,
+        slug: str,
+        *,
+        module: str,
+        title: str,
+        stamp: str,
+        dated_defaults: bool,
+    ) -> None:
         if module == "novel":
             body = "<!--scene:opening-->\n\n"
             self.write_content(
@@ -283,9 +317,9 @@ class VaultStore:
         elif module == "notes":
             self.write_content(
                 slug,
-                content_id="note-1",
+                content_id=f"note-{stamp}" if dated_defaults else "note-1",
                 type_="note",
-                title="Untitled note",
+                title=f"Note {stamp}" if dated_defaults else "Untitled note",
                 body="",
                 book_id=DEFAULT_BOOK_ID,
                 folder_id=DEFAULT_FOLDER_ID,
@@ -322,13 +356,49 @@ class VaultStore:
         else:
             self.write_content(
                 slug,
-                content_id="manuscript",
+                content_id=f"draft-{stamp}" if dated_defaults else "manuscript",
                 type_="manuscript",
-                title="Untitled draft",
+                title=f"Draft {stamp}" if dated_defaults else "Untitled draft",
                 body="",
                 book_id=DEFAULT_BOOK_ID,
                 folder_id=DEFAULT_FOLDER_ID,
             )
+
+    def rename_project(self, slug: str, name: str) -> dict[str, Any]:
+        """Rename the visible project title while preserving its stable folder identity."""
+        name = name.strip()
+        if not name:
+            raise ValueError("project name cannot be empty")
+        md = project_dir(self.root, slug) / "project.md"
+        if not md.exists():
+            raise FileNotFoundError(slug)
+        with self._write_lock:
+            meta, _ = parse_markdown(md.read_text(encoding="utf-8"))
+            meta["title"] = name
+            meta["updated_at"] = _utc_now()
+            atomic_write(md, dump_markdown(meta, f"# {name}\n"))
+        return {
+            "slug": slug,
+            "name": name,
+            "archived": bool(meta.get("archived", False)),
+            "module": str(meta.get("module") or "draft"),
+            "updated_at": meta["updated_at"],
+        }
+
+    def rename_content(self, project_slug: str, content_id: str, title: str) -> dict[str, Any]:
+        """Rename content metadata without changing its stable filename/ID."""
+        title = title.strip()
+        if not title:
+            raise ValueError("content title cannot be empty")
+        with self._write_lock:
+            data = self.read_content(project_slug, content_id)
+            meta = dict(data["meta"])
+            meta["title"] = title
+            meta["updated_at"] = _utc_now()
+            path = self.resolve_content_path(project_slug, content_id)
+            atomic_write(path, dump_markdown(meta, data["body"]))
+            self._index_file(project_slug, path)
+        return self.read_content(project_slug, content_id)
 
     def list_projects(self, *, include_archived: bool = False) -> list[dict[str, Any]]:
         projects_root = self.root / "projects"

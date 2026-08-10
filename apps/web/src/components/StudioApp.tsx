@@ -43,7 +43,7 @@ async function ensureWritingProject(): Promise<ProjectRow> {
     if (hit) return hit;
   }
   if (projects.length > 0) return projects[0];
-  return api.createProject("Untitled");
+  return api.createProject("");
 }
 
 export default function StudioApp() {
@@ -282,15 +282,7 @@ export default function StudioApp() {
 
   async function createUntitledProject(module: ProjectModule = "draft") {
     setError(null);
-    const names: Record<ProjectModule, string> = {
-      draft: "Untitled",
-      novel: "Untitled novel",
-      screenplay: "Untitled screenplay",
-      notes: "Untitled notes",
-      journal: "Untitled journal",
-      blog: "Untitled blog",
-    };
-    const p = await api.createProject(names[module] || "Untitled", module);
+    const p = await api.createProject("", module);
     await refreshProjects();
     goDraft(p.slug);
   }
@@ -332,6 +324,12 @@ export default function StudioApp() {
       goDraft(writing.slug);
       await refreshProjects();
     }
+  }
+
+  async function renameProject(slug: string, name: string) {
+    setError(null);
+    await api.renameProject(slug, name);
+    await refreshProjects();
   }
 
   async function restoreProject(slug: string) {
@@ -582,6 +580,7 @@ export default function StudioApp() {
             onArchive={(slug) => void archiveProject(slug).catch((e: Error) => setError(e.message))}
             onRestore={(slug) => void restoreProject(slug).catch((e: Error) => setError(e.message))}
             onDelete={(slug, typed) => void deleteProject(slug, typed).catch((e: Error) => setError(e.message))}
+            onRename={(slug, name) => void renameProject(slug, name).catch((e: Error) => setError(e.message))}
           />
         )}
       </main>

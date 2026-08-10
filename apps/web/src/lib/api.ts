@@ -151,6 +151,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ name, module }),
     }),
+  renameProject: (slug: string, name: string) =>
+    req<ProjectRow>(`/api/projects/${slug}/rename`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    }),
   archiveProject: (slug: string) =>
     req<ProjectRow>(`/api/projects/${slug}/archive`, { method: "POST" }),
   restoreProject: (slug: string) =>
@@ -210,6 +215,11 @@ export const api = {
   readContent: (slug: string, id: string) =>
     req<{ id: string; body: string; content_hash: string; meta: { title?: string; scenes?: ContentScene[] } }>(
       `/api/projects/${slug}/content/${id}`,
+    ),
+  renameContent: (slug: string, id: string, name: string) =>
+    req<{ id: string; body: string; meta: { title?: string } }>(
+      `/api/projects/${slug}/content/${encodeURIComponent(id)}/rename`,
+      { method: "PATCH", body: JSON.stringify({ name }) },
     ),
   getContentScenes: (slug: string, contentId: string) =>
     req<{ scenes: ContentScene[] }>(`/api/projects/${slug}/content/${contentId}/scenes`),

@@ -209,8 +209,12 @@ def vault_settings(body: SettingsIn):
 
 
 class CreateProjectIn(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
+    name: str = Field(default="", max_length=200)
     module: str = "draft"
+
+
+class RenameIn(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
 
 
 @app.get("/api/projects")
@@ -230,6 +234,16 @@ def projects_create(body: CreateProjectIn):
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
     except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.patch("/api/projects/{slug}/rename")
+def project_rename(slug: str, body: RenameIn):
+    try:
+        return state.get_vault().rename_project(slug, body.name)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except (RuntimeError, ValueError) as exc:
         raise HTTPException(400, str(exc)) from exc
 
 
@@ -417,6 +431,16 @@ def content_read(slug: str, content_id: str):
     except FileNotFoundError as exc:
         raise HTTPException(404, str(exc)) from exc
     except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.patch("/api/projects/{slug}/content/{content_id}/rename")
+def content_rename(slug: str, content_id: str, body: RenameIn):
+    try:
+        return state.get_vault().rename_content(slug, content_id, body.name)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except (RuntimeError, ValueError) as exc:
         raise HTTPException(400, str(exc)) from exc
 
 

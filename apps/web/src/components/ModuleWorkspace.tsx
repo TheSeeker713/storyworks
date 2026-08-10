@@ -20,6 +20,19 @@ function wordCount(s: string) {
   return t ? t.split(/\s+/).length : 0;
 }
 
+function datedContentName(prefix: string) {
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+    String(now.getSeconds()).padStart(2, "0"),
+  ].join("-");
+  return { id: `${prefix.toLowerCase()}-${stamp}`, title: `${prefix} ${stamp}` };
+}
+
 const MODULES = ["novel", "screenplay", "notes", "journal", "blog"] as const;
 export type WorkspaceModule = (typeof MODULES)[number];
 
@@ -96,6 +109,8 @@ export default function ModuleWorkspace({
   const [mapOpen, setMapOpen] = useState(false);
   const [prov, setProv] = useState<ProvenanceSummary | null>(null);
   const [agentBusy, setAgentBusy] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameTitle, setRenameTitle] = useState("");
 
   // Blog
   const [meta, setMeta] = useState<ProjectMeta | null>(null);
@@ -330,12 +345,12 @@ export default function ModuleWorkspace({
   }
 
   async function newNote() {
-    const id = `note-${Date.now().toString(36)}`;
+    const { id, title } = datedContentName("Note");
     try {
       await api.writeContent(project.slug, {
         id,
         type: "note",
-        title: "Untitled note",
+        title,
         body: "",
         book_id: "main",
         folder_id: "main",
@@ -344,6 +359,23 @@ export default function ModuleWorkspace({
       const rows = await loadContent();
       const row = rows.find((c) => c.id === id);
       if (row) void selectContent(row);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function renameActiveContent() {
+    if (!activeId || !renameTitle.trim()) return;
+    try {
+      await api.renameContent(project.slug, activeId, renameTitle.trim());
+      setActiveTitle(renameTitle.trim());
+      setContent((current) =>
+        current.map((row) =>
+          row.id === activeId ? { ...row, title: renameTitle.trim() } : row,
+        ),
+      );
+      setRenameOpen(false);
+      setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -503,6 +535,18 @@ export default function ModuleWorkspace({
         <span className="text-xs capitalize" style={{ color: "var(--sw-ink-muted)" }}>
           {module}
         </span>
+        {activeId && (
+          <button
+            type="button"
+            className="sw-btn-ghost text-xs"
+            onClick={() => {
+              setRenameTitle(activeTitle);
+              setRenameOpen(true);
+            }}
+          >
+            Rename…
+          </button>
+        )}
         {module === "journal" && (
           <>
             <button
@@ -932,6 +976,38 @@ export default function ModuleWorkspace({
           onClose={() => setMapOpen(false)}
           pins={journalEntries.map((e) => ({ id: e.id, title: e.title }))}
         />
+      )}
+
+      {renameOpen && activeId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/25 p-6"
+          onClick={() => setRenameOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border bg-white p-5 shadow-xl"
+            style={{ borderColor: "var(--sw-border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-medium" style={{ color: "var(--sw-teal)" }}>Rename content</h3>
+            <input
+              className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
+              style={{ borderColor: "var(--sw-border)" }}
+              value={renameTitle}
+              onChange={(e) => setRenameTitle(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setRenameOpen(false);
+                if (e.key === "Enter") void renameActiveContent();
+              }}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="sw-btn-ghost" onClick={() => setRenameOpen(false)}>Cancel</button>
+              <button type="button" className="sw-btn" disabled={!renameTitle.trim()} onClick={() => void renameActiveContent()}>
+                Rename
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
 
