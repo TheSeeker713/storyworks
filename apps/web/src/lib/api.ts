@@ -102,6 +102,11 @@ export const api = {
     ),
   history: (slug: string) =>
     req<{ history: { sha: string; date: string; message: string }[] }>(`/api/projects/${slug}/history`),
+  checkpoint: (slug: string, message = "autosave") =>
+    req<{ ok: boolean; committed?: boolean; reason?: string; message?: string; error?: string }>(
+      `/api/projects/${slug}/checkpoint?message=${encodeURIComponent(message)}`,
+      { method: "POST" },
+    ),
   writeContent: (
     slug: string,
     body: {

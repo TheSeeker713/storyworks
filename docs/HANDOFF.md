@@ -12,7 +12,7 @@ From [`docs/MASTER_PLAN.md`](MASTER_PLAN.md) — **Phase 2 = Data & Draft Screen
 
 1. **Master plan is law:** [`docs/MASTER_PLAN.md`](MASTER_PLAN.md).
 2. **Phase 0 Setup** done. **Phase 1 Design COMPLETE.**
-3. **Phase 2 FULL STOP — Zen revert shipped, awaiting Jeremy live verify.** Trap root cause recorded in [`docs/build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md`](build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md). Zen ownership restored to DraftShell only (no StudioApp `zen` / no `fixed` overlay). Not COMPLETE until Jeremy says so. `dual 18` in his vault left untouched unless he asks.
+3. **Phase 2 FULL STOP — awaiting Jeremy live verify** (Zen revert + write pipeline). Zen = DraftShell-only. Autosave persists `.md` without per-keystroke git; checkpoint on idle/blur/History; SQLite index in Application Support. Failure record: [`docs/build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md`](build_log/2026-08-09-zen-trap-and-vault-isolation-failure.md). `dual 18` untouched unless he asks. Not COMPLETE until Jeremy says so.
 4. **Project switcher RESOLVED (Option 3):** Home list/grid + header switcher. **Typography still OPEN.**
 5. Standing: no live server probes; no human-vault writes from agents; pytest/`tmp_path` only. In-chat verify lists; agents never invent Jeremy’s confirmation.
 6. Protocol: [`docs/PHASE_STEP_PROTOCOL.md`](PHASE_STEP_PROTOCOL.md).

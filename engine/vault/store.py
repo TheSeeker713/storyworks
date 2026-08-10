@@ -467,12 +467,7 @@ class VaultStore:
                 pmeta["updated_at"] = meta["updated_at"]
                 atomic_write(pmd, dump_markdown(pmeta, pbody))
             st = path.stat()
-            try:
-                from engine.committer import checkpoint_project
-
-                checkpoint_project(project_dir(self.root, project_slug), message=f"save {content_id}")
-            except Exception:
-                pass
+            # Git checkpoint is NOT per-write — see checkpoint_project (idle / blur / History).
             return {
                 "ok": True,
                 "id": content_id,
@@ -484,6 +479,12 @@ class VaultStore:
                 "book_id": book_id,
                 "folder_id": folder_id,
             }
+
+    def checkpoint_project(self, project_slug: str, *, message: str = "autosave") -> dict[str, Any]:
+        """Coarse git snapshot for Version History — not called on every content write."""
+        from engine.committer import checkpoint_project
+
+        return checkpoint_project(project_dir(self.root, project_slug), message=message)
 
     def read_content(self, project_slug: str, content_id: str) -> dict[str, Any]:
         self.migrate_project(project_slug)

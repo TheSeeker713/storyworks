@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 DEFAULT_BOOK_ID = "main"
@@ -12,37 +13,63 @@ def storyworks_dir(vault: Path) -> Path:
     return vault / ".storyworks"
 
 
+def app_support_root() -> Path:
+    """macOS local app cache — outside iCloud Documents."""
+    return Path.home() / "Library" / "Application Support" / "Storyworks"
+
+
 def index_dir(vault: Path) -> Path:
-    """Local-only SQLite cache dir. `.nosync` keeps iCloud Drive from syncing WAL files."""
-    return storyworks_dir(vault) / "cache.nosync"
+    """SQLite cache dir keyed by vault path (not inside the vault / iCloud tree)."""
+    digest = hashlib.sha256(str(vault.resolve()).encode("utf-8")).hexdigest()[:24]
+    return app_support_root() / "indexes" / digest
 
 
 def index_path(vault: Path) -> Path:
     return index_dir(vault) / "index.sqlite"
 
 
+def vault_cache_nosync_index(vault: Path) -> Path:
+    """Previous in-vault `.nosync` location (still under Documents)."""
+    return storyworks_dir(vault) / "cache.nosync" / "index.sqlite"
+
+
 def legacy_index_path(vault: Path) -> Path:
-    """Pre-`.nosync` location (was corrupted under iCloud Documents)."""
+    """Oldest in-vault location (corrupted under iCloud Documents)."""
     return storyworks_dir(vault) / "index.sqlite"
 
 
-def migrate_legacy_index(vault: Path) -> None:
-    """Move old `.storyworks/index.sqlite*` into `cache.nosync/` once."""
-    dest = index_path(vault)
-    if dest.exists():
-        return
-    src = legacy_index_path(vault)
-    if not src.exists():
-        index_dir(vault).mkdir(parents=True, exist_ok=True)
-        return
-    index_dir(vault).mkdir(parents=True, exist_ok=True)
+def _move_sqlite_bundle(src: Path, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
     for suffix in ("", "-wal", "-shm"):
         old = Path(f"{src}{suffix}") if suffix else src
         if not old.exists():
             continue
         new = Path(f"{dest}{suffix}") if suffix else dest
-        if not new.exists():
-            old.replace(new)
+        if new.exists():
+            continue
+        old.replace(new)
+
+
+def migrate_legacy_index(vault: Path) -> None:
+    """Prefer Application Support; pull forward from older in-vault index locations once."""
+    dest = index_path(vault)
+    if dest.exists():
+        return
+    for src in (vault_cache_nosync_index(vault), legacy_index_path(vault)):
+        if src.exists():
+            _move_sqlite_bundle(src, dest)
+            # Drop empty cache.nosync dir if we emptied it
+            parent = src.parent
+            if parent.name == "cache.nosync" and parent.is_dir():
+                try:
+                    next(parent.iterdir())
+                except StopIteration:
+                    try:
+                        parent.rmdir()
+                    except OSError:
+                        pass
+            return
+    index_dir(vault).mkdir(parents=True, exist_ok=True)
 
 
 def settings_path(vault: Path) -> Path:

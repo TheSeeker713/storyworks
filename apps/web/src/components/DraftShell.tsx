@@ -85,6 +85,8 @@ export default function DraftShell({
   async function openHistory() {
     setHistoryOpen(true);
     try {
+      // Flush a coarse checkpoint before listing so History includes recent disk saves.
+      await api.checkpoint(project.slug, "history").catch(() => undefined);
       const h = await api.history(project.slug);
       setHistory(h.history);
     } catch {

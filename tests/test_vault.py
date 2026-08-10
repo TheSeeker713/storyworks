@@ -94,11 +94,15 @@ def test_api_vault_flow(vault_dir: Path):
     assert Path(r.json()["backup"]).is_dir()
 
 
-def test_index_lives_under_cache_nosync(store: VaultStore, vault_dir: Path):
-    """SQLite must not sit at vault root under iCloud-synced Documents."""
-    db = vault_dir / ".storyworks" / "cache.nosync" / "index.sqlite"
+def test_index_lives_outside_vault_in_app_support(store: VaultStore, vault_dir: Path):
+    """SQLite cache must not live inside an iCloud-synced vault tree."""
+    from engine.vault.paths import app_support_root, index_path
+
+    db = index_path(vault_dir)
     assert db.is_file()
+    assert app_support_root() in db.parents
     assert not (vault_dir / ".storyworks" / "index.sqlite").exists()
+    assert not (vault_dir / ".storyworks" / "cache.nosync" / "index.sqlite").exists()
 
 
 def test_migrates_legacy_index_out_of_icloud_path(tmp_path: Path):

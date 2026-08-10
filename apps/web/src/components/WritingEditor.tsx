@@ -17,6 +17,9 @@ type Props = {
   onContextMenu?: (e: React.MouseEvent) => void;
 };
 
+const AUTOSAVE_MS = 600;
+const CHECKPOINT_IDLE_MS = 30_000;
+
 function textToDoc(text: string) {
   const lines = text.length > 0 ? text.split("\n") : [""];
   return {
@@ -42,8 +45,88 @@ export default function WritingEditor({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const hashRef = useRef<string>("");
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const checkpointTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const readyRef = useRef(false);
+  const inFlightRef = useRef(false);
+  const queuedBodyRef = useRef<string | null>(null);
+  const projectSlugRef = useRef(projectSlug);
+  const contentIdRef = useRef(contentId);
+  const contentTitleRef = useRef(contentTitle);
+  const projectNameRef = useRef(projectName);
+
+  projectSlugRef.current = projectSlug;
+  contentIdRef.current = contentId;
+  contentTitleRef.current = contentTitle;
+  projectNameRef.current = projectName;
+
+  function scheduleCheckpoint(reason: string) {
+    if (checkpointTimer.current) clearTimeout(checkpointTimer.current);
+    checkpointTimer.current = setTimeout(() => {
+      void api.checkpoint(projectSlugRef.current, reason).catch(() => {
+        // History is best-effort; markdown truth already persisted.
+      });
+    }, CHECKPOINT_IDLE_MS);
+  }
+
+  function checkpointNow(reason: string) {
+    if (checkpointTimer.current) clearTimeout(checkpointTimer.current);
+    checkpointTimer.current = null;
+    void api.checkpoint(projectSlugRef.current, reason).catch(() => {});
+  }
+
+  async function persistBody(body: string) {
+    if (inFlightRef.current) {
+      queuedBodyRef.current = body;
+      return;
+    }
+    inFlightRef.current = true;
+    setSaveState("saving");
+    try {
+      let next: string | null = body;
+      while (next !== null) {
+        const toWrite = next;
+        next = null;
+        queuedBodyRef.current = null;
+        try {
+          const result = await api.writeContent(projectSlugRef.current, {
+            id: contentIdRef.current,
+            type: "manuscript",
+            title: contentTitleRef.current || projectNameRef.current || "Manuscript",
+            body: toWrite,
+            book_id: "main",
+            folder_id: "main",
+            expected_hash: hashRef.current || undefined,
+            dirty: true,
+          });
+          if (result.conflict) {
+            setError("File changed on disk — reload the project to continue.");
+            setSaveState("error");
+            return;
+          }
+          if (result.content_hash) hashRef.current = result.content_hash;
+          setError(null);
+          setSaveState("saved");
+          scheduleCheckpoint(`save ${contentIdRef.current}`);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : String(e));
+          setSaveState("error");
+          return;
+        }
+        if (queuedBodyRef.current !== null) {
+          next = queuedBodyRef.current;
+          queuedBodyRef.current = null;
+        }
+      }
+    } finally {
+      inFlightRef.current = false;
+      if (queuedBodyRef.current !== null) {
+        const leftover = queuedBodyRef.current;
+        queuedBodyRef.current = null;
+        void persistBody(leftover);
+      }
+    }
+  }
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -61,34 +144,10 @@ export default function WritingEditor({
       onDraftText?.(text);
       if (!readyRef.current) return;
       setSaveState("saving");
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => {
-        void (async () => {
-          try {
-            const result = await api.writeContent(projectSlug, {
-              id: contentId,
-              type: "manuscript",
-              title: contentTitle || projectName || "Manuscript",
-              body: ed.getText({ blockSeparator: "\n" }),
-              book_id: "main",
-              folder_id: "main",
-              expected_hash: hashRef.current || undefined,
-              dirty: true,
-            });
-            if (result.conflict) {
-              setError("File changed on disk — reload the project to continue.");
-              setSaveState("error");
-              return;
-            }
-            if (result.content_hash) hashRef.current = result.content_hash;
-            setSaveState("saved");
-            setError(null);
-          } catch (e) {
-            setError(e instanceof Error ? e.message : String(e));
-            setSaveState("error");
-          }
-        })();
-      }, 600);
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(() => {
+        void persistBody(ed.getText({ blockSeparator: "\n" }));
+      }, AUTOSAVE_MS);
     },
   });
 
@@ -133,9 +192,27 @@ export default function WritingEditor({
     });
 
     return () => {
-      if (timer.current) clearTimeout(timer.current);
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [editor, projectSlug, projectName, contentId, contentTitle, onDraftText]);
+
+  useEffect(() => {
+    function onVis() {
+      if (document.visibilityState === "hidden") {
+        checkpointNow("blur");
+      }
+    }
+    function onBlur() {
+      checkpointNow("blur");
+    }
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("blur", onBlur);
+      if (checkpointTimer.current) clearTimeout(checkpointTimer.current);
+    };
+  }, []);
 
   const label =
     saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : saveState === "error" ? "Save error" : "";

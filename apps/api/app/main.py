@@ -268,6 +268,18 @@ def project_history(slug: str, limit: int = 50):
         raise HTTPException(400, str(exc)) from exc
 
 
+@app.post("/api/projects/{slug}/checkpoint")
+def project_checkpoint(slug: str, message: str = "autosave"):
+    """Coarse per-project git snapshot (idle / blur / History) — not every content write."""
+    try:
+        store = state.get_vault()
+        return store.checkpoint_project(slug, message=message or "autosave")
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(500, f"checkpoint failed: {type(exc).__name__}: {exc}") from exc
+
+
 @app.get("/api/projects/{slug}/content")
 def content_list(slug: str, archived: bool = False):
     try:

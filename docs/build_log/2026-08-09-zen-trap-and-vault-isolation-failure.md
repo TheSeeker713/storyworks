@@ -62,6 +62,13 @@ Current `DraftShell` JSX has a single `<WritingEditor />` mount. The trap is **n
 - Closed the rule gap: `storyworks-no-servers.mdc` now forbids direct programmatic probes against any live server/process (curl, Python probes, etc.), not only booting servers.
 - `dual 18` in Jeremy’s manuscript: **not cleared** — left as-is unless he explicitly asks.
 
+## Follow-up — write pipeline (applied)
+
+- `write_content` no longer calls `checkpoint_project` per save.
+- Checkpoint via `POST /api/projects/{slug}/checkpoint` on idle ≥30s, blur/visibility hidden, or opening History.
+- WritingEditor single-flights autosaves (in-flight + one queued latest body).
+- SQLite index under `~/Library/Application Support/Storyworks/indexes/<vault-hash>/` (migrates from in-vault locations). Markdown remains in the vault.
+
 ## Related commits
 
 - `263df58` — SQLite locks / autosave error surfacing / protocol chat checklists  

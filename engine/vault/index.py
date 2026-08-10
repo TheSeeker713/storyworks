@@ -53,7 +53,7 @@ class VaultIndex:
 
     def _with_retry(self, fn: Any) -> Any:
         last: Optional[BaseException] = None
-        for attempt in range(6):
+        for attempt in range(12):
             try:
                 return fn()
             except sqlite3.OperationalError as exc:
@@ -61,7 +61,8 @@ class VaultIndex:
                 msg = str(exc).lower()
                 if "disk i/o" not in msg and "locked" not in msg and "busy" not in msg:
                     raise
-                time.sleep(0.04 * (attempt + 1))
+                # Exponential backoff capped ~0.8s; total wait well under a few seconds.
+                time.sleep(min(0.8, 0.05 * (2**attempt)))
         assert last is not None
         raise last
 
