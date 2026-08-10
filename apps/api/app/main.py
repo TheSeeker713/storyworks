@@ -555,6 +555,51 @@ def vault_search(q: str = "", limit: int = 40):
         raise HTTPException(400, str(exc)) from exc
 
 
+@app.get("/api/command/search")
+def command_search(q: str = "", limit: int = 12):
+    """Grouped Cmd+K search over projects, Codex, and writing."""
+    try:
+        from engine.vault import codex as cx
+        from engine.vault.paths import project_dir
+
+        store = state.get_vault()
+        query = q.strip().casefold()
+        if not query:
+            return {"projects": [], "codex": [], "writing": []}
+
+        projects = [
+            row
+            for row in store.list_projects(include_archived=False)
+            if query in f"{row.get('name', '')} {row.get('module', '')}".casefold()
+        ][:limit]
+
+        codex: list[dict[str, Any]] = []
+        for project in store.list_projects(include_archived=False):
+            slug = str(project["slug"])
+            for entry in cx.list_entries(project_dir(store.root, slug)):
+                if query not in f"{entry.get('title', '')} {entry.get('subject', '')} {entry.get('type', '')}".casefold():
+                    continue
+                codex.append(
+                    {
+                        **entry,
+                        "project_slug": slug,
+                        "project_name": project["name"],
+                    }
+                )
+                if len(codex) >= limit:
+                    break
+            if len(codex) >= limit:
+                break
+
+        return {
+            "projects": projects,
+            "codex": codex,
+            "writing": store.search_vault(q, limit=limit),
+        }
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
 @app.get("/api/projects/{slug}/codex")
 def codex_list(slug: str, type: Optional[str] = None):
     try:

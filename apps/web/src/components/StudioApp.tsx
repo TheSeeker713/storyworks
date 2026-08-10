@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api, type ProjectModule, type ProjectRow } from "@/lib/api";
+import {
+  api,
+  type CommandCodexHit,
+  type ProjectModule,
+  type ProjectRow,
+} from "@/lib/api";
 import { runConnectorBootChecks, type SttUiState } from "@/lib/connectors";
 import BootScreen from "@/components/BootScreen";
 import DraftShell from "@/components/DraftShell";
@@ -67,6 +72,12 @@ export default function StudioApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [dictating, setDictating] = useState(false);
+  const [commandCodexTarget, setCommandCodexTarget] = useState<{
+    project_slug: string;
+    type: string;
+    id: string;
+    nonce: number;
+  } | null>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -292,6 +303,26 @@ export default function StudioApp() {
     goDraft(slug);
   }
 
+  function openCommandCodex(entry: CommandCodexHit) {
+    setCommandCodexTarget({
+      project_slug: entry.project_slug,
+      type: entry.type,
+      id: entry.id,
+      nonce: Date.now(),
+    });
+    goDraft(entry.project_slug);
+  }
+
+  function runCommandTool(tool: string, module?: ProjectModule) {
+    if (tool === "settings") {
+      setSettingsOpen(true);
+      return;
+    }
+    if (module) {
+      void createUntitledProject(module).catch((e: Error) => setError(e.message));
+    }
+  }
+
   async function archiveProject(slug: string) {
     setError(null);
     await api.archiveProject(slug);
@@ -515,6 +546,9 @@ export default function StudioApp() {
         open={cmdkOpen}
         onClose={() => setCmdkOpen(false)}
         onApplied={syncFromSettings}
+        onProject={openProject}
+        onCodex={openCommandCodex}
+        onTool={runCommandTool}
       />
       <main className="relative min-h-0 flex-1">
         {!vaultPath ? (
@@ -535,6 +569,8 @@ export default function StudioApp() {
             onMuseAppendConsumed={() => setMuseAppend(null)}
             onMuseAccept={(s) => setMuseAppend(s)}
             onCreateModule={(mod) => void createModuleFromDraft(mod).catch((e: Error) => setError(e.message))}
+            commandCodexTarget={commandCodexTarget}
+            onCommandCodexConsumed={() => setCommandCodexTarget(null)}
           />
         ) : (
           <ProjectList

@@ -20,9 +20,17 @@ type Props = {
   open: boolean;
   projectSlug: string;
   onClose: () => void;
+  initialEntry?: { type: string; id: string; nonce: number } | null;
+  onInitialEntryOpened?: () => void;
 };
 
-export default function CodexPanel({ open, projectSlug, onClose }: Props) {
+export default function CodexPanel({
+  open,
+  projectSlug,
+  onClose,
+  initialEntry,
+  onInitialEntryOpened,
+}: Props) {
   const [entries, setEntries] = useState<CodexEntrySummary[]>([]);
   const [suggestedOrder, setSuggestedOrder] = useState<string[]>([...CODEX_TYPES]);
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -59,6 +67,21 @@ export default function CodexPanel({ open, projectSlug, onClose }: Props) {
       }
     })();
   }, [open, loadList]);
+
+  useEffect(() => {
+    if (!open || !initialEntry) return;
+    void api
+      .getCodex(projectSlug, initialEntry.type, initialEntry.id)
+      .then((full) => {
+        setSelected(full);
+        setFacetDraft({ ...(full.facets || {}) });
+        setCreating(false);
+        setTypeFilter("all");
+        setError(null);
+        onInitialEntryOpened?.();
+      })
+      .catch((e: Error) => setError(e.message));
+  }, [open, projectSlug, initialEntry, onInitialEntryOpened]);
 
   async function toggleComplex() {
     const next = !complex;

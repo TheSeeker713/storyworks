@@ -48,6 +48,17 @@ export type SearchHit = {
   snippet?: string;
 };
 
+export type CommandCodexHit = CodexEntrySummary & {
+  project_slug: string;
+  project_name: string;
+};
+
+export type CommandSearchResult = {
+  projects: ProjectRow[];
+  codex: CommandCodexHit[];
+  writing: SearchHit[];
+};
+
 export type ProjectMeta = {
   slug: string;
   name: string;
@@ -210,6 +221,10 @@ export const api = {
     }),
   search: (q: string, limit = 40) =>
     req<{ hits: SearchHit[] }>(`/api/search?q=${encodeURIComponent(q)}&limit=${limit}`),
+  commandSearch: (q: string, limit = 12) =>
+    req<CommandSearchResult>(
+      `/api/command/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+    ),
   listCodex: (slug: string, type?: string) =>
     req<{ entries: CodexEntrySummary[]; suggested_order: string[] }>(
       `/api/projects/${slug}/codex${type ? `?type=${encodeURIComponent(type)}` : ""}`,

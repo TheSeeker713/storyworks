@@ -23,6 +23,8 @@ type Props = {
   onMuseAppendConsumed: () => void;
   onMuseAccept: (s: string) => void;
   onCreateModule?: (module: ProjectModule) => void;
+  commandCodexTarget?: { project_slug: string; type: string; id: string; nonce: number } | null;
+  onCommandCodexConsumed?: () => void;
 };
 
 const MENU = ["File", "Edit", "View", "Window", "Help"] as const;
@@ -48,6 +50,8 @@ export default function DraftShell({
   onMuseAppendConsumed,
   onMuseAccept,
   onCreateModule,
+  commandCodexTarget,
+  onCommandCodexConsumed,
 }: Props) {
   const [tabs, setTabs] = useState<Tab[]>([{ id: "manuscript", title: "Untitled draft" }]);
   const [activeId, setActiveId] = useState("manuscript");
@@ -69,6 +73,10 @@ export default function DraftShell({
   const useModuleWorkspace = isWorkspaceModule(module);
   const isScreenplay = module === "screenplay";
   const isDraft = module === "draft" || !module;
+
+  useEffect(() => {
+    if (commandCodexTarget?.project_slug === project.slug) setCodexOpen(true);
+  }, [commandCodexTarget, project.slug]);
 
   const loadStructure = useCallback(async () => {
     try {
@@ -606,7 +614,15 @@ export default function DraftShell({
         </div>
       )}
 
-      <CodexPanel open={codexOpen} projectSlug={project.slug} onClose={() => setCodexOpen(false)} />
+      <CodexPanel
+        open={codexOpen}
+        projectSlug={project.slug}
+        initialEntry={
+          commandCodexTarget?.project_slug === project.slug ? commandCodexTarget : null
+        }
+        onInitialEntryOpened={onCommandCodexConsumed}
+        onClose={() => setCodexOpen(false)}
+      />
       <DrawingPopup open={drawingOpen} onClose={() => setDrawingOpen(false)} />
 
       {pensOpen && (

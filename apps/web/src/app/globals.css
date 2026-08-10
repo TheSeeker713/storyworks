@@ -68,3 +68,26 @@ body {
   cursor: not-allowed;
   transform: none;
 }
+
+.sw-command-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--sw-parchment-deep);
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+}
+
+.sw-command-row:hover,
+.sw-command-row:focus-visible {
+  background: var(--sw-parchment-deep);
+  outline: none;
+}
+
+.sw-command-row > span:last-child {
+  color: var(--sw-ink-faint);
+  font-size: 0.6875rem;
+  text-align: right;
+}
