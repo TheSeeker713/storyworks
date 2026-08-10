@@ -7,6 +7,8 @@ import BootScreen from "@/components/BootScreen";
 import DraftShell from "@/components/DraftShell";
 import Onboarding from "@/components/Onboarding";
 import ProjectList from "@/components/ProjectList";
+import SettingsPanel from "@/components/SettingsPanel";
+import CmdKPalette from "@/components/CmdKPalette";
 
 const VAULT_KEY = "storyworks.vaultPath";
 const PROJECT_KEY = "storyworks.projectSlug";
@@ -62,6 +64,65 @@ export default function StudioApp() {
   const [pickingFolder, setPickingFolder] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
   const [completingOnboard, setCompletingOnboard] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [dictating, setDictating] = useState(false);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdkOpen(true);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+        e.preventDefault();
+        setSettingsOpen(true);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  function syncFromSettings(s: Record<string, unknown>) {
+    setMasterOn(s.ai_master_enabled !== false);
+    setMuseEnabled(Boolean(s.muse_enabled));
+    setSttEnabled(Boolean(s.stt_enabled));
+    localStorage.setItem(MUSE_KEY, s.muse_enabled ? "1" : "0");
+    localStorage.setItem(STT_KEY, s.stt_enabled ? "1" : "0");
+  }
+
+  async function startDictate() {
+    if (!masterOn || !sttEnabled || sttState !== "working" || dictating) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("Microphone API unavailable in this environment");
+      return;
+    }
+    setDictating(true);
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      recorder.ondataavailable = (ev) => {
+        if (ev.data.size) chunks.push(ev.data);
+      };
+      const stopped = new Promise<Blob>((resolve) => {
+        recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || "audio/webm" }));
+      });
+      recorder.start();
+      await new Promise((r) => setTimeout(r, 4000));
+      recorder.stop();
+      stream.getTracks().forEach((t) => t.stop());
+      const blob = await stopped;
+      const result = await api.transcribeUpload(blob);
+      if (result.text) setMuseAppend(result.text);
+      else setError(result.error || "No speech transcribed");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDictating(false);
+    }
+  }
 
   const goHome = useCallback(() => {
     setView("home");
@@ -373,6 +434,34 @@ export default function StudioApp() {
         >
           {sttLabel}
         </button>
+        <button
+          type="button"
+          title="Dictate ~4s into the editor (local STT)"
+          disabled={!masterOn || !sttEnabled || sttState !== "working" || dictating}
+          onClick={() => void startDictate()}
+          className={headerBtn}
+          style={{ borderColor: "var(--sw-border)", background: "white" }}
+        >
+          {dictating ? "Listening…" : "Dictate"}
+        </button>
+        <button
+          type="button"
+          className={headerBtn}
+          style={{ borderColor: "var(--sw-border)", background: "white" }}
+          onClick={() => setSettingsOpen(true)}
+          title="Settings (⌘,)"
+        >
+          Settings
+        </button>
+        <button
+          type="button"
+          className={headerBtn}
+          style={{ borderColor: "var(--sw-border)", background: "white" }}
+          onClick={() => setCmdkOpen(true)}
+          title="Command palette (⌘K)"
+        >
+          ⌘K
+        </button>
         <div className="flex flex-1 flex-wrap items-center gap-2 text-sm">
           <p
             className="min-w-[12rem] flex-1 truncate rounded-lg border bg-white px-2 py-1 font-mono text-xs"
@@ -417,6 +506,16 @@ export default function StudioApp() {
         </p>
       </header>
       {error && <p className="bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>}
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onSettingsChange={syncFromSettings}
+      />
+      <CmdKPalette
+        open={cmdkOpen}
+        onClose={() => setCmdkOpen(false)}
+        onApplied={syncFromSettings}
+      />
       <main className="relative min-h-0 flex-1">
         {!vaultPath ? (
           <div className="flex h-full items-center justify-center p-8" style={{ color: "var(--sw-ink-muted)" }}>

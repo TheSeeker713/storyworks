@@ -321,4 +321,84 @@ export const api = {
         project_name: body.projectName,
       }),
     }),
+  bumpProvenance: (slug: string, contentId: string, body: { muse_words?: number; ai_words?: number }) =>
+    req<{ ok: boolean; provenance: { muse_words: number; ai_words: number }; summary: ProvenanceSummary }>(
+      `/api/projects/${slug}/content/${encodeURIComponent(contentId)}/provenance`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+  getProvenance: (slug: string, contentId: string) =>
+    req<{ ok: boolean; summary: ProvenanceSummary; provenance: { muse_words?: number; ai_words?: number } }>(
+      `/api/projects/${slug}/content/${encodeURIComponent(contentId)}/provenance`,
+    ),
+  listSandbox: (slug: string, contentId?: string) =>
+    req<{ items: SandboxItem[] }>(
+      `/api/projects/${slug}/ai/sandbox${contentId ? `?content_id=${encodeURIComponent(contentId)}` : ""}`,
+    ),
+  createSandbox: (slug: string, body: { content_id: string; kind: string; body: string; title?: string }) =>
+    req<{ ok: boolean; item: SandboxItem }>(`/api/projects/${slug}/ai/sandbox`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  sandboxAction: (slug: string, draftId: string, action: "approve" | "set_aside" | "dismiss", mode = "append") =>
+    req<{ ok: boolean; item?: SandboxItem; content?: { body: string; meta?: Record<string, unknown> } }>(
+      `/api/projects/${slug}/ai/sandbox/${encodeURIComponent(draftId)}`,
+      { method: "POST", body: JSON.stringify({ action, mode }) },
+    ),
+  agentTool: (body: {
+    tool: string;
+    text?: string;
+    query?: string;
+    stage?: string;
+    content_id?: string;
+    project_slug?: string;
+  }) =>
+    req<{
+      ok: boolean;
+      text?: string;
+      error?: string;
+      disabled?: boolean;
+      sandbox?: SandboxItem;
+      hits?: SearchHit[];
+    }>("/api/ai/agent", { method: "POST", body: JSON.stringify(body) }),
+  settingsAgent: (request: string, apply = true) =>
+    req<{ ok: boolean; patch?: Record<string, unknown>; applied?: boolean; settings?: Record<string, unknown>; error?: string }>(
+      "/api/ai/settings",
+      { method: "POST", body: JSON.stringify({ request, apply }) },
+    ),
+  transcribeUpload: async (blob: Blob, filename = "dictate.webm") => {
+    const fd = new FormData();
+    fd.append("file", blob, filename);
+    const res = await fetch("/api/stt/transcribe-upload", { method: "POST", body: fd });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `STT upload failed (${res.status})`);
+    }
+    return (await res.json()) as { ok: boolean; text?: string; error?: string };
+  },
+  exportProject: (slug: string, format: string) =>
+    req<{
+      ok: boolean;
+      format: string;
+      filename: string;
+      content: string;
+      media_type: string;
+      encoding?: string;
+    }>(`/api/projects/${slug}/export?format=${encodeURIComponent(format)}`, { method: "POST" }),
+};
+
+export type ProvenanceSummary = {
+  total_words: number;
+  author_words: number;
+  muse_words: number;
+  ai_words: number;
+};
+
+export type SandboxItem = {
+  id: string;
+  content_id: string;
+  kind: string;
+  title: string;
+  body: string;
+  status: string;
+  created_at?: string;
 };

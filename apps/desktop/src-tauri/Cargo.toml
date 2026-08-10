@@ -1,0 +1,9 @@
+[package]
+name = "storyworks-desktop"
+version = "0.1.0"
+description = "Storyworks macOS shell (Tauri scaffold — not yet a signed product)"
+authors = ["Mycelia Interactive"]
+edition = "2021"
+
+# Intentionally dependency-light until Jeremy runs full Tauri init + signing.
+# tauri / tauri-build will be added when the desktop toolchain is installed locally.

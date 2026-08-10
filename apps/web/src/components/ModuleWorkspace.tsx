@@ -7,10 +7,18 @@ import {
   type JournalBook,
   type ProjectMeta,
   type ProjectRow,
+  type ProvenanceSummary,
   type SearchHit,
 } from "@/lib/api";
 import WritingEditor, { type WritingEditorHandle } from "@/components/WritingEditor";
 import JournalMap from "@/components/JournalMap";
+import MuseLayer from "@/components/MuseLayer";
+import AiSandboxPanel from "@/components/AiSandboxPanel";
+
+function wordCount(s: string) {
+  const t = s.trim();
+  return t ? t.split(/\s+/).length : 0;
+}
 
 const MODULES = ["novel", "screenplay", "notes", "journal", "blog"] as const;
 export type WorkspaceModule = (typeof MODULES)[number];
@@ -34,6 +42,12 @@ type Props = {
   onContextMenu?: (e: React.MouseEvent) => void;
   onOpenCodex: () => void;
   screenplayStatus?: string | null;
+  museEnabled?: boolean;
+  masterOn?: boolean;
+  museAppend?: string | null;
+  onMuseAppendConsumed?: () => void;
+  onMuseAccept?: (s: string) => void;
+  draftText?: string;
 };
 
 export default function ModuleWorkspace({
@@ -42,6 +56,12 @@ export default function ModuleWorkspace({
   onContextMenu,
   onOpenCodex,
   screenplayStatus,
+  museEnabled = false,
+  masterOn = false,
+  museAppend = null,
+  onMuseAppendConsumed,
+  onMuseAccept,
+  draftText = "",
 }: Props) {
   const module = (project.module || "draft") as WorkspaceModule;
   const editorRef = useRef<WritingEditorHandle>(null);
@@ -72,6 +92,8 @@ export default function ModuleWorkspace({
   const [unlockPassword, setUnlockPassword] = useState("");
   const [sessionDekByBook, setSessionDekByBook] = useState<Record<string, string>>({});
   const [mapOpen, setMapOpen] = useState(false);
+  const [prov, setProv] = useState<ProvenanceSummary | null>(null);
+  const [agentBusy, setAgentBusy] = useState(false);
 
   // Blog
   const [meta, setMeta] = useState<ProjectMeta | null>(null);
@@ -332,6 +354,65 @@ export default function ModuleWorkspace({
 
   const fontSizeClass = module === "journal" ? "text-[18px]" : "text-[16px]";
 
+  const refreshProvenance = useCallback(async () => {
+    if (!activeId) {
+      setProv(null);
+      return;
+    }
+    try {
+      const r = await api.getProvenance(project.slug, activeId);
+      setProv(r.summary);
+    } catch {
+      setProv(null);
+    }
+  }, [project.slug, activeId]);
+
+  useEffect(() => {
+    void refreshProvenance();
+  }, [refreshProvenance, draftText]);
+
+  const getMuseContext = useCallback(
+    () => ({
+      text: draftText,
+      title: activeTitle || project.name,
+      projectName: project.name,
+    }),
+    [draftText, activeTitle, project.name],
+  );
+
+  async function handleMuseAccept(s: string) {
+    onMuseAccept?.(s);
+    if (activeId) {
+      try {
+        await api.bumpProvenance(project.slug, activeId, { muse_words: wordCount(s) });
+        await refreshProvenance();
+      } catch {
+        /* provenance is best-effort */
+      }
+    }
+  }
+
+  async function runAgent(tool: string, text: string, stage?: string) {
+    if (!activeId || !masterOn) return;
+    setAgentBusy(true);
+    setError(null);
+    try {
+      const r = await api.agentTool({
+        tool,
+        text,
+        stage,
+        content_id: activeId,
+        project_slug: project.slug,
+        query: text,
+      });
+      if (!r.ok) setError(r.error || "Agent unavailable");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAgentBusy(false);
+    }
+  }
+
   if (zen && module === "journal") {
     return (
       <div className="relative h-full">
@@ -373,8 +454,16 @@ export default function ModuleWorkspace({
             onContextMenu={onContextMenu}
             transformLoad={transformJournalLoad}
             transformSave={transformJournalSave}
+            appendText={museAppend}
+            onAppendConsumed={onMuseAppendConsumed}
           />
         )}
+        <MuseLayer
+          enabled={museEnabled}
+          masterOn={masterOn}
+          getContext={getMuseContext}
+          onAccept={(s) => void handleMuseAccept(s)}
+        />
       </div>
     );
   }
@@ -434,8 +523,37 @@ export default function ModuleWorkspace({
             Set aside: {setAsideCount}
           </span>
         )}
+        {module === "blog" && (
+          <button
+            type="button"
+            className="rounded border bg-white px-2 py-1 text-xs"
+            style={{ borderColor: "var(--sw-border)" }}
+            disabled={agentBusy || !masterOn || !activeId}
+            onClick={() => void runAgent("blog_review", draftText, blogStage)}
+            title="Non-blocking AI review → sandbox card"
+          >
+            AI review
+          </button>
+        )}
+        {module === "notes" && (
+          <button
+            type="button"
+            className="rounded border bg-white px-2 py-1 text-xs"
+            style={{ borderColor: "var(--sw-border)" }}
+            disabled={agentBusy || !masterOn || !searchQ.trim()}
+            onClick={() => void runAgent("ask_vault", searchQ)}
+            title="Ask your vault (NL over search hits)"
+          >
+            Ask AI
+          </button>
+        )}
+        {prov && (
+          <span className="ml-auto text-[11px]" style={{ color: "var(--sw-ink-faint)" }}>
+            {prov.total_words} words · {prov.author_words} you · {prov.muse_words} Muse · {prov.ai_words} AI
+          </span>
+        )}
         {screenplayStatus && (
-          <span className="ml-auto text-xs" style={{ color: "var(--sw-teal)" }}>
+          <span className="text-xs" style={{ color: "var(--sw-teal)" }}>
             {screenplayStatus}
           </span>
         )}
@@ -774,12 +892,27 @@ export default function ModuleWorkspace({
               onContextMenu={onContextMenu}
               transformLoad={module === "journal" ? transformJournalLoad : undefined}
               transformSave={module === "journal" ? transformJournalSave : undefined}
+              appendText={museAppend}
+              onAppendConsumed={onMuseAppendConsumed}
             />
           ) : (
             <p className="p-6 text-sm" style={{ color: "var(--sw-ink-faint)" }}>
               No content yet.
             </p>
           )}
+          {activeId && (
+            <AiSandboxPanel
+              projectSlug={project.slug}
+              contentId={activeId}
+              onApproved={() => void refreshProvenance()}
+            />
+          )}
+          <MuseLayer
+            enabled={museEnabled}
+            masterOn={masterOn}
+            getContext={getMuseContext}
+            onAccept={(s) => void handleMuseAccept(s)}
+          />
         </div>
       </div>
 

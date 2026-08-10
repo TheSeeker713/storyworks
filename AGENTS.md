@@ -17,9 +17,12 @@ Standing law: [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md). It supersedes all pr
 | **1 Design** | COMPLETE (2026-08-09) | Seven design artifacts. Project switcher resolved (Option 3). Typography still OPEN — see HANDOFF. |
 | **2 Data & Draft** | Machine shipped; live clear may still be open | Zen revert + write pipeline on main. Do not invent Jeremy’s Phase 2 clear. |
 | **3 Novel & Screenplay** | Machine done (continuous run) | Codex + Novel + Screenplay. No inter-phase stop this run — see `PHASE_3.md`. |
-| **4 Notes / Journal / Blog** | FULL STOP — awaiting Jeremy | Continuous 3→4 run stopped here. In-chat checklist only. Do not start Phase 5 until Jeremy replies. |
-| **5–8 / Deployment** | Not started | AI → PENS → Onboarding/Lite·Full → Export → Packaging |
-| **Deployment** | Not started | Tauri packaging, signing, pricing, distribution |
+| **4 Notes / Journal / Blog** | Machine done | Continuous 3→4 earlier same day. Human clear still Jeremy’s words. |
+| **5 AI agentic** | Machine done (overnight) | Muse all modules, sandbox, provenance, STT dictate, Cmd+K. See `PHASE_5.md`. |
+| **6 PENS** | Stub only (overnight) | Warm roadmap panel. Real system deliberately not built. |
+| **7 Settings / Lite·Full** | Machine done (overnight) | Settings + runtime tier/BYOM. Lite ≠ binary strip. |
+| **8 Export** | Machine done (overnight) | Fountain/FDX/EPUB/PDF/MD. See `PHASE_8.md`. |
+| **Deployment** | Scaffold only | Tauri tree + signing checklist. Blocked on Jeremy’s Apple credentials. |
 
 **Do not** treat the prior Vite/Phase 0–1B tree, or the pre-master-plan “Phase 0 with vault/editor/Muse” structure, as current product law. Superseded history (old phase docs + per-step devlogs): [`docs/archive/2026-08-08-pre-master-plan.zip`](docs/archive/2026-08-08-pre-master-plan.zip).
 

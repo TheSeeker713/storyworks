@@ -63,6 +63,7 @@ export default function DraftShell({
   const [codexOpen, setCodexOpen] = useState(false);
   const [drawingOpen, setDrawingOpen] = useState(false);
   const [screenplayStatus, setScreenplayStatus] = useState<string | null>(null);
+  const [pensOpen, setPensOpen] = useState(false);
 
   const module = project.module || "draft";
   const useModuleWorkspace = isWorkspaceModule(module);
@@ -223,6 +224,39 @@ export default function DraftShell({
                       <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => void openHistory()}>
                         Version history…
                       </button>
+                      {(["markdown", "fountain", "fdx", "epub", "pdf"] as const).map((fmt) => (
+                        <button
+                          key={fmt}
+                          type="button"
+                          className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]"
+                          onClick={() => {
+                            setMenuOpen(null);
+                            void (async () => {
+                              try {
+                                const r = await api.exportProject(project.slug, fmt);
+                                const bin = r.encoding === "base64";
+                                const blob = bin
+                                  ? new Blob(
+                                      [Uint8Array.from(atob(r.content), (c) => c.charCodeAt(0))],
+                                      { type: r.media_type },
+                                    )
+                                  : new Blob([r.content], { type: r.media_type });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = r.filename;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                                setShellError(null);
+                              } catch (e) {
+                                setShellError(e instanceof Error ? e.message : String(e));
+                              }
+                            })();
+                          }}
+                        >
+                          Export {fmt.toUpperCase()}…
+                        </button>
+                      ))}
                       {isDraft && (
                         <button type="button" className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]" onClick={() => void newTab()}>
                           New tab
@@ -316,6 +350,12 @@ export default function DraftShell({
             onDraftText={onDraftText}
             onOpenCodex={() => setCodexOpen(true)}
             screenplayStatus={screenplayStatus}
+            museEnabled={museEnabled}
+            masterOn={masterOn}
+            museAppend={museAppend}
+            onMuseAppendConsumed={onMuseAppendConsumed}
+            onMuseAccept={onMuseAccept}
+            draftText={draftText}
             onContextMenu={(e) => {
               e.preventDefault();
               setCtx({ x: e.clientX, y: e.clientY });
@@ -399,11 +439,13 @@ export default function DraftShell({
                     </ul>
                   </>
                 )}
-                <p className="mt-4 text-xs" style={{ color: "var(--sw-ink-faint)" }}>
-                  PENS: coming soon.
-                </p>
-                <button type="button" className="mt-2 text-xs underline" style={{ color: "var(--sw-teal)" }} disabled title="Coming soon">
-                  PENS (coming soon)
+                <button
+                  type="button"
+                  className="mt-4 w-full rounded-lg border px-2 py-2 text-left text-xs"
+                  style={{ borderColor: "var(--sw-border)", color: "var(--sw-teal)" }}
+                  onClick={() => setPensOpen(true)}
+                >
+                  PENS
                 </button>
               </aside>
             )}
@@ -427,7 +469,13 @@ export default function DraftShell({
                 enabled={museEnabled}
                 masterOn={masterOn}
                 getContext={getMuseContext}
-                onAccept={onMuseAccept}
+                onAccept={(s) => {
+                  onMuseAccept(s);
+                  const words = s.trim() ? s.trim().split(/\s+/).length : 0;
+                  if (words > 0) {
+                    void api.bumpProvenance(project.slug, activeId, { muse_words: words }).catch(() => undefined);
+                  }
+                }}
               />
             </div>
           </div>
@@ -455,8 +503,26 @@ export default function DraftShell({
                 type="button"
                 className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]"
                 onClick={() => {
-                  setScreenplayStatus("Describe — stub (Phase 5 AI)");
+                  const sel = window.getSelection()?.toString() || draftText.slice(-800);
+                  setScreenplayStatus("Describe…");
                   setCtx(null);
+                  void api
+                    .agentTool({
+                      tool: "describe",
+                      text: sel,
+                      content_id: activeId,
+                      project_slug: project.slug,
+                    })
+                    .then((r) =>
+                      setScreenplayStatus(
+                        r.ok
+                          ? r.sandbox
+                            ? "Describe → sandbox card (approve to merge)"
+                            : "Describe ready"
+                          : r.error || "Describe unavailable",
+                      ),
+                    )
+                    .catch((e: Error) => setScreenplayStatus(e.message));
                 }}
               >
                 Describe
@@ -465,8 +531,26 @@ export default function DraftShell({
                 type="button"
                 className="block w-full px-3 py-1.5 text-left hover:bg-[var(--sw-parchment-deep)]"
                 onClick={() => {
-                  setScreenplayStatus("Show don't tell — stub (Phase 5 AI)");
+                  const sel = window.getSelection()?.toString() || draftText.slice(-800);
+                  setScreenplayStatus("Show-don't-tell…");
                   setCtx(null);
+                  void api
+                    .agentTool({
+                      tool: "show_dont_tell",
+                      text: sel,
+                      content_id: activeId,
+                      project_slug: project.slug,
+                    })
+                    .then((r) =>
+                      setScreenplayStatus(
+                        r.ok
+                          ? r.sandbox
+                            ? "Show-don't-tell → sandbox card"
+                            : "Revision ready"
+                          : r.error || "Unavailable",
+                      ),
+                    )
+                    .catch((e: Error) => setScreenplayStatus(e.message));
                 }}
               >
                 Show don&apos;t tell
@@ -524,6 +608,31 @@ export default function DraftShell({
 
       <CodexPanel open={codexOpen} projectSlug={project.slug} onClose={() => setCodexOpen(false)} />
       <DrawingPopup open={drawingOpen} onClose={() => setDrawingOpen(false)} />
+
+      {pensOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/25 p-6"
+          onClick={() => setPensOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg border bg-white p-5 shadow-xl"
+            style={{ borderColor: "var(--sw-border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-medium" style={{ color: "var(--sw-teal)" }}>
+              PENS is on the roadmap
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--sw-ink-muted)" }}>
+              Procedural Editor for Nonlinear Storytelling needs its own node-graph intelligence and a
+              dedicated visual layer — roughly doubling the rest of the app&apos;s build effort. That work
+              stays deliberately parked. The tray icon stays so the vision is visible, not hidden.
+            </p>
+            <button type="button" className="sw-btn mt-4" onClick={() => setPensOpen(false)}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
