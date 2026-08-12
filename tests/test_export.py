@@ -7,6 +7,7 @@ import io
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from pypdf import PdfReader
 
@@ -14,6 +15,20 @@ from apps.api.app.main import app
 from engine.export.formats import _as_fdx, _as_pdf, export_project
 
 
+_MACOS_PDF_FONT_INSTALLED = any(
+    path.is_file()
+    for path in (
+        Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
+        Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+        Path("/System/Library/Fonts/SFNS.ttf"),
+    )
+)
+
+
+@pytest.mark.skipif(
+    not _MACOS_PDF_FONT_INSTALLED,
+    reason="supported macOS PDF font not present on this machine",
+)
 def test_export_fountain_and_epub_via_api(tmp_path: Path):
     client = TestClient(app)
     vault = tmp_path / "v"
@@ -101,6 +116,10 @@ def test_fdx_preserves_fountain_screenplay_structure():
     assert root.findtext("./TitlePage/Content/Paragraph/Text") == "Tide & Memory"
 
 
+@pytest.mark.skipif(
+    not _MACOS_PDF_FONT_INSTALLED,
+    reason="supported macOS PDF font not present on this machine",
+)
 def test_pdf_is_paginated_unicode_and_does_not_truncate():
     lines = [f"Line {index}: café — 雪 and “quoted text”" for index in range(1, 451)]
     pdf_bytes = _as_pdf([("Long chapter", "\n".join(lines))], "Unicode manuscript — 雪")
@@ -115,6 +134,10 @@ def test_pdf_is_paginated_unicode_and_does_not_truncate():
     assert "?" not in extracted
 
 
+@pytest.mark.skipif(
+    not _MACOS_PDF_FONT_INSTALLED,
+    reason="supported macOS PDF font not present on this machine",
+)
 def test_pdf_api_returns_decodable_complete_document(tmp_path: Path):
     client = TestClient(app)
     vault = tmp_path / "v"
