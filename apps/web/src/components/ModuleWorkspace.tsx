@@ -5,6 +5,7 @@ import {
   api,
   type ContentScene,
   type JournalBook,
+  type JournalMemory,
   type ProjectMeta,
   type ProjectRow,
   type ProvenanceSummary,
@@ -110,6 +111,7 @@ export default function ModuleWorkspace({
   const [unlockMode, setUnlockMode] = useState<"keychain" | "password" | "recovery">("keychain");
   const [sessionDekByBook, setSessionDekByBook] = useState<Record<string, string>>({});
   const [mapOpen, setMapOpen] = useState(false);
+  const [journalMemory, setJournalMemory] = useState<JournalMemory | null>(null);
   const [prov, setProv] = useState<ProvenanceSummary | null>(null);
   const [agentBusy, setAgentBusy] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -327,6 +329,25 @@ export default function ModuleWorkspace({
   const activeBookPrivacy = books.find((b) => b.id === activeBookId)?.privacy || "public";
   const activeSessionDek = sessionDekByBook[activeBookId];
 
+  useEffect(() => {
+    if (module !== "journal") {
+      setJournalMemory(null);
+      return;
+    }
+    let cancelled = false;
+    void api
+      .journalMemory(project.slug, activeBookId, activeId)
+      .then((memory) => {
+        if (!cancelled) setJournalMemory(memory);
+      })
+      .catch(() => {
+        if (!cancelled) setJournalMemory(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [project.slug, module, activeBookId, activeId]);
+
   async function transformJournalLoad(body: string) {
     if (module !== "journal" || activeBookPrivacy !== "private") return body;
     if (!activeSessionDek) throw new Error("Unlock this private book to read entries.");
@@ -478,6 +499,32 @@ export default function ModuleWorkspace({
     }
   }
 
+  const journalMemoryCard =
+    journalMemory?.memory && journalMemory.question ? (
+      <section
+        className="rounded-xl border bg-white/95 p-4 shadow-sm"
+        style={{ borderColor: "var(--sw-border)" }}
+        aria-label={journalMemory.kind === "on_this_day" ? "On This Day" : "Journal memory"}
+      >
+        <p
+          className="text-[10px] font-medium uppercase tracking-[0.14em]"
+          style={{ color: "var(--sw-driftwood)" }}
+        >
+          {journalMemory.kind === "on_this_day" ? "On This Day" : "From an earlier entry"} ·{" "}
+          {journalMemory.memory.title}
+        </p>
+        <blockquote
+          className="mt-2 border-l-2 pl-3 text-sm"
+          style={{ borderColor: "var(--sw-gold)", color: "var(--sw-ink-muted)" }}
+        >
+          “{journalMemory.memory.excerpt}”
+        </blockquote>
+        <p className="mt-3 text-sm font-medium" style={{ color: "var(--sw-teal)" }}>
+          {journalMemory.question}
+        </p>
+      </section>
+    ) : null;
+
   if (zen && module === "journal") {
     return (
       <div className="relative h-full">
@@ -501,6 +548,11 @@ export default function ModuleWorkspace({
           <p className="absolute left-4 top-14 z-10 max-w-md rounded bg-red-50 px-3 py-2 text-xs text-red-700">
             {error}
           </p>
+        )}
+        {journalMemoryCard && (
+          <div className="absolute bottom-4 left-4 z-10 max-w-xl">
+            {journalMemoryCard}
+          </div>
         )}
         {activeId && (
           <WritingEditor
@@ -964,28 +1016,33 @@ export default function ModuleWorkspace({
           </aside>
         )}
 
-        <div className="relative min-h-0 min-w-0 flex-1">
+        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+          {module === "journal" && journalMemoryCard && (
+            <div className="shrink-0 px-6 pt-4">{journalMemoryCard}</div>
+          )}
           {activeId ? (
-            <WritingEditor
-              ref={editorRef}
-              key={`${project.slug}-${activeId}-${activeBookId}-${activeSessionDek ? "u" : "l"}`}
-              projectSlug={project.slug}
-              projectName={project.name}
-              contentId={activeId}
-              contentTitle={activeTitle}
-              contentType={activeType}
-              autoTag={module === "notes"}
-              bookId={module === "journal" ? activeBookId : "main"}
-              folderId="main"
-              className={editorClass}
-              fontSizeClass={fontSizeClass}
-              onDraftText={onDraftText}
-              onContextMenu={onContextMenu}
-              transformLoad={module === "journal" ? transformJournalLoad : undefined}
-              transformSave={module === "journal" ? transformJournalSave : undefined}
-              appendText={museAppend}
-              onAppendConsumed={onMuseAppendConsumed}
-            />
+            <div className="min-h-0 flex-1">
+              <WritingEditor
+                ref={editorRef}
+                key={`${project.slug}-${activeId}-${activeBookId}-${activeSessionDek ? "u" : "l"}`}
+                projectSlug={project.slug}
+                projectName={project.name}
+                contentId={activeId}
+                contentTitle={activeTitle}
+                contentType={activeType}
+                autoTag={module === "notes"}
+                bookId={module === "journal" ? activeBookId : "main"}
+                folderId="main"
+                className={editorClass}
+                fontSizeClass={fontSizeClass}
+                onDraftText={onDraftText}
+                onContextMenu={onContextMenu}
+                transformLoad={module === "journal" ? transformJournalLoad : undefined}
+                transformSave={module === "journal" ? transformJournalSave : undefined}
+                appendText={museAppend}
+                onAppendConsumed={onMuseAppendConsumed}
+              />
+            </div>
           ) : (
             <p className="p-6 text-sm" style={{ color: "var(--sw-ink-faint)" }}>
               No content yet.

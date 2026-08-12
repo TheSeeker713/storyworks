@@ -763,6 +763,32 @@ def journal_book_unlock(slug: str, book_id: str, body: JournalUnlockIn):
         raise HTTPException(400, str(exc)) from exc
 
 
+@app.get("/api/projects/{slug}/journal/memory")
+def journal_memory(
+    slug: str,
+    book_id: str = "main",
+    active_content_id: str = "",
+    as_of: Optional[str] = None,
+):
+    from datetime import date
+
+    from engine.vault.journal_memory import build_journal_memory
+
+    try:
+        day = date.fromisoformat(as_of) if as_of else None
+        return build_journal_memory(
+            state.get_vault(),
+            slug,
+            book_id=book_id,
+            active_content_id=active_content_id,
+            as_of=day,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, "as_of must be an ISO date") from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
 class JournalCipherIn(BaseModel):
     session_dek: str
     text: str = ""

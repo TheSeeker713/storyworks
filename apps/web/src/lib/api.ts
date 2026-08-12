@@ -77,6 +77,21 @@ export type JournalBook = {
   recovery_warning?: string;
 };
 
+export type JournalMemory = {
+  ok: boolean;
+  as_of: string;
+  kind: "on_this_day" | "recent_memory" | null;
+  memory: {
+    id: string;
+    title: string;
+    date: string;
+    body: string;
+    excerpt: string;
+    years_ago: number;
+  } | null;
+  question: string | null;
+};
+
 export type ContentScene = {
   id: string;
   title: string;
@@ -314,6 +329,10 @@ export const api = {
         method: "POST",
         body: JSON.stringify(body),
       },
+    ),
+  journalMemory: (slug: string, bookId: string, activeContentId = "") =>
+    req<JournalMemory>(
+      `/api/projects/${slug}/journal/memory?book_id=${encodeURIComponent(bookId)}&active_content_id=${encodeURIComponent(activeContentId)}`,
     ),
   sealJournalText: (slug: string, bookId: string, sessionDek: string, text: string) =>
     req<{ ciphertext: string }>(
