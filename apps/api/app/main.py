@@ -59,6 +59,27 @@ def connector_openclaw():
     return openclaw_health()
 
 
+@app.get("/api/skins/today")
+def skins_today():
+    from engine.vault.skins import today_skin
+
+    return today_skin(ROOT)
+
+
+@app.get("/api/skins/file/{filename}")
+def skins_file(filename: str):
+    from fastapi.responses import FileResponse
+
+    from engine.vault.skins import skins_dir
+
+    safe = Path(filename).name
+    if safe != filename or ".." in filename:
+        raise HTTPException(400, "invalid skin filename")
+    path = skins_dir(ROOT) / safe
+    if not path.is_file():
+        raise HTTPException(404, "skin not found")
+    return FileResponse(path)
+
 @app.get("/api/connectors/stt")
 def connector_stt():
     from engine.connectors.stt import stt_status
@@ -205,7 +226,10 @@ def vault_settings(body: SettingsIn):
         store = state.get_vault()
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
-    return store.save_settings(body.patch)
+    try:
+        return store.save_settings(body.patch)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 class CreateProjectIn(BaseModel):

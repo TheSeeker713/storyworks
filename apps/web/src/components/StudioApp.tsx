@@ -15,6 +15,7 @@ import ProjectList from "@/components/ProjectList";
 import SettingsPanel from "@/components/SettingsPanel";
 import CmdKPalette from "@/components/CmdKPalette";
 import GoldBezel from "@/components/GoldBezel";
+import { fallbackSkinBackground } from "@/components/SkinPreview";
 
 const VAULT_KEY = "storyworks.vaultPath";
 const PROJECT_KEY = "storyworks.projectSlug";
@@ -73,6 +74,9 @@ export default function StudioApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [dictating, setDictating] = useState(false);
+  const [trayEdge, setTrayEdge] = useState<"left" | "right">("left");
+  const [dailySkinsEnabled, setDailySkinsEnabled] = useState(false);
+  const [skinUrl, setSkinUrl] = useState<string | null>(null);
   const [commandCodexTarget, setCommandCodexTarget] = useState<{
     project_slug: string;
     type: string;
@@ -95,10 +99,28 @@ export default function StudioApp() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  async function refreshSkin(enabled: boolean) {
+    if (!enabled) {
+      setSkinUrl(null);
+      return;
+    }
+    try {
+      const today = await api.skinToday();
+      setSkinUrl(today.available && today.url ? today.url : null);
+    } catch {
+      setSkinUrl(null);
+    }
+  }
+
   function syncFromSettings(s: Record<string, unknown>) {
     setMasterOn(s.ai_master_enabled !== false);
     setMuseEnabled(Boolean(s.muse_enabled));
     setSttEnabled(Boolean(s.stt_enabled));
+    const edge = s.tray_edge === "right" ? "right" : "left";
+    const skinsOn = Boolean(s.daily_skins_enabled);
+    setTrayEdge(edge);
+    setDailySkinsEnabled(skinsOn);
+    void refreshSkin(skinsOn);
     localStorage.setItem(MUSE_KEY, s.muse_enabled ? "1" : "0");
     localStorage.setItem(STT_KEY, s.stt_enabled ? "1" : "0");
   }
@@ -169,7 +191,7 @@ export default function StudioApp() {
       setVaultPath(path);
       setInputPath(path);
       const v = await api.vault();
-      setMasterOn(Boolean(v.settings.ai_master_enabled !== false));
+      syncFromSettings(v.settings || {});
       const writing = await ensureWritingProject();
       localStorage.setItem(PROJECT_KEY, writing.slug);
       pushRecent(writing.slug);
@@ -241,22 +263,36 @@ export default function StudioApp() {
     }
   }
 
-  async function finishOnboardingSetup(opts: { hateAi: boolean }) {
+  async function finishOnboardingSetup(opts: {
+    hateAi: boolean;
+    dailySkinsEnabled?: boolean;
+    trayEdge?: "left" | "right";
+  }) {
     const path = inputPath.trim();
     if (!path) throw new Error("Choose a vault folder first");
     setCompletingOnboard(true);
     setError(null);
     try {
       await openVault(path, { forceDraft: true });
+      const skinsOn = Boolean(opts.dailySkinsEnabled);
+      const edge = opts.trayEdge === "right" ? "right" : "left";
       const patch = opts.hateAi
-        ? { ai_master_enabled: false, muse_enabled: false, stt_enabled: false }
-        : { ai_master_enabled: true, muse_enabled: false, stt_enabled: false };
-      await api.patchSettings(patch);
-      setMasterOn(!opts.hateAi);
-      setMuseEnabled(false);
-      setSttEnabled(false);
-      localStorage.setItem(MUSE_KEY, "0");
-      localStorage.setItem(STT_KEY, "0");
+        ? {
+            ai_master_enabled: false,
+            muse_enabled: false,
+            stt_enabled: false,
+            daily_skins_enabled: skinsOn,
+            tray_edge: edge,
+          }
+        : {
+            ai_master_enabled: true,
+            muse_enabled: false,
+            stt_enabled: false,
+            daily_skins_enabled: skinsOn,
+            tray_edge: edge,
+          };
+      const merged = await api.patchSettings(patch);
+      syncFromSettings(merged);
     } finally {
       setCompletingOnboard(false);
     }
@@ -404,9 +440,20 @@ export default function StudioApp() {
   }
 
   const showDraft = Boolean(vaultPath && view === "draft" && projectSlug && selectedProject && !selectedProject.archived);
+  const shellBackground = dailySkinsEnabled
+    ? skinUrl
+      ? {
+          backgroundColor: "#DCE8DF",
+          backgroundImage: `linear-gradient(rgba(251,248,241,.72), rgba(251,248,241,.72)), url(${skinUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          color: "var(--sw-ink)",
+        }
+      : { ...fallbackSkinBackground, color: "var(--sw-ink)" }
+    : { background: "var(--sw-parchment)", color: "var(--sw-ink)" };
 
   return (
-    <div className="flex h-screen flex-col" style={{ background: "var(--sw-parchment)", color: "var(--sw-ink)" }}>
+    <div className="flex h-screen flex-col" style={shellBackground}>
       {showOnboarding && (
         <Onboarding
           vaultPath={inputPath}
@@ -558,6 +605,7 @@ export default function StudioApp() {
             projects={projects}
             museEnabled={museEnabled}
             masterOn={masterOn}
+            trayEdge={trayEdge}
             onHome={goHome}
             onSwitchProject={openProject}
             onDraftText={setDraftText}

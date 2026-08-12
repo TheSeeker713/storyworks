@@ -73,6 +73,8 @@ PERMITTED_SETTINGS = {
     "stt_model",
     "product_tier",
     "byom_enabled",
+    "daily_skins_enabled",
+    "tray_edge",
 }
 
 
@@ -95,6 +97,14 @@ def settings_via_agent(request: str, current: dict[str, Any], *, settings: dict[
         patch = {"stt_enabled": True}
     elif "turn off stt" in low or "disable stt" in low:
         patch = {"stt_enabled": False}
+    elif "daily skins" in low or "turn on skins" in low or "enable skins" in low:
+        patch = {"daily_skins_enabled": True}
+    elif "turn off skins" in low or "disable skins" in low:
+        patch = {"daily_skins_enabled": False}
+    elif "tray" in low and "right" in low:
+        patch = {"tray_edge": "right"}
+    elif "tray" in low and "left" in low:
+        patch = {"tray_edge": "left"}
     elif "lite" in low and "tier" in low:
         patch = {"product_tier": "lite"}
     elif "full" in low and "tier" in low:

@@ -15,6 +15,7 @@ type Props = {
   projects: ProjectRow[];
   museEnabled: boolean;
   masterOn: boolean;
+  trayEdge?: "left" | "right";
   onHome: () => void;
   onSwitchProject: (slug: string) => void;
   onDraftText: (text: string) => void;
@@ -55,6 +56,7 @@ export default function DraftShell({
   projects,
   museEnabled,
   masterOn,
+  trayEdge = "left",
   onHome,
   onSwitchProject,
   onDraftText,
@@ -446,6 +448,7 @@ export default function DraftShell({
         <div className="min-h-0 flex-1">
           <ModuleWorkspace
             project={project}
+            trayEdge={trayEdge}
             onDraftText={onDraftText}
             onOpenCodex={(entry) => {
               setNoteCodexTarget(
@@ -496,11 +499,13 @@ export default function DraftShell({
             </button>
           </div>
 
-          <div className="relative flex min-h-0 flex-1">
-            {/* Left tray edge */}
+          <div className={`relative flex min-h-0 flex-1 ${trayEdge === "right" ? "flex-row-reverse" : ""}`}>
+            {/* Tray edge */}
             <button
               type="button"
-              className="absolute left-0 top-0 z-20 h-full w-3 border-r"
+              className={`absolute top-0 z-20 h-full w-3 ${
+                trayEdge === "right" ? "right-0 border-l" : "left-0 border-r"
+              }`}
               style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
               title="Reveal tray"
               onMouseEnter={scheduleTrayOpen}
@@ -509,7 +514,9 @@ export default function DraftShell({
             />
             {trayOpen && (
               <aside
-                className="z-30 w-56 shrink-0 border-r p-3 text-sm shadow-md"
+                className={`z-30 w-56 shrink-0 p-3 text-sm shadow-md ${
+                  trayEdge === "right" ? "border-l" : "border-r"
+                }`}
                 style={{ borderColor: "var(--sw-border)", background: "white" }}
                 onMouseEnter={scheduleTrayOpen}
                 onMouseLeave={scheduleTrayClose}

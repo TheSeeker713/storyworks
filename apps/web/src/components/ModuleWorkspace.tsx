@@ -64,6 +64,7 @@ type Props = {
   onMuseAppendConsumed?: () => void;
   onMuseAccept?: (s: string) => void;
   draftText?: string;
+  trayEdge?: "left" | "right";
 };
 
 export default function ModuleWorkspace({
@@ -78,6 +79,7 @@ export default function ModuleWorkspace({
   onMuseAppendConsumed,
   onMuseAccept,
   draftText = "",
+  trayEdge = "left",
 }: Props) {
   const module = (project.module || "draft") as WorkspaceModule;
   const editorRef = useRef<WritingEditorHandle>(null);
@@ -886,10 +888,12 @@ export default function ModuleWorkspace({
         </div>
       )}
 
-      <div className="relative flex min-h-0 flex-1">
+      <div className={`relative flex min-h-0 flex-1 ${trayEdge === "right" ? "flex-row-reverse" : ""}`}>
         <button
           type="button"
-          className="absolute left-0 top-0 z-20 h-full w-3 border-r"
+          className={`absolute top-0 z-20 h-full w-3 ${
+            trayEdge === "right" ? "right-0 border-l" : "left-0 border-r"
+          }`}
           style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment-deep)" }}
           title="Reveal tray"
           onMouseEnter={scheduleTrayOpen}
@@ -898,7 +902,9 @@ export default function ModuleWorkspace({
         />
         {trayOpen && (
           <aside
-            className="z-30 w-60 shrink-0 overflow-y-auto border-r p-3 text-sm"
+            className={`z-30 w-60 shrink-0 overflow-y-auto p-3 text-sm ${
+              trayEdge === "right" ? "border-l" : "border-r"
+            }`}
             style={{ borderColor: "var(--sw-border)", background: "white" }}
             onMouseEnter={scheduleTrayOpen}
             onMouseLeave={scheduleTrayClose}

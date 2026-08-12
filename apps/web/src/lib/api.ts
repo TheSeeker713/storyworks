@@ -399,6 +399,25 @@ export const api = {
       undefined,
       STT_TIMEOUT_MS,
     ),
+  skinToday: () =>
+    req<{
+      ok: boolean;
+      available: boolean;
+      as_of?: string;
+      filename?: string | null;
+      url?: string | null;
+      count?: number;
+      reason?: string | null;
+    }>("/api/skins/today"),
+  openclaw: () =>
+    req<{
+      ok: boolean;
+      available: boolean;
+      error?: string;
+      path?: string;
+      roles?: Record<string, boolean>;
+      role_status?: Record<string, { enabled: boolean; available: boolean; error?: string | null }>;
+    }>("/api/connectors/openclaw"),
   museSuggest: (body: { text: string; title: string; projectName: string }) =>
     req<{ ok: boolean; suggestion?: string; error?: string; disabled?: boolean }>("/api/muse/suggest", {
       method: "POST",

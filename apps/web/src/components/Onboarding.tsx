@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SkinPreview from "@/components/SkinPreview";
 
-export type OnboardingComplete = { hateAi: boolean };
+export type OnboardingComplete = {
+  hateAi: boolean;
+  dailySkinsEnabled: boolean;
+  trayEdge: "left" | "right";
+};
 
 type Props = {
   vaultPath: string;
@@ -19,7 +24,7 @@ type Props = {
   onTourFinished: () => void;
 };
 
-type Step = "setup" | "tour";
+type Step = "setup" | "appearance" | "tour";
 
 const btnBase =
   "rounded-sm border px-4 py-2 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800";
@@ -51,6 +56,10 @@ export default function Onboarding({
   onTourFinished,
 }: Props) {
   const [step, setStep] = useState<Step>("setup");
+  const [hateAi, setHateAi] = useState(false);
+  const [dailySkinsEnabled, setDailySkinsEnabled] = useState(false);
+  const [trayEdge, setTrayEdge] = useState<"left" | "right">("left");
+  const [savingAppearance, setSavingAppearance] = useState(false);
   const hasVault = Boolean(vaultPath.trim());
   const actionsEnabled = hasVault && !picking && !completing;
 
@@ -68,10 +77,21 @@ export default function Onboarding({
     return () => window.removeEventListener("keydown", onKey);
   }, [dismissible, onDismiss, onTourFinished, step]);
 
-  async function chooseAi(hateAi: boolean) {
+  async function chooseAi(nextHateAi: boolean) {
     if (!actionsEnabled) return;
-    await onComplete({ hateAi });
-    setStep("tour");
+    setHateAi(nextHateAi);
+    setStep("appearance");
+  }
+
+  async function finishAppearance() {
+    if (!actionsEnabled || savingAppearance) return;
+    setSavingAppearance(true);
+    try {
+      await onComplete({ hateAi, dailySkinsEnabled, trayEdge });
+      setStep("tour");
+    } finally {
+      setSavingAppearance(false);
+    }
   }
 
   function onBackdropClick() {
@@ -149,7 +169,7 @@ export default function Onboarding({
               <button
                 type="button"
                 className={`${btnBase} ${actionsEnabled ? btnIdle : btnDisabled}`}
-                onClick={() => chooseAi(true)}
+                onClick={() => void chooseAi(true)}
                 disabled={!actionsEnabled}
                 title={hasVault ? undefined : "Choose a vault folder first"}
               >
@@ -159,13 +179,82 @@ export default function Onboarding({
               <button
                 type="button"
                 className={`${btnBase} ${actionsEnabled ? btnPrimary : btnDisabled}`}
-                onClick={() => chooseAi(false)}
+                onClick={() => void chooseAi(false)}
                 disabled={!actionsEnabled}
                 title={hasVault ? undefined : "Choose a vault folder first"}
               >
                 Keep AI helpers available (off until I turn them on)
               </button>
             </div>
+          </>
+        ) : step === "appearance" ? (
+          <>
+            <h2 id="onboarding-title" className="text-2xl font-semibold text-teal-950">
+              Skins and tray
+            </h2>
+            <p className="mt-2 text-sm text-stone-600">
+              Daily skins rotate a local background image under a light overlay. The tool tray can sit
+              on either edge. Both can change later in Settings.
+            </p>
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="font-medium text-stone-800">Daily skins</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={`${btnBase} px-3 py-1.5 text-xs ${
+                      !dailySkinsEnabled ? btnPrimary : btnIdle
+                    }`}
+                    onClick={() => setDailySkinsEnabled(false)}
+                  >
+                    Off
+                  </button>
+                  <button
+                    type="button"
+                    className={`${btnBase} px-3 py-1.5 text-xs ${
+                      dailySkinsEnabled ? btnPrimary : btnIdle
+                    }`}
+                    onClick={() => setDailySkinsEnabled(true)}
+                  >
+                    On
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="font-medium text-stone-800">Tool tray edge</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={`${btnBase} px-3 py-1.5 text-xs ${
+                      trayEdge === "left" ? btnPrimary : btnIdle
+                    }`}
+                    onClick={() => setTrayEdge("left")}
+                  >
+                    Left
+                  </button>
+                  <button
+                    type="button"
+                    className={`${btnBase} px-3 py-1.5 text-xs ${
+                      trayEdge === "right" ? btnPrimary : btnIdle
+                    }`}
+                    onClick={() => setTrayEdge("right")}
+                  >
+                    Right
+                  </button>
+                </div>
+              </div>
+              <SkinPreview enabled={dailySkinsEnabled} trayEdge={trayEdge} />
+            </div>
+            <button
+              type="button"
+              className={`mt-8 w-full ${btnBase} ${
+                actionsEnabled && !savingAppearance ? btnPrimary : btnDisabled
+              }`}
+              disabled={!actionsEnabled || savingAppearance}
+              onClick={() => void finishAppearance()}
+            >
+              {savingAppearance ? "Saving…" : "Continue"}
+            </button>
           </>
         ) : (
           <>

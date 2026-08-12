@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import SkinPreview from "@/components/SkinPreview";
 
 type Props = {
   open: boolean;
@@ -200,6 +201,61 @@ export default function SettingsPanel({ open, onClose, onSettingsChange }: Props
                 onChange={(e) => setSettings((s) => ({ ...s, byom_endpoint: e.target.value }))}
                 onBlur={() => void patch({ byom_endpoint: String(settings.byom_endpoint || "") })}
               />
+            </section>
+          )}
+
+          {show("Appearance skins tray") && (
+            <section>
+              <h3 className="text-xs uppercase tracking-wide" style={{ color: "var(--sw-driftwood)" }}>
+                Appearance
+              </h3>
+              <label className="mt-2 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.daily_skins_enabled)}
+                  onChange={(e) => void patch({ daily_skins_enabled: e.target.checked })}
+                />
+                Daily skins
+              </label>
+              <p className="mt-1 text-xs" style={{ color: "var(--sw-ink-muted)" }}>
+                Rotates a local background image under a fixed light overlay. Uses{" "}
+                <code className="font-mono">assets/skins/</code> when present; otherwise a local
+                placeholder pattern.
+              </p>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span>Tool tray edge</span>
+                <div className="flex gap-2">
+                  {(["left", "right"] as const).map((edge) => (
+                    <button
+                      key={edge}
+                      type="button"
+                      className="rounded-lg border px-3 py-1.5 capitalize"
+                      style={{
+                        borderColor:
+                          String(settings.tray_edge || "left") === edge
+                            ? "var(--sw-teal)"
+                            : "var(--sw-border)",
+                        background:
+                          String(settings.tray_edge || "left") === edge
+                            ? "var(--sw-parchment)"
+                            : "white",
+                      }}
+                      onClick={() => void patch({ tray_edge: edge })}
+                    >
+                      {edge}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-3">
+                <SkinPreview
+                  enabled={Boolean(settings.daily_skins_enabled)}
+                  trayEdge={
+                    String(settings.tray_edge || "left") === "right" ? "right" : "left"
+                  }
+                  compact
+                />
+              </div>
             </section>
           )}
 

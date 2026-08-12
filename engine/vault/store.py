@@ -38,6 +38,22 @@ from engine.vault.paths import (
 
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 
+DEFAULT_SETTINGS: dict[str, Any] = {
+    "ai_master_enabled": True,
+    "muse_enabled": True,
+    "stt_enabled": False,
+    "stt_model": "mlx-community/whisper-tiny",
+    "write_model": "huihui_ai/qwen3-abliterated:14b",
+    "agent_model": "qwen2.5-coder:7b",
+    "codex_complex": False,
+    "product_tier": "full",
+    "byom_enabled": False,
+    "byom_endpoint": "",
+    "daily_skins_enabled": False,
+    "tray_edge": "left",
+    "openclaw": {"research": False, "git": False, "agentic": False},
+}
+
 
 def slugify(name: str) -> str:
     s = SLUG_RE.sub("-", name.strip().lower()).strip("-")
@@ -119,23 +135,7 @@ class VaultStore:
         if not settings_path(root).exists():
             atomic_write(
                 settings_path(root),
-                json.dumps(
-                    {
-                        "ai_master_enabled": True,
-                        "muse_enabled": True,
-                        "stt_enabled": False,
-                        "stt_model": "mlx-community/whisper-tiny",
-                        "write_model": "huihui_ai/qwen3-abliterated:14b",
-                        "agent_model": "qwen2.5-coder:7b",
-                        "codex_complex": False,
-                        "product_tier": "full",
-                        "byom_enabled": False,
-                        "byom_endpoint": "",
-                        "openclaw": {"research": False, "git": False, "agentic": False},
-                    },
-                    indent=2,
-                )
-                + "\n",
+                json.dumps(DEFAULT_SETTINGS, indent=2) + "\n",
             )
         store = cls(root)
         store.migrate_all_projects()
@@ -146,11 +146,42 @@ class VaultStore:
         self.index.close()
 
     def settings(self) -> dict[str, Any]:
-        raw = settings_path(self.root).read_text(encoding="utf-8")
-        return json.loads(raw)
+        raw = json.loads(settings_path(self.root).read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            raw = {}
+        out = {**DEFAULT_SETTINGS, **raw}
+        openclaw_raw = raw.get("openclaw") if isinstance(raw.get("openclaw"), dict) else {}
+        out["openclaw"] = {
+            **dict(DEFAULT_SETTINGS["openclaw"]),
+            **openclaw_raw,
+        }
+        if out.get("tray_edge") not in {"left", "right"}:
+            out["tray_edge"] = "left"
+        if not isinstance(out.get("daily_skins_enabled"), bool):
+            out["daily_skins_enabled"] = False
+        return out
 
     def save_settings(self, data: dict[str, Any]) -> dict[str, Any]:
-        merged = {**self.settings(), **data}
+        if "tray_edge" in data and data["tray_edge"] not in {"left", "right"}:
+            raise ValueError("tray_edge must be left or right")
+        if "daily_skins_enabled" in data and not isinstance(
+            data["daily_skins_enabled"], bool
+        ):
+            raise ValueError("daily_skins_enabled must be a boolean")
+        current = self.settings()
+        merged = {**current, **data}
+        if "openclaw" in data:
+            if not isinstance(data["openclaw"], dict):
+                raise ValueError("openclaw must be an object")
+            for key, value in data["openclaw"].items():
+                if key not in {"research", "git", "agentic"}:
+                    raise ValueError(f"unknown openclaw role: {key}")
+                if not isinstance(value, bool):
+                    raise ValueError(f"openclaw.{key} must be a boolean")
+            merged["openclaw"] = {
+                **dict(current.get("openclaw") or DEFAULT_SETTINGS["openclaw"]),
+                **data["openclaw"],
+            }
         atomic_write(settings_path(self.root), json.dumps(merged, indent=2) + "\n")
         return merged
 
