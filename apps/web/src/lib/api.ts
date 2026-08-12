@@ -425,9 +425,30 @@ export const api = {
       available: boolean;
       error?: string;
       path?: string;
+      version?: string | null;
       roles?: Record<string, boolean>;
-      role_status?: Record<string, { enabled: boolean; available: boolean; error?: string | null }>;
+      role_status?: Record<
+        string,
+        {
+          enabled: boolean;
+          available: boolean;
+          ok?: boolean;
+          label?: string;
+          error?: string | null;
+        }
+      >;
     }>("/api/connectors/openclaw"),
+  openclawRun: (role: "research" | "git" | "agentic", payload?: Record<string, unknown>) =>
+    req<{
+      ok: boolean;
+      unavailable?: boolean;
+      role?: string;
+      error?: string;
+      label?: string;
+    }>("/api/connectors/openclaw/run", {
+      method: "POST",
+      body: JSON.stringify({ role, payload }),
+    }),
   museSuggest: (body: { text: string; title: string; projectName: string }) =>
     req<{ ok: boolean; suggestion?: string; error?: string; disabled?: boolean }>("/api/muse/suggest", {
       method: "POST",

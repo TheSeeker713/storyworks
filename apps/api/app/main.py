@@ -56,7 +56,31 @@ def connector_ollama():
 def connector_openclaw():
     from engine.connectors.openclaw import openclaw_health
 
-    return openclaw_health()
+    settings: dict[str, Any] = {}
+    try:
+        settings = state.get_vault().settings()
+    except RuntimeError:
+        pass
+    return openclaw_health(settings)
+
+
+class OpenClawRoleIn(BaseModel):
+    role: str
+    payload: Optional[dict[str, Any]] = None
+
+
+@app.post("/api/connectors/openclaw/run")
+def connector_openclaw_run(body: OpenClawRoleIn):
+    from engine.connectors.openclaw import ROLES, run_openclaw_role
+
+    if body.role not in ROLES:
+        raise HTTPException(400, f"unknown openclaw role: {body.role}")
+    settings: dict[str, Any] = {}
+    try:
+        settings = state.get_vault().settings()
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return run_openclaw_role(body.role, settings=settings, payload=body.payload)
 
 
 @app.get("/api/skins/today")

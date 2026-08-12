@@ -22,6 +22,9 @@ export default function SettingsPanel({ open, onClose, onSettingsChange }: Props
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [openclaw, setOpenclaw] = useState<Awaited<ReturnType<typeof api.openclaw>> | null>(null);
+  const [openclawError, setOpenclawError] = useState<string | null>(null);
+  const [roleProbe, setRoleProbe] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -29,6 +32,13 @@ export default function SettingsPanel({ open, onClose, onSettingsChange }: Props
       .vault()
       .then((v) => setSettings(v.settings || {}))
       .catch((e: Error) => setError(e.message));
+    void api
+      .openclaw()
+      .then((status) => {
+        setOpenclaw(status);
+        setOpenclawError(status.available ? null : status.error || "OpenClaw unavailable");
+      })
+      .catch((e: Error) => setOpenclawError(e.message));
   }, [open]);
 
   if (!open) return null;
@@ -41,14 +51,37 @@ export default function SettingsPanel({ open, onClose, onSettingsChange }: Props
       setSettings(merged);
       onSettingsChange?.(merged);
       setSaved(true);
+      const status = await api.openclaw();
+      setOpenclaw(status);
+      setOpenclawError(status.available ? null : status.error || "OpenClaw unavailable");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function probeRole(role: "research" | "git" | "agentic") {
+    setRoleProbe(null);
+    try {
+      const result = await api.openclawRun(role);
+      setRoleProbe(
+        result.ok
+          ? `${role}: ready`
+          : `${role}: ${result.error || "unavailable"}`,
+      );
+    } catch (e) {
+      setRoleProbe(e instanceof Error ? e.message : String(e));
     }
   }
 
   const tier = String(settings.product_tier || "full");
   const q = search.trim().toLowerCase();
   const show = (label: string) => !q || label.toLowerCase().includes(q);
+  const openclawSettings =
+    (settings.openclaw as Record<string, boolean> | undefined) || {
+      research: false,
+      git: false,
+      agentic: false,
+    };
 
   return (
     <div className="fixed inset-0 z-[55] flex justify-end bg-stone-900/20" onClick={onClose}>
@@ -201,6 +234,81 @@ export default function SettingsPanel({ open, onClose, onSettingsChange }: Props
                 onChange={(e) => setSettings((s) => ({ ...s, byom_endpoint: e.target.value }))}
                 onBlur={() => void patch({ byom_endpoint: String(settings.byom_endpoint || "") })}
               />
+            </section>
+          )}
+
+          {show("OpenClaw research git agentic") && (
+            <section>
+              <h3 className="text-xs uppercase tracking-wide" style={{ color: "var(--sw-driftwood)" }}>
+                OpenClaw
+              </h3>
+              <p className="mt-1 text-xs" style={{ color: "var(--sw-ink-muted)" }}>
+                Three independent bridges, all off by default. Each fails closed with a visible
+                reason when OpenClaw is missing or the role is not ready — they never hang the
+                writing surface.
+              </p>
+              {openclawError && (
+                <p className="mt-2 text-xs text-amber-800" role="status">
+                  {openclawError}
+                </p>
+              )}
+              {roleProbe && (
+                <p className="mt-2 text-xs" style={{ color: "var(--sw-ink-muted)" }} role="status">
+                  {roleProbe}
+                </p>
+              )}
+              {(["research", "git", "agentic"] as const).map((role) => {
+                const status = openclaw?.role_status?.[role];
+                const enabled = Boolean(openclawSettings[role]);
+                const showWarn = enabled && (!status?.ok || Boolean(status?.error));
+                return (
+                  <div
+                    key={role}
+                    className="mt-3 rounded-lg border px-3 py-2"
+                    style={{ borderColor: "var(--sw-border)" }}
+                  >
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={enabled}
+                        disabled={settings.ai_master_enabled === false}
+                        onChange={(e) =>
+                          void patch({
+                            openclaw: {
+                              ...openclawSettings,
+                              [role]: e.target.checked,
+                            },
+                          })
+                        }
+                      />
+                      <span className="capitalize">{role}</span>
+                    </label>
+                    <p className="mt-1 text-[11px]" style={{ color: "var(--sw-ink-muted)" }}>
+                      {status?.label || role}
+                    </p>
+                    <p
+                      className="mt-1 text-[11px]"
+                      style={{ color: showWarn ? "#9a3412" : "var(--sw-teal)" }}
+                    >
+                      {!enabled
+                        ? "Off"
+                        : status?.ok
+                          ? "Ready"
+                          : status?.error || openclaw?.error || "Unavailable"}
+                    </p>
+                    {enabled && (
+                      <button
+                        type="button"
+                        className="mt-2 rounded border px-2 py-1 text-[11px]"
+                        style={{ borderColor: "var(--sw-border)" }}
+                        onClick={() => void probeRole(role)}
+                      >
+                        Probe role
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </section>
           )}
 
