@@ -74,7 +74,14 @@ def test_notes_api_persists_typed_codex_links_and_stubs(tmp_path: Path):
     stored = client.get(
         f"/api/projects/{project['slug']}/content/note-typed"
     ).json()
+    assert response.json()["content_hash"] == stored["content_hash"]
     assert stored["meta"]["codex_links"] == links
+    for link in links:
+        target = client.get(
+            f"/api/projects/{project['slug']}/codex/{link['type']}/{link['entry_id']}"
+        )
+        assert target.status_code == 200
+        assert target.json()["title"] == link["name"]
     entries = client.get(f"/api/projects/{project['slug']}/codex").json()["entries"]
     assert {(entry["title"], entry["type"]) for entry in entries} >= {
         ("Mara", "character"),

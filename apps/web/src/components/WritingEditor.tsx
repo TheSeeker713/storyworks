@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Paragraph from "@tiptap/extension-paragraph";
-import { api } from "@/lib/api";
+import { api, type CodexLink } from "@/lib/api";
 
 export type WritingEditorHandle = {
   scrollToScene: (sceneId: string) => void;
@@ -24,6 +24,7 @@ type Props = {
   bodyClassName?: string;
   fontSizeClass?: string;
   onDraftText?: (text: string) => void;
+  onContentSaved?: (result: { codex_links?: CodexLink[] }) => void;
   appendText?: string | null;
   onAppendConsumed?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
@@ -96,6 +97,7 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
     bodyClassName,
     fontSizeClass = "text-[16px]",
     onDraftText,
+    onContentSaved,
     appendText,
     onAppendConsumed,
     onContextMenu,
@@ -112,6 +114,7 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
   const readyRef = useRef(false);
   const inFlightRef = useRef(false);
   const queuedBodyRef = useRef<SavePayload | null>(null);
+  const onContentSavedRef = useRef(onContentSaved);
   const projectSlugRef = useRef(projectSlug);
   const contentIdRef = useRef(contentId);
   const contentTitleRef = useRef(contentTitle);
@@ -133,6 +136,7 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
   folderIdRef.current = folderId;
   transformLoadRef.current = transformLoad;
   transformSaveRef.current = transformSave;
+  onContentSavedRef.current = onContentSaved;
 
   function scheduleCheckpoint(reason: string) {
     if (checkpointTimer.current) clearTimeout(checkpointTimer.current);
@@ -190,6 +194,7 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
             return;
           }
           if (result.content_hash) hashRef.current = result.content_hash;
+          onContentSavedRef.current?.(result);
           setError(null);
           setSaveState("saved");
           scheduleCheckpoint(`save ${contentIdRef.current}`);

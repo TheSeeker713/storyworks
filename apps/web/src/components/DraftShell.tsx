@@ -81,6 +81,11 @@ export default function DraftShell({
   const [structure, setStructure] = useState<string>("");
   const [shellError, setShellError] = useState<string | null>(null);
   const [codexOpen, setCodexOpen] = useState(false);
+  const [noteCodexTarget, setNoteCodexTarget] = useState<{
+    type: string;
+    id: string;
+    nonce: number;
+  } | null>(null);
   const [drawingOpen, setDrawingOpen] = useState(false);
   const [screenplayStatus, setScreenplayStatus] = useState<string | null>(null);
   const [pensOpen, setPensOpen] = useState(false);
@@ -91,6 +96,10 @@ export default function DraftShell({
   const useModuleWorkspace = isWorkspaceModule(module);
   const isScreenplay = module === "screenplay";
   const isDraft = module === "draft" || !module;
+  const codexInitialEntry =
+    commandCodexTarget?.project_slug === project.slug
+      ? commandCodexTarget
+      : noteCodexTarget;
 
   function scheduleTrayOpen() {
     if (trayCloseTimer.current) clearTimeout(trayCloseTimer.current);
@@ -438,7 +447,12 @@ export default function DraftShell({
           <ModuleWorkspace
             project={project}
             onDraftText={onDraftText}
-            onOpenCodex={() => setCodexOpen(true)}
+            onOpenCodex={(entry) => {
+              setNoteCodexTarget(
+                entry ? { ...entry, nonce: Date.now() } : null,
+              );
+              setCodexOpen(true);
+            }}
             screenplayStatus={screenplayStatus}
             museEnabled={museEnabled}
             masterOn={masterOn}
@@ -746,11 +760,17 @@ export default function DraftShell({
       <CodexPanel
         open={codexOpen}
         projectSlug={project.slug}
-        initialEntry={
-          commandCodexTarget?.project_slug === project.slug ? commandCodexTarget : null
-        }
-        onInitialEntryOpened={onCommandCodexConsumed}
-        onClose={() => setCodexOpen(false)}
+        initialEntry={codexInitialEntry}
+        onInitialEntryOpened={() => {
+          if (commandCodexTarget?.project_slug === project.slug) {
+            onCommandCodexConsumed?.();
+          }
+          setNoteCodexTarget(null);
+        }}
+        onClose={() => {
+          setCodexOpen(false);
+          setNoteCodexTarget(null);
+        }}
       />
       <DrawingPopup open={drawingOpen} onClose={() => setDrawingOpen(false)} />
 

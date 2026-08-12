@@ -421,6 +421,16 @@ def content_write(slug: str, body: WriteContentIn):
             path = store.resolve_content_path(slug, result["id"])
             atomic_write(path, dump_markdown(meta, data["body"]))
             store._index_file(slug, path)
+            stored = store.read_content(slug, result["id"])
+            result.update(
+                {
+                    "content_hash": stored["content_hash"],
+                    "meta": stored["meta"],
+                    "body": stored["body"],
+                    "mtime": stored["mtime"],
+                    "path": stored["path"],
+                }
+            )
             result["auto_tags"] = stubs
             result["codex_links"] = links
         return result

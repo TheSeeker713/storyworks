@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   api,
+  type CodexLink,
   type ContentScene,
   type JournalBook,
   type JournalMemory,
@@ -55,7 +56,7 @@ type Props = {
   project: ProjectRow;
   onDraftText: (text: string) => void;
   onContextMenu?: (e: React.MouseEvent) => void;
-  onOpenCodex: () => void;
+  onOpenCodex: (entry?: { type: string; id: string }) => void;
   screenplayStatus?: string | null;
   museEnabled?: boolean;
   masterOn?: boolean;
@@ -96,6 +97,7 @@ export default function ModuleWorkspace({
   // Notes
   const [searchQ, setSearchQ] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
+  const [noteLinks, setNoteLinks] = useState<CodexLink[]>([]);
 
   // Journal
   const [zen, setZen] = useState(module === "journal");
@@ -149,9 +151,19 @@ export default function ModuleWorkspace({
     return res.content;
   }, [project.slug]);
 
+  async function loadNoteLinks(contentId: string) {
+    try {
+      const note = await api.readContent(project.slug, contentId);
+      setNoteLinks(note.meta.codex_links || []);
+    } catch {
+      setNoteLinks([]);
+    }
+  }
+
   useEffect(() => {
     setZen(module === "journal");
     setError(null);
+    setNoteLinks([]);
     void (async () => {
       try {
         const rows = await loadContent();
@@ -181,6 +193,7 @@ export default function ModuleWorkspace({
             setActiveId(first.id);
             setActiveTitle(first.title);
             setActiveType("note");
+            void loadNoteLinks(first.id);
           }
         } else if (module === "journal") {
           const b = await api.listBooks(project.slug);
@@ -229,6 +242,8 @@ export default function ModuleWorkspace({
     setActiveId(row.id);
     setActiveTitle(row.title);
     setActiveType(row.type);
+    if (module === "notes" && row.type === "note") void loadNoteLinks(row.id);
+    else setNoteLinks([]);
   }
 
   async function runSearch() {
@@ -575,7 +590,7 @@ export default function ModuleWorkspace({
           type="button"
           className="absolute left-4 top-4 z-10 rounded-lg border px-3 py-1.5 text-xs"
           style={{ borderColor: "var(--sw-gold)", color: "var(--sw-gold)", background: "white" }}
-          onClick={onOpenCodex}
+          onClick={() => onOpenCodex()}
         >
           Codex
         </button>
@@ -646,7 +661,7 @@ export default function ModuleWorkspace({
           type="button"
           className="rounded px-2 py-1 text-xs font-medium"
           style={{ color: "var(--sw-gold)", border: "1px solid var(--sw-gold)" }}
-          onClick={onOpenCodex}
+          onClick={() => onOpenCodex()}
           title="Open Codex"
         >
           Codex
@@ -745,6 +760,34 @@ export default function ModuleWorkspace({
           </span>
         )}
       </div>
+
+      {module === "notes" && noteLinks.length > 0 && (
+        <div
+          className="flex flex-wrap gap-1.5 border-b px-4 py-2"
+          style={{ borderColor: "var(--sw-border)", background: "var(--sw-parchment)" }}
+          aria-label="Detected Codex tags"
+        >
+          {noteLinks.map((link) => {
+            const character = link.type === "character";
+            return (
+              <button
+                key={`${link.type}-${link.entry_id}`}
+                type="button"
+                className="rounded-full border px-2.5 py-1 text-[10px] font-medium capitalize"
+                style={{
+                  background: character ? "#EAF3DE" : "#FAEEDA",
+                  color: character ? "#3B6D11" : "#854F0B",
+                  borderColor: character ? "#97C459" : "#EF9F27",
+                }}
+                onClick={() => onOpenCodex({ type: link.type, id: link.entry_id })}
+                title={`Open ${link.name} in Codex`}
+              >
+                {link.type} · {link.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {module === "blog" && (
         <div
@@ -1094,6 +1137,11 @@ export default function ModuleWorkspace({
                 className={editorClass}
                 fontSizeClass={fontSizeClass}
                 onDraftText={onDraftText}
+                onContentSaved={(result) => {
+                  if (module === "notes" && result.codex_links) {
+                    setNoteLinks(result.codex_links);
+                  }
+                }}
                 onContextMenu={onContextMenu}
                 transformLoad={module === "journal" ? transformJournalLoad : undefined}
                 transformSave={module === "journal" ? transformJournalSave : undefined}

@@ -23,6 +23,12 @@ export type CodexEntrySummary = {
   updated_at?: string;
 };
 
+export type CodexLink = {
+  name: string;
+  type: string;
+  entry_id: string;
+};
+
 export type CodexProgression = {
   id: string;
   mode: string;
@@ -240,8 +246,9 @@ export const api = {
       content_hash?: string;
       conflict?: boolean;
       body?: string;
-      meta?: { title?: string };
+      meta?: { title?: string; codex_links?: CodexLink[] };
       auto_tags?: unknown;
+      codex_links?: CodexLink[];
     }>(`/api/projects/${slug}/content`, {
       method: "POST",
       body: JSON.stringify(body),
@@ -258,6 +265,7 @@ export const api = {
         entry_date?: string;
         entry_time?: string;
         word_count?: number;
+        codex_links?: CodexLink[];
       };
     }>(
       `/api/projects/${slug}/content/${id}`,
