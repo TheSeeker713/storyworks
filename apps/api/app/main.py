@@ -329,7 +329,11 @@ class WriteContentIn(BaseModel):
     entry_time: Optional[str] = None
     word_count: Optional[int] = Field(default=None, ge=0)
     auto_tag: bool = False
+    exclude_from_ai: Optional[bool] = None
 
+
+class ExcludeFromAiIn(BaseModel):
+    exclude_from_ai: bool
 
 @app.get("/api/projects/{slug}/books")
 def books_list(slug: str):
@@ -403,6 +407,7 @@ def content_write(slug: str, body: WriteContentIn):
             word_count=body.word_count,
             expected_hash=body.expected_hash,
             dirty=body.dirty,
+            exclude_from_ai=body.exclude_from_ai,
         )
         if result.get("ok") and (body.tags is not None or body.scenes is not None):
             data = store.read_content(slug, result["id"])
@@ -423,6 +428,12 @@ def content_write(slug: str, body: WriteContentIn):
             from engine.vault.codex import ensure_stub
             from engine.vault.note_detection import detect_note_codex_links
             from engine.vault.paths import project_dir
+
+            current_meta = dict((result.get("meta") or {}))
+            if bool(current_meta.get("exclude_from_ai")):
+                result["auto_tags"] = []
+                result["codex_links"] = list(current_meta.get("codex_links") or [])
+                return result
 
             stubs = []
             links = detect_note_codex_links(body.body or "")
@@ -470,6 +481,17 @@ def content_read(slug: str, content_id: str):
     try:
         store = state.get_vault()
         return store.read_content(slug, content_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.patch("/api/projects/{slug}/content/{content_id}/exclude-from-ai")
+def content_exclude_from_ai(slug: str, content_id: str, body: ExcludeFromAiIn):
+    try:
+        store = state.get_vault()
+        return store.set_exclude_from_ai(slug, content_id, body.exclude_from_ai)
     except FileNotFoundError as exc:
         raise HTTPException(404, str(exc)) from exc
     except RuntimeError as exc:
@@ -1012,7 +1034,7 @@ def ai_agent(body: AgentToolIn):
     elif body.tool == "blog_review":
         result = agent_mod.blog_review(body.stage, body.text, settings=settings)
     elif body.tool == "ask_vault":
-        hits = store.search_vault(body.query or body.text, limit=12)
+        hits = store.search_vault(body.query or body.text, limit=12, for_ai=True)
         result = agent_mod.ask_vault(body.query or body.text, hits, settings=settings)
         result["hits"] = hits
     else:

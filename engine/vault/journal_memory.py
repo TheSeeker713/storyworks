@@ -67,6 +67,8 @@ def build_journal_memory(
         meta = dict(data.get("meta") or {})
         if str(meta.get("book_id") or "main") != book_id:
             continue
+        if bool(meta.get("exclude_from_ai")):
+            continue
         body = str(data.get("body") or "")
         if not body.strip() or body.startswith("swenc:"):
             continue

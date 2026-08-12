@@ -601,6 +601,7 @@ class VaultStore:
         word_count: Optional[int] = None,
         expected_hash: Optional[str] = None,
         dirty: bool = False,
+        exclude_from_ai: Optional[bool] = None,
     ) -> dict[str, Any]:
         with self._write_lock:
             self.migrate_project(project_slug)
@@ -650,16 +651,19 @@ class VaultStore:
 
             prev_scenes: list[Any] = []
             prev_tags: list[Any] = []
+            prev_codex_links: list[Any] = []
             prev_provenance: dict[str, Any] = {}
             prev_paragraph_timestamps: list[str] = []
             prev_entry_date = ""
             prev_entry_time = ""
             prev_word_count = 0
+            prev_exclude_from_ai = False
             if path.exists():
                 try:
                     pmeta, _ = parse_markdown(path.read_text(encoding="utf-8"))
                     prev_scenes = list(pmeta.get("scenes") or [])
                     prev_tags = list(pmeta.get("tags") or [])
+                    prev_codex_links = list(pmeta.get("codex_links") or [])
                     if isinstance(pmeta.get("provenance"), dict):
                         prev_provenance = dict(pmeta["provenance"])
                     prev_paragraph_timestamps = [
@@ -668,6 +672,7 @@ class VaultStore:
                     prev_entry_date = str(pmeta.get("entry_date") or "")
                     prev_entry_time = str(pmeta.get("entry_time") or "")
                     prev_word_count = max(0, int(pmeta.get("word_count") or 0))
+                    prev_exclude_from_ai = bool(pmeta.get("exclude_from_ai"))
                 except (OSError, TypeError, ValueError):
                     pass
             journal_meta: dict[str, Any] = {}
@@ -701,11 +706,17 @@ class VaultStore:
                 "subject": subject,
                 "tags": prev_tags,
                 "scenes": prev_scenes,
+                "codex_links": prev_codex_links,
                 "provenance": prev_provenance,
                 "paragraph_timestamps": (
                     [str(value) for value in paragraph_timestamps]
                     if paragraph_timestamps is not None
                     else prev_paragraph_timestamps
+                ),
+                "exclude_from_ai": (
+                    bool(exclude_from_ai)
+                    if exclude_from_ai is not None
+                    else prev_exclude_from_ai
                 ),
                 "archived": False,
                 "canvas": canvas or {},
@@ -1063,7 +1074,32 @@ class VaultStore:
         token = dek.decode("ascii")
         return {"ok": True, "privacy": "private", "book_id": book_id, "session_dek": token}
 
-    def search_vault(self, query: str, *, limit: int = 40) -> list[dict[str, Any]]:
+    def content_excludes_ai(self, project_slug: str, content_id: str) -> bool:
+        try:
+            data = self.read_content(project_slug, content_id)
+        except FileNotFoundError:
+            return False
+        return bool((data.get("meta") or {}).get("exclude_from_ai"))
+
+    def set_exclude_from_ai(
+        self, project_slug: str, content_id: str, exclude: bool
+    ) -> dict[str, Any]:
+        data = self.read_content(project_slug, content_id)
+        meta = dict(data.get("meta") or {})
+        meta["exclude_from_ai"] = bool(exclude)
+        meta["updated_at"] = _utc_now()
+        path = self.resolve_content_path(project_slug, content_id)
+        atomic_write(path, dump_markdown(meta, str(data.get("body") or "")))
+        self._index_file(project_slug, path)
+        return self.read_content(project_slug, content_id)
+
+    def search_vault(
+        self,
+        query: str,
+        *,
+        limit: int = 40,
+        for_ai: bool = False,
+    ) -> list[dict[str, Any]]:
         """Lexical Ask-your-vault search (Phase 4); NL agent is Phase 5."""
         q = query.strip().lower()
         if not q:
@@ -1081,9 +1117,13 @@ class VaultStore:
                 blob = f"{title} {subject}".lower()
                 path = self.root / str(row.get("path") or "")
                 body_snip = ""
+                exclude_from_ai = False
                 if path.is_file():
                     try:
-                        _, body = parse_markdown(path.read_text(encoding="utf-8"))
+                        meta, body = parse_markdown(path.read_text(encoding="utf-8"))
+                        exclude_from_ai = bool(meta.get("exclude_from_ai"))
+                        if for_ai and exclude_from_ai:
+                            continue
                         body_snip = body[:240]
                         blob += " " + body.lower()
                     except OSError:
@@ -1096,6 +1136,7 @@ class VaultStore:
                             "title": title,
                             "type": row.get("type"),
                             "snippet": body_snip,
+                            "exclude_from_ai": exclude_from_ai,
                         }
                     )
                 if len(hits) >= limit:

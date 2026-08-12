@@ -238,6 +238,7 @@ export const api = {
       entry_time?: string;
       word_count?: number;
       auto_tag?: boolean;
+      exclude_from_ai?: boolean;
     },
   ) =>
     req<{
@@ -246,12 +247,22 @@ export const api = {
       content_hash?: string;
       conflict?: boolean;
       body?: string;
-      meta?: { title?: string; codex_links?: CodexLink[] };
+      meta?: { title?: string; codex_links?: CodexLink[]; exclude_from_ai?: boolean };
       auto_tags?: unknown;
       codex_links?: CodexLink[];
     }>(`/api/projects/${slug}/content`, {
       method: "POST",
       body: JSON.stringify(body),
+    }),
+  setExcludeFromAi: (slug: string, id: string, exclude_from_ai: boolean) =>
+    req<{
+      id: string;
+      content_hash: string;
+      meta: { exclude_from_ai?: boolean; title?: string; codex_links?: CodexLink[] };
+      body: string;
+    }>(`/api/projects/${slug}/content/${id}/exclude-from-ai`, {
+      method: "PATCH",
+      body: JSON.stringify({ exclude_from_ai }),
     }),
   readContent: (slug: string, id: string) =>
     req<{
@@ -262,14 +273,13 @@ export const api = {
         title?: string;
         scenes?: ContentScene[];
         paragraph_timestamps?: string[];
+        exclude_from_ai?: boolean;
+        codex_links?: CodexLink[];
         entry_date?: string;
         entry_time?: string;
         word_count?: number;
-        codex_links?: CodexLink[];
       };
-    }>(
-      `/api/projects/${slug}/content/${id}`,
-    ),
+    }>(`/api/projects/${slug}/content/${id}`),
   renameContent: (slug: string, id: string, name: string) =>
     req<{ id: string; body: string; meta: { title?: string } }>(
       `/api/projects/${slug}/content/${encodeURIComponent(id)}/rename`,

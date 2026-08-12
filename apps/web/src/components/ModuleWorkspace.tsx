@@ -100,6 +100,7 @@ export default function ModuleWorkspace({
   const [searchQ, setSearchQ] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [noteLinks, setNoteLinks] = useState<CodexLink[]>([]);
+  const [excludeFromAi, setExcludeFromAi] = useState(false);
 
   // Journal
   const [zen, setZen] = useState(module === "journal");
@@ -157,8 +158,35 @@ export default function ModuleWorkspace({
     try {
       const note = await api.readContent(project.slug, contentId);
       setNoteLinks(note.meta.codex_links || []);
+      setExcludeFromAi(Boolean(note.meta.exclude_from_ai));
     } catch {
       setNoteLinks([]);
+      setExcludeFromAi(false);
+    }
+  }
+
+  async function loadExcludeFromAi(contentId: string) {
+    try {
+      const row = await api.readContent(project.slug, contentId);
+      setExcludeFromAi(Boolean(row.meta.exclude_from_ai));
+    } catch {
+      setExcludeFromAi(false);
+    }
+  }
+
+  async function toggleExcludeFromAi() {
+    if (!activeId || (module !== "notes" && module !== "journal")) return;
+    const next = !excludeFromAi;
+    try {
+      await api.setExcludeFromAi(project.slug, activeId, next);
+      setExcludeFromAi(next);
+      setError(null);
+      if (module === "journal") {
+        const memory = await api.journalMemory(project.slug, activeBookId, activeId);
+        setJournalMemory(memory);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -166,6 +194,7 @@ export default function ModuleWorkspace({
     setZen(module === "journal");
     setError(null);
     setNoteLinks([]);
+    setExcludeFromAi(false);
     void (async () => {
       try {
         const rows = await loadContent();
@@ -210,6 +239,7 @@ export default function ModuleWorkspace({
             setActiveId(first.id);
             setActiveTitle(first.title);
             setActiveType("journal_entry");
+            void loadExcludeFromAi(first.id);
           }
         } else if (module === "blog") {
           const m = await api.getProjectMeta(project.slug);
@@ -245,7 +275,11 @@ export default function ModuleWorkspace({
     setActiveTitle(row.title);
     setActiveType(row.type);
     if (module === "notes" && row.type === "note") void loadNoteLinks(row.id);
-    else setNoteLinks([]);
+    else if (module === "journal" && row.type === "journal_entry") void loadExcludeFromAi(row.id);
+    else {
+      setNoteLinks([]);
+      setExcludeFromAi(false);
+    }
   }
 
   async function runSearch() {
@@ -579,6 +613,20 @@ export default function ModuleWorkspace({
               {journalStats.entry_count} entries · {journalStats.current_streak} day streak
             </span>
           )}
+          {activeId && (
+            <label
+              className="flex items-center gap-1.5 rounded-lg border bg-white/90 px-3 py-1.5 text-xs"
+              style={{ borderColor: excludeFromAi ? "var(--sw-teal)" : "var(--sw-border)" }}
+              title="Exclude this entry from Muse and Journal memory. Not Private Book encryption."
+            >
+              <input
+                type="checkbox"
+                checked={excludeFromAi}
+                onChange={() => void toggleExcludeFromAi()}
+              />
+              Exclude from AI
+            </label>
+          )}
           <button
             type="button"
             className="rounded-lg border bg-white/90 px-3 py-1.5 text-xs"
@@ -637,7 +685,7 @@ export default function ModuleWorkspace({
           />
         )}
         <MuseLayer
-          enabled={museEnabled}
+          enabled={museEnabled && !excludeFromAi}
           masterOn={masterOn}
           getContext={getMuseContext}
           onAccept={(s) => void handleMuseAccept(s)}
@@ -750,6 +798,23 @@ export default function ModuleWorkspace({
           >
             Ask AI
           </button>
+        )}
+        {(module === "notes" || module === "journal") && activeId && (
+          <label
+            className="flex items-center gap-1.5 rounded border bg-white px-2 py-1 text-xs"
+            style={{
+              borderColor: excludeFromAi ? "var(--sw-teal)" : "var(--sw-border)",
+              color: "var(--sw-ink)",
+            }}
+            title="Exclude this entry from Muse, Journal memory, Ask vault, and auto-tag. Not the same as a Private Journal Book."
+          >
+            <input
+              type="checkbox"
+              checked={excludeFromAi}
+              onChange={() => void toggleExcludeFromAi()}
+            />
+            Exclude from AI
+          </label>
         )}
         {prov && (
           <span className="ml-auto text-[11px]" style={{ color: "var(--sw-ink-faint)" }}>
@@ -1137,7 +1202,7 @@ export default function ModuleWorkspace({
                 contentId={activeId}
                 contentTitle={activeTitle}
                 contentType={activeType}
-                autoTag={module === "notes"}
+                autoTag={module === "notes" && !excludeFromAi}
                 bookId={module === "journal" ? activeBookId : "main"}
                 folderId="main"
                 className={editorClass}
@@ -1168,7 +1233,7 @@ export default function ModuleWorkspace({
             />
           )}
           <MuseLayer
-            enabled={museEnabled}
+            enabled={museEnabled && !excludeFromAi}
             masterOn={masterOn}
             getContext={getMuseContext}
             onAccept={(s) => void handleMuseAccept(s)}
