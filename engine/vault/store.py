@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+from engine.ai.provenance import count_words
 from engine.vault.frontmatter import dump_markdown, parse_markdown
 from engine.vault.index import VaultIndex
 from engine.vault.paths import (
@@ -50,6 +51,15 @@ def _utc_now() -> str:
 def _creation_stamp() -> str:
     """Human-readable local creation time, safe in IDs and filenames."""
     return datetime.now().astimezone().strftime("%Y-%m-%d-%H%M%S")
+
+
+def _journal_date_from_title(title: str) -> str:
+    for format_ in ("%m/%d/%Y", "%Y-%m-%d", "%m-%d-%Y"):
+        try:
+            return datetime.strptime(title.strip(), format_).date().isoformat()
+        except ValueError:
+            continue
+    return ""
 
 
 def _default_project_title(module: str, stamp: str) -> str:
@@ -555,6 +565,9 @@ class VaultStore:
         folder_id: str = DEFAULT_FOLDER_ID,
         canvas: Optional[dict[str, Any]] = None,
         paragraph_timestamps: Optional[list[str]] = None,
+        entry_date: Optional[str] = None,
+        entry_time: Optional[str] = None,
+        word_count: Optional[int] = None,
         expected_hash: Optional[str] = None,
         dirty: bool = False,
     ) -> dict[str, Any]:
@@ -608,6 +621,9 @@ class VaultStore:
             prev_tags: list[Any] = []
             prev_provenance: dict[str, Any] = {}
             prev_paragraph_timestamps: list[str] = []
+            prev_entry_date = ""
+            prev_entry_time = ""
+            prev_word_count = 0
             if path.exists():
                 try:
                     pmeta, _ = parse_markdown(path.read_text(encoding="utf-8"))
@@ -618,8 +634,32 @@ class VaultStore:
                     prev_paragraph_timestamps = [
                         str(value) for value in list(pmeta.get("paragraph_timestamps") or [])
                     ]
-                except OSError:
+                    prev_entry_date = str(pmeta.get("entry_date") or "")
+                    prev_entry_time = str(pmeta.get("entry_time") or "")
+                    prev_word_count = max(0, int(pmeta.get("word_count") or 0))
+                except (OSError, TypeError, ValueError):
                     pass
+            journal_meta: dict[str, Any] = {}
+            if type_ == "journal_entry":
+                local_now = datetime.now().astimezone().replace(microsecond=0)
+                if body.startswith("swenc:"):
+                    journal_word_count = (
+                        max(0, int(word_count))
+                        if word_count is not None
+                        else prev_word_count
+                    )
+                else:
+                    journal_word_count = count_words(body)
+                journal_meta = {
+                    "entry_date": (
+                        entry_date
+                        or prev_entry_date
+                        or _journal_date_from_title(title)
+                        or local_now.date().isoformat()
+                    ),
+                    "entry_time": entry_time or prev_entry_time or local_now.timetz().isoformat(),
+                    "word_count": journal_word_count,
+                }
             meta = {
                 "id": content_id,
                 "type": type_,
@@ -639,6 +679,7 @@ class VaultStore:
                 "archived": False,
                 "canvas": canvas or {},
                 "updated_at": _utc_now(),
+                **journal_meta,
             }
             text = dump_markdown(meta, body)
             atomic_write(path, text)

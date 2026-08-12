@@ -92,6 +92,21 @@ export type JournalMemory = {
   question: string | null;
 };
 
+export type JournalStats = {
+  ok: boolean;
+  as_of: string;
+  book_id: string;
+  entry_count: number;
+  current_streak: number;
+  total_words: number;
+  entries: {
+    id: string;
+    date: string;
+    time: string;
+    word_count: number;
+  }[];
+};
+
 export type ContentScene = {
   id: string;
   title: string;
@@ -213,6 +228,9 @@ export const api = {
       tags?: string[];
       scenes?: ContentScene[];
       paragraph_timestamps?: string[];
+      entry_date?: string;
+      entry_time?: string;
+      word_count?: number;
       auto_tag?: boolean;
     },
   ) =>
@@ -233,7 +251,14 @@ export const api = {
       id: string;
       body: string;
       content_hash: string;
-      meta: { title?: string; scenes?: ContentScene[]; paragraph_timestamps?: string[] };
+      meta: {
+        title?: string;
+        scenes?: ContentScene[];
+        paragraph_timestamps?: string[];
+        entry_date?: string;
+        entry_time?: string;
+        word_count?: number;
+      };
     }>(
       `/api/projects/${slug}/content/${id}`,
     ),
@@ -333,6 +358,10 @@ export const api = {
   journalMemory: (slug: string, bookId: string, activeContentId = "") =>
     req<JournalMemory>(
       `/api/projects/${slug}/journal/memory?book_id=${encodeURIComponent(bookId)}&active_content_id=${encodeURIComponent(activeContentId)}`,
+    ),
+  journalStats: (slug: string, bookId: string) =>
+    req<JournalStats>(
+      `/api/projects/${slug}/journal/stats?book_id=${encodeURIComponent(bookId)}`,
     ),
   sealJournalText: (slug: string, bookId: string, sessionDek: string, text: string) =>
     req<{ ciphertext: string }>(

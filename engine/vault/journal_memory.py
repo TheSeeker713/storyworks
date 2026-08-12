@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Optional
 
 
@@ -123,4 +123,69 @@ def build_journal_memory(
         "kind": kind,
         "memory": memory,
         "question": question,
+    }
+
+
+def build_journal_stats(
+    store: Any,
+    project_slug: str,
+    *,
+    book_id: str = "main",
+    as_of: Optional[date] = None,
+) -> dict[str, Any]:
+    """Compute per-Book counts and streaks entirely from local markdown."""
+    today = as_of or date.today()
+    entries: list[dict[str, Any]] = []
+    written_dates: set[date] = set()
+    total_words = 0
+
+    for row in store.index.list_project(project_slug, include_archived=False):
+        if str(row.get("type") or "") != "journal_entry":
+            continue
+        content_id = str(row.get("id") or "")
+        if not content_id:
+            continue
+        data = store.read_content(project_slug, content_id)
+        meta = dict(data.get("meta") or {})
+        if str(meta.get("book_id") or "main") != book_id:
+            continue
+        body = str(data.get("body") or "")
+        written_on = _entry_date(meta)
+        try:
+            stored_words = max(0, int(meta.get("word_count") or 0))
+        except (TypeError, ValueError):
+            stored_words = 0
+        words = stored_words if body.startswith("swenc:") else len(re.findall(r"\S+", body))
+        total_words += words
+        if written_on is not None and body.strip():
+            written_dates.add(written_on)
+        entries.append(
+            {
+                "id": content_id,
+                "date": written_on.isoformat() if written_on is not None else "",
+                "time": str(meta.get("entry_time") or ""),
+                "word_count": words,
+            }
+        )
+
+    anchor: Optional[date] = None
+    if today in written_dates:
+        anchor = today
+    elif today - timedelta(days=1) in written_dates:
+        anchor = today - timedelta(days=1)
+
+    streak = 0
+    while anchor is not None and anchor in written_dates:
+        streak += 1
+        anchor -= timedelta(days=1)
+
+    entries.sort(key=lambda item: (item["date"], item["time"], item["id"]), reverse=True)
+    return {
+        "ok": True,
+        "as_of": today.isoformat(),
+        "book_id": book_id,
+        "entry_count": len(entries),
+        "current_streak": streak,
+        "total_words": total_words,
+        "entries": entries,
     }

@@ -35,6 +35,10 @@ type Props = {
 const AUTOSAVE_MS = 600;
 const CHECKPOINT_IDLE_MS = 30_000;
 
+function countWords(text: string) {
+  return (text.match(/\S+/g) || []).length;
+}
+
 const TimestampedParagraph = Paragraph.extend({
   addAttributes() {
     return {
@@ -170,6 +174,10 @@ const WritingEditor = forwardRef<WritingEditorHandle, Props>(function WritingEdi
             paragraph_timestamps: isTimestampedType(contentTypeRef.current)
               ? toWrite.paragraphTimestamps
               : undefined,
+            word_count:
+              contentTypeRef.current === "journal_entry"
+                ? countWords(toWrite.body)
+                : undefined,
             book_id: bookIdRef.current || "main",
             folder_id: folderIdRef.current || "main",
             expected_hash: hashRef.current || undefined,

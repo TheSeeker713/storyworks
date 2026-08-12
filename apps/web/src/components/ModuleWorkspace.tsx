@@ -6,6 +6,7 @@ import {
   type ContentScene,
   type JournalBook,
   type JournalMemory,
+  type JournalStats,
   type ProjectMeta,
   type ProjectRow,
   type ProvenanceSummary,
@@ -112,6 +113,7 @@ export default function ModuleWorkspace({
   const [sessionDekByBook, setSessionDekByBook] = useState<Record<string, string>>({});
   const [mapOpen, setMapOpen] = useState(false);
   const [journalMemory, setJournalMemory] = useState<JournalMemory | null>(null);
+  const [journalStats, setJournalStats] = useState<JournalStats | null>(null);
   const [prov, setProv] = useState<ProvenanceSummary | null>(null);
   const [agentBusy, setAgentBusy] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -348,6 +350,28 @@ export default function ModuleWorkspace({
     };
   }, [project.slug, module, activeBookId, activeId]);
 
+  useEffect(() => {
+    if (module !== "journal") {
+      setJournalStats(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void api
+        .journalStats(project.slug, activeBookId)
+        .then((stats) => {
+          if (!cancelled) setJournalStats(stats);
+        })
+        .catch(() => {
+          if (!cancelled) setJournalStats(null);
+        });
+    }, draftText ? 850 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [project.slug, module, activeBookId, activeId, draftText]);
+
   async function transformJournalLoad(body: string) {
     if (module !== "journal" || activeBookPrivacy !== "private") return body;
     if (!activeSessionDek) throw new Error("Unlock this private book to read entries.");
@@ -524,18 +548,29 @@ export default function ModuleWorkspace({
         </p>
       </section>
     ) : null;
+  const activeJournalMeta = journalStats?.entries.find((entry) => entry.id === activeId);
 
   if (zen && module === "journal") {
     return (
       <div className="relative h-full">
-        <button
-          type="button"
-          className="absolute right-4 top-4 z-10 rounded-lg border bg-white/90 px-3 py-1.5 text-xs"
-          style={{ borderColor: "var(--sw-border)" }}
-          onClick={() => setZen(false)}
-        >
-          Normal
-        </button>
+        <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+          {journalStats && (
+            <span
+              className="rounded-full border bg-white/90 px-3 py-1.5 text-xs"
+              style={{ borderColor: "var(--sw-border)", color: "var(--sw-ink-muted)" }}
+            >
+              {journalStats.entry_count} entries · {journalStats.current_streak} day streak
+            </span>
+          )}
+          <button
+            type="button"
+            className="rounded-lg border bg-white/90 px-3 py-1.5 text-xs"
+            style={{ borderColor: "var(--sw-border)" }}
+            onClick={() => setZen(false)}
+          >
+            Normal
+          </button>
+        </div>
         <button
           type="button"
           className="absolute left-4 top-4 z-10 rounded-lg border px-3 py-1.5 text-xs"
@@ -553,6 +588,15 @@ export default function ModuleWorkspace({
           <div className="absolute bottom-4 left-4 z-10 max-w-xl">
             {journalMemoryCard}
           </div>
+        )}
+        {activeJournalMeta && (
+          <p
+            className="absolute bottom-4 right-4 z-10 rounded-full bg-white/90 px-3 py-1.5 text-[11px]"
+            style={{ color: "var(--sw-ink-faint)" }}
+          >
+            {activeJournalMeta.date} · {activeJournalMeta.time.slice(0, 5)} ·{" "}
+            {activeJournalMeta.word_count} words
+          </p>
         )}
         {activeId && (
           <WritingEditor
@@ -641,6 +685,20 @@ export default function ModuleWorkspace({
             >
               Zen
             </button>
+            {journalStats && (
+              <span
+                className="rounded-full px-2.5 py-1 text-[11px]"
+                style={{ background: "var(--sw-forest)", color: "var(--sw-parchment)" }}
+              >
+                {journalStats.entry_count} entries · {journalStats.current_streak} day streak
+              </span>
+            )}
+            {activeJournalMeta && (
+              <span className="text-[11px]" style={{ color: "var(--sw-ink-faint)" }}>
+                {activeJournalMeta.date} · {activeJournalMeta.time.slice(0, 5)} ·{" "}
+                {activeJournalMeta.word_count} words
+              </span>
+            )}
           </>
         )}
         {module === "blog" && setAsideCount > 0 && (

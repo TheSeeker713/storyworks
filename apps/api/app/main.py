@@ -301,6 +301,9 @@ class WriteContentIn(BaseModel):
     tags: Optional[list[str]] = None
     scenes: Optional[list[dict[str, Any]]] = None
     paragraph_timestamps: Optional[list[str]] = None
+    entry_date: Optional[str] = None
+    entry_time: Optional[str] = None
+    word_count: Optional[int] = Field(default=None, ge=0)
     auto_tag: bool = False
 
 
@@ -371,6 +374,9 @@ def content_write(slug: str, body: WriteContentIn):
             folder_id=body.folder_id,
             canvas=body.canvas,
             paragraph_timestamps=body.paragraph_timestamps,
+            entry_date=body.entry_date,
+            entry_time=body.entry_time,
+            word_count=body.word_count,
             expected_hash=body.expected_hash,
             dirty=body.dirty,
         )
@@ -783,6 +789,21 @@ def journal_memory(
             active_content_id=active_content_id,
             as_of=day,
         )
+    except ValueError as exc:
+        raise HTTPException(400, "as_of must be an ISO date") from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/projects/{slug}/journal/stats")
+def journal_stats(slug: str, book_id: str = "main", as_of: Optional[str] = None):
+    from datetime import date
+
+    from engine.vault.journal_memory import build_journal_stats
+
+    try:
+        day = date.fromisoformat(as_of) if as_of else None
+        return build_journal_stats(state.get_vault(), slug, book_id=book_id, as_of=day)
     except ValueError as exc:
         raise HTTPException(400, "as_of must be an ISO date") from exc
     except RuntimeError as exc:
